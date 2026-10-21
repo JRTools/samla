@@ -185,6 +185,15 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert req('/files/version/download?space='+space+'&entry='+entry+'&version='+historical_version)[1]=='<?php echo 123;'
                     assert req('/files/version/restore',{'csrf':token,'space':space,'entry':entry,'parent':parent,'version':historical_version,'revision':'2'})[0]==303
                     assert req('/files/download?space='+space+'&entry='+entry)[1]=='<?php echo 123;'
+                    lock_fixture="require 'vendor/autoload.php';$c=Samla\\Core\\Configuration\\AppConfig::fromGlobals();if(!str_starts_with($c->database->database,'media_platform_test_')){exit(1);}$p=(new Samla\\Core\\Database\\ConnectionFactory())->connect($c->database);$i=new Samla\\Core\\Identity\\PdoIdentityRepository($p,3600);$r=Samla\\Core\\Plugins\\PluginRuntime::boot([new Samla\\Core\\Identity\\IdentityPlugin(),new Samla\\Core\\Storage\\StoragePlugin(),new Samla\\Plugins\\Rbac\\RbacPlugin(new Samla\\Plugins\\Rbac\\PdoRoleRepository($p),$i)]);$l=new Samla\\Core\\Storage\\StorageLockService($p,new Samla\\Core\\Authorization\\AuthorizationService($r,$i),new Samla\\Core\\Administration\\PdoMutationRunner($p,$r),new Samla\\Core\\Storage\\StorageWriteGuard($p));if(isset($argv[4])){$l->release($argv[1],$argv[2],$argv[3],$argv[4]);}else{echo $l->acquire($argv[1],$argv[2],$argv[3],seconds:60)['token'];}"
+                    locked=subprocess.run(php+['-r',lock_fixture,user,space,entry],cwd=project,env=env,capture_output=True,text=True)
+                    assert locked.returncode==0,locked.stderr
+                    lock_token=locked.stdout
+                    assert req('/files/change',{'csrf':token,'space':space,'entry':entry,'operation':'trash','expected_name':'test.php','expected_parent':parent,'parent':parent})[0]==423
+                    assert req('/files/replace',multipart(token,{'entry':entry,'revision':'3'},'blocked'),headers)[0]==423
+                    assert req('/files/download?space='+space+'&entry='+entry)[0]==200
+                    unlocked=subprocess.run(php+['-r',lock_fixture,user,space,entry,lock_token],cwd=project,env=env,capture_output=True,text=True)
+                    assert unlocked.returncode==0,unlocked.stderr
                     def change(identifier,operation,name,expected_parent,target='',new_name=''):
                         return req('/files/change',{'csrf':token,'space':space,'entry':identifier,'operation':operation,'expected_name':name,'expected_parent':expected_parent,'parent':target,'name':new_name})[0]
                     assert change(entry,'rename','test.php',parent,new_name='renamed.php')==303

@@ -1,4 +1,4 @@
-# Experimentelle Plugin-API 0.6
+# Experimentelle Plugin-API 0.7
 
 Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog.
 
@@ -91,3 +91,12 @@ Die Authentifizierung eines App-Passworts liefert nur ein positives Credential-E
 MutationContext akzeptiert storage.file.replace und storage.version.restore mit verpflichtendem StorageChange im exakten Space-Scope und Zielen entry/version. Vorschlag: unveränderlicher logischer Name, Elternkennung, neue Größe und SHA-256. Das Ziel version ist die Kennung der neu archivierten bisherigen Revision. Audit/Outbox behalten ausschließlich Kennungen. Die Revisionserwartung, aktuelle Rechte, Eltern-/Papierkorbsichtbarkeit und Metadaten werden unter MutationRunner vor und nach Validatoren geprüft. Quotenberechnung, Archivierung, Referenzwechsel und Audit/Outbox sind atomar.
 
 Das zusätzliche atomare Bereichsrecht files.versions.read erlaubt keine aktuelle Dateioperation und wird nicht automatisch vergeben. Historienanzeige/-download verlangen außerdem files.read und files.list. Wiederherstellung benötigt zusätzlich files.update. Plugin-Veto lässt aktuellen Inhalt und Historie unverändert; ein bereits physisch publiziertes unreferenziertes Objekt kann bis zur kontrollierten Bereinigung erhalten bleiben.
+
+
+## Ressourcensperren ab API 0.7
+
+StorageLockChange(recursive, seconds) ist ein unveränderlicher Vorschlag für storage.lock.acquire/renew/release. MutationContext verlangt Space-Scope, Ziel lock und diesen Vorschlag genau für diese Operationen. Acquire/Renew verlangen 1 bis 3600 Sekunden, Release genau 0. Ein direkt gesperrter Eintrag kann zusätzlich als entry angegeben sein; leere Eintragskennung bedeutet Bereichswurzel und wird nicht als leeres Auditziel serialisiert. Fremde Operationen dürfen keinen Lock-Vorschlag verwenden.
+
+Token und frei übermitteltes Owner-Label werden weder im Vorschlag noch in Audit/Outbox gespeichert. Der persistente Lock-Datensatz enthält sie für die Protokollintegration. Ein Token ist ein Nachweis zur eigenen Sperre, ersetzt aber keine Ressourcenberechtigung. Andere Benutzer können auch mit bekanntem Token die Sperre nicht übergehen.
+
+Alle geschützten Speichermutationen prüfen aktive Sperren vor und nach Validatoren unter dem gemeinsamen Administrationslock. Dateiinhalt, Elternmitgliedschaft und betroffene Teilbäume werden getrennt berücksichtigt. Ein Plugin-Veto rollt Sperranlage/-verlängerung/-freigabe samt Audit/Outbox zurück. Ressourcensperren geben keine Erlaubnis durch generische Hooks. Der API-Major bleibt experimentell 0.

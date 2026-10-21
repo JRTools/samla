@@ -85,3 +85,12 @@ Der Betreiber nennt etwa 1000 Dateien und fünf aktive Benutzer; iOS, Android, W
 Jede Ersetzung archiviert den bisherigen Inhalt. Wiederherstellen macht einen alten Inhalt zum neuen Stand und erhält den vorherigen aktuellen Stand. Keine automatische Löschung oder erfundene Retentionsrichtlinie. Historienleserecht ist separat und wird bestehenden Rollen nicht automatisch hinzugefügt. Quoten zählen alle logischen Zustände einschließlich Papierkorb. GC und Konsistenzprüfer dürfen historische Objekte nicht als verwaist behandeln.
 
 Eine Versionsschutzgrenze von 1000 historischen Zuständen pro Datei verhindert unbeschränkte Metadatenanlage durch leere Ersetzungen, ohne historische Inhalte zu löschen. Das ist eine technische Schutzgrenze und kein bestätigtes Betriebsziel. Weitere gemeinsame Schreibsperren und WebDAV folgen in den nächsten Phasen.
+
+
+## Iteration 17: gemeinsame Sperren vor Protokollfreigabe
+
+Dauerhafte exklusive Sperren werden über stabile Eintragskennungen geführt. Ein eigenständiger nativer Sabre-PDO-Lockbestand würde Browseränderungen nicht schützen und wird daher nicht separat eingeführt. Der kommende DAV-Backendadapter muss die vorhandenen Samla-Sperrdienste verwenden.
+
+Sperranlage verlangt files.update im konkreten Bereich, sichtbares Ziel und keine überlappende aktive Sperre. Verlängerung/Freigabe verlangen zusätzlich Eigentümer, aktuelles Token und dieselbe erwartete Sperrkennung. Ein Token einer fremden Identität gewährt auch bei sonst gültigen Dateirechten keinen Schreibzugriff. Ablauf ist begrenzt, kein unbegrenztes Holding.
+
+Physische Uploadübertragung bleibt vor der kurzen SQL-Mutation. Die Sperrprüfung erfolgt vor der Übertragung und nochmals bei der abschließenden Transaktion. Tritt dazwischen eine Sperre hinzu, wird keine sichtbare Datei publiziert; ein bereits fertiges physisches Objekt kann bis zur kontrollierten GC erhalten bleiben. Browserfehler 423 ist bewusst sichtbar, kein stiller Sperrenbypass. API 0.7 ergänzt den typisierten Lock-Vorschlag.

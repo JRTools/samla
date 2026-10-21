@@ -128,3 +128,8 @@ APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/migrate.php
 ```
 
 Es gibt keine automatische Vergabe des zusätzlichen Historienleserechts. Gruppen bei Bedarf ausdrücklich mit dem history-Profil ergänzen (storage.md). Die vorhandene Uploadgrenze bleibt standardmäßig unverändert; APP_MAX_UPLOAD_BYTES macht sie konfigurierbar. Eine höhere Grenze verlangt auch passende PHP-/Webserverwerte und verfügbare Bereichsquote. Die neuen Versionstabellen gehören in das konsistente Datenbank-/Dateisystembackup.
+
+
+## Update auf Iteration 17
+
+Die neue Sperrtabelle ist vor Schreibzugriffen zu migrieren. Der vorhandene Wartungsbefehl bin/migrate.php gilt unverändert. Browser und spätere DAV-Mutationen verwenden dieselbe Sperrbasis. Es gibt in dieser Phase noch keinen angeschlossenen WebDAV-Endpunkt.

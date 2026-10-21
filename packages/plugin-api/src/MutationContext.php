@@ -17,6 +17,7 @@ final readonly class MutationContext
         public ?GroupDetailsChange $groupDetails = null,
         public ?GroupMappingChange $groupMapping = null,
         public ?StorageChange $storageChange = null,
+        public ?StorageLockChange $storageLock = null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -31,6 +32,11 @@ final readonly class MutationContext
             }
         }
         $groupOperation = in_array($operation, ['identity.group.create', 'identity.group.rename'], true);
+        $lockOperation = in_array($operation, ['storage.lock.acquire','storage.lock.renew','storage.lock.release'], true);
+        if ($lockOperation !== ($storageLock !== null) || ($lockOperation && ($scope !== Scope::Space || !isset($targets['lock'])
+            || (($operation === 'storage.lock.release') !== ($storageLock->seconds === 0))))) {
+            throw new \InvalidArgumentException('Lock proposal must match its operation.');
+        }
         $storageOperation = in_array($operation, ['storage.folder.create', 'storage.file.upload', 'storage.entry.rename', 'storage.entry.move',
             'storage.file.copy', 'storage.entry.trash', 'storage.entry.restore', 'storage.file.replace', 'storage.version.restore'], true);
         if ($storageOperation !== ($storageChange !== null) || ($storageOperation && ($scope !== Scope::Space || !isset($targets['entry'])))) {

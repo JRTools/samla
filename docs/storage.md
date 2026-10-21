@@ -127,3 +127,16 @@ APP_MAX_UPLOAD_BYTES setzt die maximale Inhaltsgröße als ganze Bytezahl, Stand
 ### Vereinbarter Prüfbereich
 
 Geplanter Bestand: ungefähr 1000 Dateien, fünf aktive Benutzer; Zielplattformen iOS/Android/Windows/macOS. Die Integrationstests lesen einen 1000-Dateien-Katalog über zehn Seiten ohne Verluste/Dubletten und starten fünf PHP-Prozesse über eine gemeinsame Startbarriere. Bei Quote für drei der fünf Uploads werden genau drei gespeichert und zwei abgewiesen. Das belegt dieses begrenzte Parallelitätsverhalten; weitere Crash-/Leistungs-/native Clientprüfungen bleiben erforderlich.
+
+
+## Gemeinsame Schreibsperren ab Iteration 17
+
+Eine exklusive Ressourcensperre ist an die feste Bereichs-/Eintragskennung gebunden. Änderungen an Name oder Ort mit gültigem Nachweis verlieren die Sperre deshalb nicht. Sperren gelten 1 bis 3600 Sekunden und können vom berechtigten Eigentümer mit Token verlängert oder freigegeben werden. Die vorgesehene Nutzung erfolgt über den folgenden DAV-Adapter; es gibt in dieser Phase noch keine eigene Browser-Sperrverwaltung.
+
+Auch der Eigentümer kann eine gesperrte Ressource ohne passenden Nachweis nicht ändern. Browseränderungen haben keinen DAV-Token und antworten daher mit 423. Die Sperre im verwendeten Client freigeben oder den Ablauf abwarten. Lesen bleibt unter den normalen Dateirechten möglich. Berechtigungsentzug und lokale Sperre werden weiterhin zentral geprüft; ein Token verleiht keine Rechte.
+
+Eine Ordnersperre ohne Teilbaumumfang schützt den Ordner und seine unmittelbare Mitgliederstruktur, nicht den Inhalt bereits vorhandener Kinder. Eine rekursive Sperre schützt auch die Nachfahren. Rename/MOVE/Papierkorb eines Ordners prüfen gesperrte Nachfahren, damit eine Sperre nicht durch Änderung eines Vorfahren umgangen wird. Upload/Kopie/Verschieben prüfen außerdem die Zielmitgliedschaft. Bereichswurzeln können ebenfalls gesperrt werden.
+
+Quotenänderungen und Sperranlage/-prüfung werden durch denselben kurzen Administrationslock serialisiert. Große Inhaltstransfers liegen weiterhin außerhalb dieser SQL-Transaktion; vor Metadatenfreigabe wird die Sperre erneut geprüft. Erwerb, Verlängerung und Freigabe haben Validatoren und Audit/Outbox. Frei übermittelte Labels und Tokens gelangen nicht in diese Ereignisse.
+
+Technische Schutzgrenzen der ersten Implementierung: höchstens 1000 aktive Sperren und 10000 Katalogeinträge je Bereich sowie höchstens 32 mitgegebene Tokens pro Mutation. Das sind keine zugesicherten Lastwerte; der vereinbarte Zielbestand liegt bei ungefähr 1000 Dateien und fünf aktiven Benutzern. Native Client-/Crashabnahme und die öffentliche Protokollintegration folgen.

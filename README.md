@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 16 (Dateiversionen und konfigurierbare Uploads)
+## Entwicklungsstand: Iteration 17 (gemeinsame Ressourcensperren)
 
 Vorhanden sind:
+
+- Persistente exklusive Ressourcensperren mit stabilen Eintragskennungen, Ordner-/Teilbaumumfang, Eigentümer-/Nachweisprüfung, Ablauf/Verlängerung und transaktionalen Erweiterungspunkten. Browseränderungen respektieren die Sperren mit HTTP 423. Der öffentliche DAV-Adapter folgt separat.
 
 - Dateiversionen mit Konfliktschutz, getrenntem Historienleserecht, Download alter Inhalte und Wiederherstellung als neuer Stand. Frühere Inhalte zählen zur Quote und werden durch Konsistenzprüfung/Bereinigung geschützt.
 - Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads mit konfigurierbarer Grenze (Standard 16 MiB), geschützten Attachment-Downloads, Umbenennen, Verschieben, Einzeldateikopien und Papierkorb/Wiederherstellung. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
@@ -108,7 +110,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 324 Tests mit 1277 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 340 Tests mit 1344 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 

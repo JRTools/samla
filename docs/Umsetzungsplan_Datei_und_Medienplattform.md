@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.17
+Version: 1.18
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 16, siehe Abschnitt 26. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 17, siehe Abschnitt 27. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -698,3 +698,34 @@ Die echte HTTP-/HTTPS-Prüfung ergänzt Multipart-Ersetzen, Abweisung eines vera
 Nächste Phase: dauerhafte gemeinsame Ressourcensperren für Browser und DAV, danach der konkrete WebDAV-Protokolladapter. Native Clients, erweiterte Dateioperationen, Medien, administrative Restfunktionen und die übrige Konzeptabnahme bleiben offen. Die Fortsetzung ist durchgehend autorisiert.
 
 Version 1.17: Abgestimmter Größen-/Plattformrahmen, versionierte Inhalte mit separatem Historienrecht, quotenkorrekte Referenzen und tatsächlich geprüfte Parallelitätsgrenze.
+
+
+## 27. Iteration 17: Persistente gemeinsame Ressourcensperren
+
+### 27.1 Kernverhalten
+
+Eine zusätzliche versionierte Migration führt exklusive Sperren nach Bereich und stabiler Eintragskennung ein. Bereichswurzel, Einzeleintrag und rekursiver Teilbaum sind abgebildet. Gültigkeit 1 bis 3600 Sekunden, ausdrückliche Verlängerung und Freigabe durch den berechtigten Eigentümer mit Token. Bereits abgelaufene Sperren werden ignoriert und bei neuer Anlage im Bereich bereinigt. Sperranlage benötigt files.update und ein sichtbares Ziel; globale Administration gibt keine Sonderfreigabe.
+
+Alle bisherigen Dateimutationen prüfen dieselbe Sperrbasis. Inhalte, direkte Elternmitgliedschaft und betroffene Teilbäume werden unterschieden: Depth-0-Ordnersperren blockieren neue/verschobene Mitglieder, aber nicht den Inhalt vorhandener Kinder; rekursive Sperren schützen alle Nachfahren. Änderungen eines Vorfahren beachten gesperrte Kinder. Zielordner werden ebenfalls geprüft. Datei-Lesezugriffe bleiben unter den bestehenden Rechten möglich.
+
+Ein Token ersetzt keine Rechte und gilt nur für die eigene Sperre im tatsächlichen Bereich. Rename/MOVE behalten die Sperre durch stabile Kennung. Browser ohne mitgegebenen DAV-Nachweis antwortet bei Sperrkonflikt mit 423, auch wenn derselbe Benutzer die Sperre über ein anderes Gerät erworben hat. In dieser Phase existiert noch keine zusätzliche Browser-Sperrverwaltung.
+
+### 27.2 Atomizität und Erweiterungen
+
+Sperranlage, -verlängerung und -freigabe verwenden MutationRunner, Guard vor/nach Validatoren, gemeinsamen Administrationslock und Audit/Outbox. Geprüft wird auch die erwartete Sperrkennung, damit ein zwischenzeitlicher Ersatz nicht als alter Zustand verändert wird. Die geschützten Speicherwriter verwenden diese Prüfung obligatorisch; ein fehlender optional injizierter Guard führt zur Standardprüfung, nicht zu einem erlaubenden Bypass.
+
+API 0.7 ergänzt StorageLockChange mit rekursivem Umfang und begrenzter Laufzeit. MutationContext verlangt den Vorschlag genau für storage.lock.acquire/renew/release im Space-Scope mit lock-Ziel. Tokens und freie Clientlabels sind nicht Teil von Vorschlag/Audit/Outbox. Große Dateiübertragungen bleiben außerhalb der kurzen SQL-Transaktion; vor sichtbarer Freigabe werden Rechte und Sperren erneut geprüft.
+
+Technische Schutzgrenzen: 1000 aktive Sperren und 10000 Katalogeinträge pro Bereich, 32 mitgegebene Tokens pro Mutation. Der Zielbestand von ungefähr 1000 Dateien/fünf aktiven Benutzern wird dadurch nicht zu einer ungeprüften Lastzusage erweitert.
+
+### 27.3 Prüfung
+
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 340 Tests, 1344 Assertions (147 Unit-/Architekturtests und 193 Integrationstests). Syntax von 159 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Neue Fälle prüfen eigene Sperre ohne Nachweis, fremden Tokenbesitzer, lokale Sperre trotz Token, rekursive/Depth-0-Ordnersperren, geschützte Vorfahren/Ziele, stabile Kennung nach Rename, überlappende Anlage, Bereichsgrenzen, Verlängerung/Freigabe/Ablauf, gelöschte Ziele, Bereichswurzel, Plugin-Veto, ausgeschlossene Tokens/Labels in Ereignissen und erneute Prüfung einer durch Validator eingebrachten Sperre vor dem Schreiben.
+
+Echte HTTP-/HTTPS-Anfragen bestätigen zusätzlich 423 für Browser-Papierkorb und Inhaltsersetzung während einer aktiven persistierten Sperre, weiter möglichen Download und Fortsetzung nach Freigabe. Alle bisherigen OIDC-/App-Passwort-/Datei-/Versions-/Quoten-/Konsistenzprüfungen bleiben erfolgreich. Der 1000-Dateien-/Fünfprozessfall bleibt Teil der Matrix. Neue Funktionen sind nicht auf dem Betreiberhost deployed.
+
+### 27.4 Fortsetzung
+
+Die Sperrbasis ist abgeschlossen; der konkrete WebDAV-Protokolladapter wird nun darauf aufgebaut. Eine separate nur von Sabre verwaltete Locktabelle wird ausdrücklich vermieden. Credential-Widerruf, Origin-/Destination-/XML-/If-/ETag-Grenzen und native Clientabnahme müssen im Adapter geprüft werden. Die übrigen Konzeptpunkte bleiben gemäß Statusmatrix offen. Die Fortsetzung ist weiterhin autorisiert.
+
+Version 1.18: Gemeinsame transaktionale Ressourcensperren mit stabiler Zuordnung, differenziertem Ordnerumfang und nachgewiesenem Browser-Schutz.

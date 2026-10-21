@@ -71,6 +71,7 @@ final readonly class FileController
             else { $data += $this->files->listing($actor, $space, $this->query($request, 'parent', 32), $request->after()); $page = 'files'; }
             return new Response(200, $this->renderer->render($page, $data));
         } catch (AccessDenied) { return $this->error(403, 'Für diesen Speicherbereich fehlt die Berechtigung oder dein Gruppenstand ist nicht mehr aktuell.', $data); }
+        catch (\Samla\Core\Storage\StorageLocked) { return $this->error(423, 'Der Eintrag oder sein Ziel ist gerade für eine Bearbeitung gesperrt. Bitte die Sperre im verwendeten Client freigeben oder ihren Ablauf abwarten.', $data); }
         catch (\Samla\Core\Storage\StorageUnavailable) { return $this->error(503, 'Der private Dateispeicher ist noch nicht eingerichtet oder für PHP nicht beschreibbar. Bitte die Administration um Prüfung bitten.', $data); }
         catch (MutationConflict) { return $this->error(409, 'Der Eintrag wurde inzwischen geändert oder der Name ist bereits vergeben. Bitte neu laden. Es wurde nichts überschrieben.', $data); }
         catch (\LengthException) { return $this->error(413, 'Uploadgrenze, Speicherquote oder Versionskapazität überschritten. Vorhandene Versionen bleiben erhalten.', $data); }
