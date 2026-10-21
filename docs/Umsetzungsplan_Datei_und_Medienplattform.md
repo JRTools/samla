@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.16
+Version: 1.16.1
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -654,3 +654,12 @@ Die echten HTTP-/HTTPS-Prüfungen ergänzen App-Passwortanlage ohne Verwaltungsr
 Der WebDAV-Endpunkt ist noch nicht angeschlossen. Vor Schreibfreigabe folgen Versions-/Konfliktschutz, gemeinsam für Browser und DAV gültige dauerhafte Sperren und der Protokolladapter. Credential-Widerruf muss auch bei konkreten Ressourcen-/Mutationsprüfungen berücksichtigt werden. Native Clientabnahme, Medienumfang, weitere administrative Oberflächen, vollständiger Recovery-/Lastnachweis und alle in 24.5 genannten übrigen Konzeptpunkte bleiben offen. Die fortlaufende Umsetzung ist weiterhin autorisiert; eine neue Bibliotheksfreigabe für SabreDAV ist nicht mehr erforderlich.
 
 Version 1.16: Tatsächlich installierte freigegebene WebDAV-Bibliothek, sichere OIDC-Kontoselbstverwaltung eigener App-Passwörter und verbesserte private Speichereinrichtung.
+
+
+### 25.6 Benötigte Betriebsziele vor dem WebDAV-Schreibpfad
+
+Konzeptabschnitt 8.2 verlangt vor Implementierung verbindliche Referenzclients und messbare Betriebsgrenzen; wörtlich: „Zahlen werden ohne Nutzungsdaten nicht erfunden.“ Für die nächsten Entscheidungen zu großen gestreamten Uploads, Versionen, gemeinsamem Locking und deren Last-/Clientabnahme fehlen noch Angaben zum erwarteten Bestand (Dateianzahl, Gesamtvolumen, größte einzelne Datei), ungefähr gleichzeitig aktiven Benutzern und konkreten Referenzclients einschließlich OS-Versionen. Grobe Größenordnungen reichen für die erste Planung.
+
+Die bisherige 16-MiB-Uploadgrenze, 100-Einträge-Seiten und begrenzten Ordnerbaumprüfungen sind vorläufige technische Schutzgrenzen der vorhandenen Umsetzung und keine mit dem Betreiber vereinbarten Zielkapazitäten. Ein erfolgreicher Testlauf beweist diese künftigen Betriebsziele nicht. Die Bibliotheksfreigabe liegt bereits vor; die benötigte Rückfrage betrifft ausschließlich diese im Konzept ausdrücklich geforderten Betriebsangaben, kein erneutes allgemeines Go.
+
+Bis zur Antwort sind die vollständig geprüften und veröffentlichten Phasen einschließlich App-Passwörtern gespeichert. Weiterer Konzeptumfang bleibt gemäß Statusmatrix offen. Weitere konkrete Bild-/Export-/Antwortzeitgrenzen sind spätestens vor den entsprechenden Medien-/Exportphasen festzulegen.
