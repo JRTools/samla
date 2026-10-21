@@ -6,7 +6,7 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 20 (automatische GitHub-Prüfungen)
+## Entwicklungsstand: Iteration 20.2 (automatische GitHub-Prüfungen)
 
 Vorhanden sind:
 

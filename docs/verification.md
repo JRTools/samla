@@ -7,3 +7,5 @@ Workflow-YAML mit PyYAML 6.0.3 als YAML-Struktur geprüft: Push/Pull-Request/man
 Der erste veröffentlichte Lauf 39692714418 wurde vor Jobanlage wegen einer ungültigen Kontextposition abgewiesen: jobs.matrix.env konnte job.services.database.ports noch nicht auswerten. Die öffentliche Annotation wurde gelesen. Der Port wird nun in einem Ausführungsschritt aus dessen gültigem job-Kontext in GITHUB_ENV übernommen. Die YAML-Struktur wurde erneut gelesen. Ein erfolgreicher Folge-Lauf wird erst nach tatsächlicher Ausführung behauptet.
 
 Referenznachweise und vollständige Anwendungsmatrix: verification-iteration-19.md. Native Clients und vollständige Crash-/Last-/Restore-Abnahme bleiben offen.
+
+Folgelauf 39692926549: Beide MariaDB-Jobs durchlaufen die Anwendungstests einschließlich HTTP/HTTPS. MySQLs Binary-Logging-Regel verweigert zehn absichtlich fehlerauslösende Triggerfixtures mit Fehler 1419. Iteration 20.2 erlaubt die Fixtureanlage im isolierten MySQL-Testcontainer über log_bin_trust_function_creators, ohne dem Anwendungskonto globale Rechte zu geben. Die produktive Anwendung/Migration bleibt unverändert. Der anschließende Vierfachlauf wird kontrolliert.

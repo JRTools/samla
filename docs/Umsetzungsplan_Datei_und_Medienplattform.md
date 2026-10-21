@@ -791,3 +791,5 @@ YAML-Struktur, vier Kombinationen, vollständige Actionpins und eingeschränkte 
 Version 1.21: Isolierte vierfache GitHub-Prüfung mit echten HTTP-/HTTPS-Testabläufen und nachvollziehbarer Trennung von lokaler Prüfung und GitHub-Laufstatus.
 
 Erster Lauf 39692714418: GitHub wies die Portabfrage in jobs.matrix.env vor Jobanlage mit einem Kontextfehler ab. Iteration 20.1 bindet den dynamischen Serviceport stattdessen in einem Ausführungsschritt über GITHUB_ENV ein. Die öffentliche Fehlerannotation wurde gelesen; kein erfolgreicher Lauf wird aus der YAML-Prüfung abgeleitet. Die weitere Laufabnahme bleibt Teil dieser Phase.
+
+Folgelauf 39692926549: Beide MariaDB-Jobs sind erfolgreich. Die MySQL-Tests benötigen für ihre absichtlich fehlerauslösenden Triggerfixtures eine Binary-Logging-Testfreigabe (Fehler 1419 im gelesenen Joblog). Iteration 20.2 aktiviert diese ausschließlich im kurzlebigen isolierten MySQL-CI-Container über dessen Test-root. Das Anwendungskonto behält seine datenbankbegrenzten Rechte; produktive Migrationen benötigen diese Fehler-Trigger nicht. Der korrigierte Vierfachlauf wird erneut kontrolliert.

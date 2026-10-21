@@ -8,6 +8,8 @@ Die Datenbank heißt media_platform_test_ci. Das Konto hat Zugriff auf diese Dat
 
 Die Actionkennungen wurden an den offiziellen Quellrepos überprüft:
 
+Die Rollbacktests erzeugen gezielt temporäre Fehler-Trigger. Im kurzlebigen MySQL-CI-Container wird dafür vor den Integrationstests einmalig log_bin_trust_function_creators aktiviert. Der Befehl läuft lokal im Container als dessen Test-root. Das Anwendungskonto behält ausschließlich seine Datenbankrechte. Diese Einstellung ist keine Anforderung oder Empfehlung für den Produktivserver; Samlas produktive Migrationen verwenden diese Fehler-Trigger nicht.
+
 - [actions/checkout v7.0.1](https://github.com/actions/checkout/tree/3d3c42e5aac5ba805825da76410c181273ba90b1)
 - [shivammathur/setup-php v2](https://github.com/shivammathur/setup-php/tree/eb7c497e18156a6bbabfef1d3a82760b9eda3962)
 
