@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.14
+Version: 1.14.1
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -564,3 +564,10 @@ Der vorhandene HTTP-Durchstich wird um explizite Bereichsanlage, echte Multipart
 Die Betreiberanweisung erlaubt die fortlaufende Abarbeitung des gesamten Konzepts ohne erneutes Go nach jeder Phase. Jede abgeschlossene Phase aktualisiert README, diesen Plan und Prüfergebnisse und wird veröffentlicht. Echte offene Entscheidungen oder fehlende benötigte Zugänge werden gezielt abgefragt. Die bestehende Regel zu zusätzlichen Laufzeitkomponenten bleibt bestehen. Nächste Arbeiten: kontrollierte Objektbereinigung, typisierte Uploadvorschläge, weitere Dateioperationen und Versionen/Papierkorb, Rollen-/Mappingoberfläche, Medienfunktionen und WebDAV einschließlich zu entscheidender Bibliotheksintegration.
 
 Version 1.14: Erste lokale Dateiablage mit expliziten Bereichsrechten, Quoten, sicheren Upload-/Downloadwegen und Wartungswerkzeugen; bestätigter Betreiberlogin und kontinuierliche weitere Umsetzung.
+
+
+### 23.5 Betreiberprüfung und Plesk-Korrektur 13.1
+
+Der Betreiber bestätigt die zunächst fehlende Speichermigration als Ursache der PDOException und führt sie nachträglich aus. Die Pfadprüfung wird an Plesk open_basedir angepasst: Die serverseitig erlaubte Wurzel bildet die Vertrauensgrenze; Eltern außerhalb dieser Freigabe werden nicht mit is_link untersucht. Innerhalb der Freigabe bleiben Symlinks gesperrt, vollständig außerhalb liegende Speicherpfade werden vor Dateisystemzugriff abgelehnt. open_basedir muss nicht erweitert oder deaktiviert werden.
+
+Ein isolierter PHP-Unterprozess mit echtem open_basedir und als Exceptions behandelten Warnungen prüft zulässige Pfade ohne verbotene Elternzugriffe, Symlinkabweisung und Abweisung fremder Speicherwurzeln. Die gezielte Speichertestsuite besteht unter PHP 8.4.5 und 8.5.4 mit je 15 Tests und 22 Assertions. Diese Korrektur wird separat vor der noch laufenden Lebenszyklusphase veröffentlicht.

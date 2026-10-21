@@ -166,3 +166,7 @@ Time: 00:08.839, Memory: 28.00 MB
 8.4 production HTTPS: OIDC, sessions, bootstrap, RBAC, space CLI, folders, multipart upload, duplicate/CSRF rejection, streamed attachment, orphan check, logout and blocking: OK
 
 ```
+
+## Plesk-Korrektur 13.1
+
+Ein zusätzlicher Unterprozesstest verwendet reales open_basedir und einen Error-Handler, der jede PHP-Warnung als Exception behandelt. Er bestätigt erlaubte Speicherwurzeln ohne Stat-Aufrufe außerhalb der Hostinggrenze, gesperrte interne Symlinks und vorab abgewiesene fremde Speicherpfade. Gezielte LocalContentStoreTest-Suite unter PHP 8.4.5 und 8.5.4: jeweils 15 Tests, 22 Assertions. Die zuvor aufgeführte Vierfachmatrix stammt aus Phase 13; für diese Pfadkorrektur wurde der gezielte Regressionstest ausgeführt.

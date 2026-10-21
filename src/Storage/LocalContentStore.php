@@ -10,13 +10,30 @@ final readonly class LocalContentStore
     public function __construct(string $root)
     {
         if (!str_starts_with($root, '/') || str_contains($root, "\0")) { throw new \InvalidArgumentException('Absolute storage root required.'); }
-        // Reject symlinks throughout the configured path, including its existing ancestors.
+        // A hosting sandbox may prohibit stat() on ancestors above its allowed root.
+        // Treat that server-configured boundary as trusted and inspect only within it.
+        $boundary = null;
+        $restriction = (string) ini_get('open_basedir');
+        if ($restriction !== '') {
+            foreach (explode(PATH_SEPARATOR, $restriction) as $base) {
+                if ($base === '.') { $base = (string) getcwd(); }
+                $base = rtrim($base, '/');
+                if ($base !== '' && str_starts_with($base, '/') && ($root === $base || str_starts_with($root, $base . '/'))
+                    && ($boundary === null || strlen($base) > strlen($boundary))) { $boundary = $base; }
+            }
+            if ($boundary === null && !in_array('/', explode(PATH_SEPARATOR, $restriction), true)) {
+                throw new \InvalidArgumentException('Storage is outside the hosting sandbox.');
+            }
+        }
+        // Reject symlinks inside the trusted sandbox; unrestricted processes check all ancestors.
         $path = '';
         foreach (explode('/', $root) as $part) {
             if ($part === '') { continue; }
             if ($part === '.' || $part === '..') { throw new \InvalidArgumentException('Noncanonical storage root.'); }
             $path .= '/' . $part;
-            if (is_link($path)) { throw new \InvalidArgumentException('Storage symlinks are not supported.'); }
+            if (($boundary === null || $path === $boundary || str_starts_with($path, $boundary . '/')) && is_link($path)) {
+                throw new \InvalidArgumentException('Storage symlinks are not supported.');
+            }
         }
         $public = realpath(__DIR__ . '/../../public');
         if ($path === '') { throw new \InvalidArgumentException('Storage cannot be the filesystem root.'); }

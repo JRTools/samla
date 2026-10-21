@@ -6,7 +6,7 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 13 (erste Dateiablage)
+## Entwicklungsstand: Iteration 13.1 (Dateiablage und Plesk-Pfadprüfung)
 
 Vorhanden sind:
 
@@ -149,3 +149,5 @@ Eine explizite Gruppenfrischerichtlinie ist für Verwaltungszugriffe erforderlic
 - [Entscheidungen und offene Angaben](docs/decisions.md)
 
 Nach jeder Implementierungsphase werden README, Umsetzungsplan und Prüfergebnisse aktualisiert und gemeinsam mit dem Code committed. Offene Prüfungen werden ausdrücklich als offen geführt.
+
+Plesk-Korrektur 13.1: Die private Pfadprüfung berücksichtigt open_basedir und untersucht keine verbotenen übergeordneten Verzeichnisse. Interne Symlinks und nicht erlaubte Speicherwurzeln bleiben gesperrt. Nach einem Codeupdate Speichermigrationen ausdrücklich ausführen.
