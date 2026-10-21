@@ -59,3 +59,12 @@ Die erste Weboberfläche registriert zusätzlich die globalen Berechtigungen `id
 Der Login verwendet nach vollständiger Tokenverifikation den bestehenden MutationRunner-/ChangeValidator-Vertrag. Operation identity.login, globaler Scope und Ziel user enthalten ausschließlich die interne Benutzerkennung. Validator-Veto und lokale Sperren verhindern Provisionierung, Namens-/Gruppenänderung, Audit und Outbox gemeinsam. Authentifizierung ersetzt keine Rollenvergabe. Verwaltungszugriffe verwenden weiterhin die vollständige zentrale Autorisierung.
 
 Der Offline-Installer verwendet identity.bootstrap für die begrenzte Erstadministration. Er ist kein öffentlicher Webendpunkt und verlangt vertrauenswürdigen CLI-/Wartungszugang. Die neuen transaktionalen Gruppen-/Rollenwriter sind interne Persistenzzusammensetzung, keine frei autorisierten Rollen-/Gruppenfunktionen. Der API-Vertrag bleibt experimentell 0.5.
+
+
+## Dateioperationen ab Iteration 13
+
+Dateilisten und Downloads verwenden den zentralen AuthorizationChecker mit files.list beziehungsweise files.read im exakten Space-Scope. Autorisierungsprovider und AccessRestriction sind auch für diese Lesezugriffe wirksam. Kein globales Administrationsrecht impliziert Dateizugriff.
+
+Neue Ordner und Uploads verwenden MutationRunner/ChangeValidator mit storage.folder.create beziehungsweise storage.file.upload, Scope Space und Ziel entry sowie optional parent. Der Kontext und Audit/Outbox enthalten interne Kennungen, keine Inhalte, freien Namen oder Hostpfade. Validatoren können die Veröffentlichung der Metadaten verhindern. Autorisierung und Zielordner werden nach Validatoren erneut geprüft. Der bestehende API-Vertrag 0.5 bleibt unverändert; eine inhaltliche Uploadprüfung über einen typisierten Vorschlag wird separat ergänzt.
+
+Der vertrauenswürdige Offline-Installer verwendet storage.space.create, Space-Scope sowie Ziele group und role. Er benötigt Wartung und einen aktiven frischen Administrator, vergibt ausschließlich die ausdrücklich angeforderte Gruppenrolle im neu angelegten Bereich und ist kein allgemeiner Rollen-HTTP-Endpunkt.

@@ -80,10 +80,11 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
             if secure:env.update(APP_ENV='production',OIDC_REDIRECT_URI=app_url+'/auth/callback')
             init="require 'vendor/autoload.php';$c=Samla\\Core\\Configuration\\AppConfig::fromGlobals();$p=(new Samla\\Core\\Database\\ConnectionFactory())->connect($c->database);(new Samla\\Core\\Database\\MigrationRunner($p))->migrate(require 'bootstrap/migrations.php');foreach(['outbox_events','audit_events','rbac_delegation_permissions','rbac_delegations','rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups','storage_spaces']as$t){$p->exec('DELETE FROM '.$t);}"
             subprocess.run(php+['-r',init],cwd=project,env=env,check=True)
+            storage=p/('storage'+version+str(secure));storage.mkdir(mode=0o700);env['APP_STORAGE_ROOT']=str(storage)
             sessions=p/('sessions'+version+str(secure));sessions.mkdir(mode=0o700)
             jar=http.cookiejar.CookieJar();opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar),NoRedirect(),urllib.request.HTTPSHandler(context=ssl.create_default_context(cafile=str(p/'cert.pem'))))
-            def req(path='/',data=None):
-                request=urllib.request.Request(app_url+path,data=None if data is None else urllib.parse.urlencode(data).encode())
+            def req(path='/',data=None,extra_headers=None):
+                request=urllib.request.Request(app_url+path,data=data if isinstance(data,bytes) else None if data is None else urllib.parse.urlencode(data).encode(),headers=extra_headers or {})
                 try:response=opener.open(request,timeout=20)
                 except urllib.error.HTTPError as e:response=e
                 return response.code,response.read().decode(),response.headers
@@ -127,6 +128,33 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,body,_=req('/groups');assert status==200
                     assert req('/groups/create',{'csrf':csrf(body),'name':'OIDC created group'})[0]==303
                     assert 'OIDC created group' in req('/groups')[1]
+                    # Real multipart upload through PHP's uploaded-file validation, plus streamed attachment.
+                    result=subprocess.run(php+['bin/storage-space-create.php',user,'samla.administrators','HTTP files','1048576'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                    assert result.returncode==0,result.stdout+result.stderr
+                    space=re.search(r'space\.[a-f0-9]{32}',result.stdout).group()
+                    status,files,_=req('/files?space='+space);assert status==200
+                    token=csrf(files)
+                    assert req('/files/folder',{'csrf':token,'space':space,'parent':'','name':'Documents'})[0]==303
+                    status,files,_=req('/files?space='+space)
+                    parent=re.search(r'parent=([a-f0-9]{32})',files).group(1)
+                    boundary='SamlaBoundary'+os.urandom(8).hex()
+                    def multipart(token):
+                        parts=[]
+                        for field,value in [('csrf',token),('space',space),('parent',parent)]:
+                            parts.append('--'+boundary+'\r\nContent-Disposition: form-data; name="'+field+'"\r\n\r\n'+value+'\r\n')
+                        parts.append('--'+boundary+'\r\nContent-Disposition: form-data; name="file"; filename="test.php"\r\nContent-Type: application/x-php\r\n\r\n<?php echo 123;\r\n--'+boundary+'--\r\n')
+                        return ''.join(parts).encode()
+                    path='/files/upload';headers={'Content-Type':'multipart/form-data; boundary='+boundary}
+                    assert req(path,multipart('bad'),headers)[0]==403
+                    assert req(path,multipart(token),headers)[0]==303
+                    assert req(path,multipart(token),headers)[0]==409
+                    status,files,_=req('/files?space='+space+'&parent='+parent);assert status==200 and 'test.php' in files
+                    entry=re.search(r'entry=([a-f0-9]{32})',files).group(1)
+                    status,content,headers=req('/files/download?space='+space+'&entry='+entry)
+                    assert status==200 and content=='<?php echo 123;'
+                    assert headers['Content-Type']=='application/octet-stream' and headers['Content-Disposition'].startswith('attachment;')
+                    checked=subprocess.run(php+['bin/storage-check.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                    assert checked.returncode==2 and 'Unreferenced object:' in checked.stdout,checked.stdout+checked.stderr
                     assert req('/auth/logout')[0]==405
                     assert req('/auth/logout',{'csrf':'bad'})[0]==403
                     assert req('/auth/logout',{'csrf':csrf(body)})[0]==303
@@ -146,7 +174,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': full OIDC code/PKCE/Basic/JWKS, cookies, session rotation/expiry, replay, bootstrap, RBAC forms, logout, invalid nonce/signature and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, sessions, bootstrap, RBAC, space CLI, folders, multipart upload, duplicate/CSRF rejection, streamed attachment, orphan check, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

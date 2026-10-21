@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 12 (OIDC-Weblogin)
+## Entwicklungsstand: Iteration 13 (erste Dateiablage)
 
 Vorhanden sind:
+
+- Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads bis 16 MiB und geschützten Attachment-Downloads. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
 
 - Gemeinsame `.env`-Konfiguration für Web und CLI mit Prozessvorrang und sicherer Vorlage `example.env`.
 - OIDC-Weblogin mit Authorization Code/PKCE S256, Basic, RS256-Tokenprüfung, kurzlebiger einmaliger Callbacktransaktion, sicheren HTTPS-Sitzungen und lokaler Abmeldung. Neues Konto ohne automatische Rollen; kontrollierte initiale Administratoreinrichtung per CLI.
@@ -28,7 +30,7 @@ Vorhanden sind:
 - Plugin-Validierung vor Änderungen, transaktionales Audit und persistierte Abschlussereignisse in einer Outbox.
 - Unit-, Architektur- und echte MySQL-/MariaDB-Integrationstests.
 
-Die Weboberfläche kann jetzt mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. WebDAV-Endpunkt und Dateioperationen fehlen weiterhin. Der echte Betreiberhost und sein ZITADEL-Login müssen nach Einrichtung geprüft werden; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
+Die Weboberfläche kann jetzt mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. WebDAV und erweiterte Dateioperationen bleiben offen. Der Betreiber bestätigt erfolgreichen ZITADEL-Login und initiale Administration auf seinem Plesk-Host; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
 
 Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen bleiben offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse, stellt sie aber noch nicht zu.
 

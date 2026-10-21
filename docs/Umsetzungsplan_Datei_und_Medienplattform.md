@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.13
+Version: 1.14
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 12, siehe Abschnitt 22. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 13, siehe Abschnitt 23. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -533,3 +533,34 @@ Lokaler Logout beendet nur die Samla-Sitzung. Zentraler IdP-/Backchannel-Logout,
 README, Installations-/Konfigurations-/OIDC-Handbuch, Erweiterungshinweise, Entscheidungen, Prüfprotokoll und dieser Plan werden mit der Phase veröffentlicht.
 
 Version 1.13: Freigegebener OIDC-Client, angeschlossener verifizierter HTTPS-Weblogin, sichere lokale Sitzungen und Abmeldung, transaktionale Identitätsübernahme, ausdrückliche Erstadministration und reproduzierbarer HTTP-Durchstich.
+
+
+## 23. Iteration 13: Erste private Dateiablage
+
+Der Betreiber bestätigt den erfolgreichen echten ZITADEL-Login und die Erstadministration auf seinem Plesk-Host. Ursache des letzten Loginfehlers waren fehlende Composer-Abhängigkeiten. Der OIDC-Vorabcheck verlangt nun die zentralen Bibliotheksklassen; der Webeinstieg protokolliert bei Fehlern zusätzlich Quelldatei und Zeile ohne Exception-Nachricht oder Secrets.
+
+### 23.1 Umfang und Rechte
+
+Die Dateiansicht unter /files bietet berechtigte Speicherbereiche, Ordnernavigation, Ordneranlage, neue Uploads und gestreamte Downloads. Listen sind seitenweise begrenzt, Namen HTML-escaped, Schreibaktionen POST/CSRF-geschützt. PHP prüft echte HTTP-Uploads. Dateien werden ausschließlich als application/octet-stream und Attachment mit nosniff ausgeliefert, auch wenn ihr Name PHP oder HTML enthält. Die maximale Inhaltsgröße ist zunächst 16 MiB; niedrigere Webserver-/PHP-Limits bleiben wirksam.
+
+files.list, files.read und files.create verlangen jeweils eine explizite Rollenzuweisung im angefragten Bereich. Globale Administratorrechte geben keinen impliziten Zugriff. Ein CLI-Installationsbefehl legt unter Wartung mit frischem Administrator einen neuen Bereich mit ausdrücklich ausgewählter vorhandener Gruppe und Quote an. Die erzeugte Rolle gilt nur für diesen neuen Bereich. Es werden keine vorhandenen Rollen erweitert. Bereichsanlage über die Oberfläche und persönliche Bereiche bleiben offen.
+
+### 23.2 Persistenz und Erweiterungen
+
+Eine zusätzliche versionierte Migration ergänzt Bereichsquoten und logische Einträge. Physische Inhalte liegen unter zufälligen Kennungen außerhalb public. Der private Speicherpfad ist über APP_STORAGE_ROOT konfigurierbar; Standard ist var/storage. Symlinks, relative und nicht kanonische Pfade sowie public werden abgewiesen. Uploads werden begrenzt gestreamt, mit SHA-256 versehen, auf 0600 gesetzt, synchronisiert und im selben Dateisystem atomar umbenannt.
+
+Erst danach veröffentlicht eine SQL-Transaktion die Metadaten. Der vorhandene gemeinsame Administrationslock serialisiert Quotenprüfung, Namenskonflikte und geschützte Änderungen. Identität, Rechte und gültiger Zielordner werden vor und nach ChangeValidator geprüft. MutationRunner, Audit und Outbox gelten für storage.folder.create, storage.file.upload und den Offline-Installer storage.space.create. Rohinhalte und Namen werden nicht in Audit/Outbox kopiert. Ein typisierter Inhalts-/Namensvorschlag für Upload-Validatoren folgt separat. Bestehende API 0.5 unverändert.
+
+Abstürze, Veto, Quotenfehler oder Namenskonflikte nach physischer Veröffentlichung können sichere verwaiste Objekte hinterlassen. Bei unklarem Commit-Ergebnis wird keine möglicherweise referenzierte Datei gelöscht. Der neue rein lesende Wartungsprüfer vergleicht Referenzen, Größe und SHA-256 und meldet fehlende/beschädigte, temporäre und verwaiste Objekte. Speicherverbrauch durch verwaiste Objekte, automatische Bereinigung und Überlastschutz bleiben konkrete Aufgaben vor breiter Betriebsfreigabe. Backup-/Restore-Anleitung beschreibt zusammengehörige Datenbank-/Dateisystemstände unter gestoppten Schreibzugriffen; ein vollständiger Recovery-Nachweis steht aus.
+
+### 23.3 Prüfung
+
+Vierfachmatrix: PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6 jeweils 290 Tests und 1095 Assertions (136 Unit-/Architekturtests, 154 Integrationstests). Syntax von 132 eigenen PHP-Dateien geprüft; Migrations-CLI meldet aktuelles Schema. Neue Tests prüfen Namen und Speicherpfade, Uploadgrößen, verschachtelte binäre Roundtrips, Bereichsisolation, fehlende automatische Admin-Dateirechte, Quoten, leere Dateien, Konflikte ohne Überschreiben, Plugin-Veto, erneute Rechteprüfung, Rollback, Sperren, Escaping, CSRF und Attachment-Streaming.
+
+Der vorhandene HTTP-Durchstich wird um explizite Bereichsanlage, echte Multipart-Uploads, Ordner, CSRF-/Konfliktabweisung, Attachment-Download und Befunde des Konsistenzprüfers erweitert. Abschließendes Ergebnis steht im aktuellen Prüfprotokoll. Kein neues Deployment auf dem Betreiberhost wird durch einen Repository-Commit behauptet.
+
+### 23.4 Fortlaufende Umsetzung
+
+Die Betreiberanweisung erlaubt die fortlaufende Abarbeitung des gesamten Konzepts ohne erneutes Go nach jeder Phase. Jede abgeschlossene Phase aktualisiert README, diesen Plan und Prüfergebnisse und wird veröffentlicht. Echte offene Entscheidungen oder fehlende benötigte Zugänge werden gezielt abgefragt. Die bestehende Regel zu zusätzlichen Laufzeitkomponenten bleibt bestehen. Nächste Arbeiten: kontrollierte Objektbereinigung, typisierte Uploadvorschläge, weitere Dateioperationen und Versionen/Papierkorb, Rollen-/Mappingoberfläche, Medienfunktionen und WebDAV einschließlich zu entscheidender Bibliotheksintegration.
+
+Version 1.14: Erste lokale Dateiablage mit expliziten Bereichsrechten, Quoten, sicheren Upload-/Downloadwegen und Wartungswerkzeugen; bestätigter Betreiberlogin und kontinuierliche weitere Umsetzung.

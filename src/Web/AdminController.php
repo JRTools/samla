@@ -10,7 +10,7 @@ final readonly class AdminController
 {
     public function __construct(private AdministrationQueryService $directory, private AuthorizationChecker $authorization,
         private UserStatusService $users, private GroupDetailsService $groups, private GroupMembershipService $memberships,
-        private PageRenderer $renderer = new PageRenderer()) {}
+        private PageRenderer $renderer = new PageRenderer(), private ?FileController $files = null) {}
 
     /** actorId and session token come only from the trusted entry point, never request fields. */
     public function capabilities(string $actorId): array
@@ -25,6 +25,7 @@ final readonly class AdminController
     {
         $caps = $this->capabilities($actorId);
         $data = ['actor' => $actorId, 'csrf' => $csrf, 'caps' => $caps, 'flash' => $flash, 'oidc' => $oidc];
+        if (str_starts_with($request->path, '/files') && $this->files !== null) { return $this->files->handle($request, $actorId, $csrf, $data); }
         try {
             $posts = ['/users/status','/groups/create','/groups/rename','/memberships/change'];
             if (in_array($request->path, $posts, true)) {

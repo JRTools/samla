@@ -23,13 +23,13 @@ try {
         } else {
             $config = AppConfig::fromEnvironment($environment);
             if ($config->maintenance) { throw new \RuntimeException('Maintenance is active.'); }
-            if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 16384) { $response = new Response(413); }
+            if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > (($_SERVER['REQUEST_URI'] ?? '') === '/files/upload' ? 17825792 : 16384)) { $response = new Response(413); }
             else { $response = (require dirname(__DIR__) . '/bootstrap/oidc-web.php')($config, $oidc)->handle(Request::fromGlobals()); }
         }
     } else {
         $config = AppConfig::fromEnvironment($environment);
         if ($config->maintenance) { throw new \RuntimeException('Maintenance is active.'); }
-        if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 16384) {
+        if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > (($_SERVER['REQUEST_URI'] ?? '') === '/files/upload' ? 17825792 : 16384)) {
             $response = new Response(413, $renderer->render('error', $data + ['status' => 413, 'error' => 'Die Formulardaten sind zu groß.']));
         } else {
             ini_set('session.use_strict_mode', '1'); ini_set('session.use_only_cookies', '1');
@@ -50,9 +50,10 @@ try {
 } catch (\InvalidArgumentException) {
     $response = new Response(400, $renderer->render('error', $data + ['status' => 400, 'error' => 'Die Anfrage ist ungültig.']));
 } catch (\Throwable $error) {
-    error_log('Samla web request failed: ' . get_class($error));
+    error_log(sprintf('Samla web request failed: %s in %s:%d', get_class($error), $error->getFile(), $error->getLine()));
     $response = new Response(503, $renderer->render('error', $data + ['status' => 503, 'error' => 'Samla ist gerade nicht verfügbar. Bitte versuche es später erneut.']));
 }
 http_response_code($response->status);
 foreach ($response->headers as $name => $value) { header($name . ': ' . $value); }
 echo $response->body;
+if ($response->stream !== null) { ($response->stream)(); }

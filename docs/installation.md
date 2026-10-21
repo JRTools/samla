@@ -103,3 +103,10 @@ Wartungsmodus wieder deaktivieren und die Kontoseite neu laden. Benutzer- und Gr
 - 403 bei einer Verwaltung bedeutet fehlende wirksame Rechte, eine Sperre, veraltete Gruppen oder eine fehlgeschlagene Sicherheitsprüfung.
 
 Sitzungen enden spätestens nach einer Stunde beziehungsweise dem früheren ID-Token-Ablauf. Es gibt keine automatische Refresh-Token-Sitzung. „Bei Samla abmelden“ beendet die lokale Sitzung; die zentrale IdP-Sitzung bleibt bestehen. Zentraler Logout, Backchannel-Logout und eine allgemeine Notfalladministration sind nicht Teil dieses Standes.
+
+
+## Dateiablage ab Iteration 13
+
+Nach erfolgreichem Login und Erstadministration folgen die neue Speichermigration, ein privates für PHP beschreibbares Speicherverzeichnis und die ausdrückliche Bereichsanlage. [storage.md](storage.md) beschreibt Plesk-PHP-Limits, Bereichsrechte, Quoten, Konsistenzprüfung und Backup/Restore. Globale Administration allein berechtigt nicht zum Lesen fremder Dateien.
+
+Bei 503 protokolliert der Webeinstieg jetzt Exception-Klasse sowie Quelldatei und Zeile, ohne Exception-Nachricht, Tokens oder Credentials. oidc-check.php prüft zusätzlich zentrale OIDC-Composer-Klassen; ein erfolgreicher Discovery-Aufruf allein beweist weiterhin keinen vollständigen Weblogin.

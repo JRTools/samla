@@ -4,12 +4,12 @@ namespace Samla\Core\Web;
 
 final readonly class Request
 {
-    public function __construct(public string $method, public string $path, public array $query = [], public array $post = []) {}
+    public function __construct(public string $method, public string $path, public array $query = [], public array $post = [], public array $files = []) {}
     public static function fromGlobals(): self
     {
         $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         if (!is_string($path) || strlen($path) > 256) { throw new \InvalidArgumentException('Invalid path.'); }
-        return new self($_SERVER['REQUEST_METHOD'] ?? 'GET', $path, $_GET, $_POST);
+        return new self($_SERVER['REQUEST_METHOD'] ?? 'GET', $path, $_GET, $_POST, $_FILES);
     }
     public function field(string $key, int $limit = 1024): string
     {

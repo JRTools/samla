@@ -10,6 +10,7 @@ final readonly class AppConfig
         public DatabaseConfig $database,
         public bool $maintenance,
         public ?int $groupMaxAgeSeconds,
+        public string $storageRoot,
     ) {}
 
     /** Trusted .env and process values only; never request headers or query parameters. */
@@ -44,6 +45,8 @@ final readonly class AppConfig
         }
         $maintenance = $env['APP_MAINTENANCE'] ?? '0';
         if (!in_array($maintenance, ['0', '1'], true)) { throw new \InvalidArgumentException('Invalid maintenance flag.'); }
-        return new self($environment, $database, $maintenance === '1', $age === '' ? null : (int) $age);
+        $root = $env['APP_STORAGE_ROOT'] ?? dirname(__DIR__, 2) . '/var/storage';
+        if (!is_string($root) || !str_starts_with($root, '/') || str_contains($root, "\0")) { throw new \InvalidArgumentException('Invalid storage root.'); }
+        return new self($environment, $database, $maintenance === '1', $age === '' ? null : (int) $age, $root);
     }
 }

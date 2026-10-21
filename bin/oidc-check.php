@@ -10,6 +10,10 @@ use Samla\Core\Configuration\OidcConfig;
 use Samla\Core\Identity\Oidc\ProviderMetadata;
 
 try {
+    foreach ([\Nyholm\Psr7\Factory\Psr17Factory::class, \Facile\OpenIDClient\Client\ClientBuilder::class,
+        \Symfony\Component\HttpClient\NativeHttpClient::class, \Facile\JoseVerifier\JWK\JwksProviderBuilder::class] as $class) {
+        if (!class_exists($class)) { fwrite(STDERR, "Missing OIDC dependencies. Run composer install from the committed lockfile.\n"); exit(1); }
+    }
     $config = OidcConfig::fromGlobals();
     if ($config === null) { throw new \RuntimeException('OIDC is disabled.'); }
     $context = stream_context_create(['http' => [

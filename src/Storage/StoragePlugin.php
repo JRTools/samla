@@ -11,7 +11,7 @@ final class StoragePlugin implements Plugin
     public function apiMajor(): int { return 0; }
     public function register(PluginRegistrar $registrar): void
     {
-        // Capabilities are declarations only; file operations are not implemented yet.
+        // Every file operation requires an explicit assignment in its own space.
         foreach (['list', 'read', 'create', 'update'] as $action) {
             $registrar->permission(new Permission('files.' . $action, $this->id(), [Scope::Space]));
         }

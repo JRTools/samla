@@ -1,7 +1,7 @@
 <?php
 use Samla\Core\Web\PageRenderer;
 $e = PageRenderer::escape(...);
-$titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen', 'error' => 'Zugriff', 'login' => 'Anmelden', 'account' => 'Mein Zugang'];
+$titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen', 'error' => 'Zugriff', 'login' => 'Anmelden', 'account' => 'Mein Zugang', 'spaces' => 'Speicherbereiche', 'files' => 'Dateien'];
 $caps = $data['caps'];
 ?>
 <!doctype html>
@@ -11,6 +11,7 @@ $caps = $data['caps'];
 <div class="shell"><aside class="sidebar" aria-label="Hauptnavigation"><a class="brand" href="/"><span class="brand-icon" aria-hidden="true">S</span>samla<span class="brand-dot">.</span></a><p class="brand-sub">Raum für alles, was zählt.</p>
 <p class="nav-heading">ARBEITSPLATZ</p><nav>
 <a href="/" <?= in_array($page, ['home','account'], true) ? 'aria-current="page"' : '' ?>><span aria-hidden="true">◈</span> Übersicht</a>
+<?php if ($data['actor'] !== null): ?><a href="/files" <?= in_array($page, ['spaces','files'], true) ? 'aria-current="page"' : '' ?>>Dateien</a><?php endif ?>
 <?php if (($data['oidc'] ?? false) && $data['actor'] !== null): ?><a href="/account">Mein Zugang</a><form class="logout" method="post" action="/auth/logout"><input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>"><button class="button button-outline" type="submit">Bei Samla abmelden</button></form><?php endif ?>
 <?php if ($caps['identity.users.read'] ?? false): ?><a href="/users" <?= $page === 'users' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">◎</span> Benutzer</a><?php endif ?>
 <?php if ($caps['identity.groups.read'] ?? false): ?><a href="/groups" <?= $page === 'groups' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">▦</span> Gruppen</a><?php endif ?>
