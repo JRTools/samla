@@ -224,6 +224,13 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert dav('MOVE',dav_folder+'/copy.txt',{'Destination':app_url+dav_folder+'/moved.txt'})[0]==201
                     assert dav('DELETE',dav_folder+'/moved.txt')[0]==204
                     assert dav('PUT',dav_folder+'/moved.txt',body='name reused')[0]==201
+                    assert dav('COPY',dav_file,{'Destination':app_url+dav_folder+'/moved.txt','Overwrite':'F'})[0]==412
+                    assert dav('COPY',dav_file,{'Destination':app_url+dav_folder+'/moved.txt'})[0]==204
+                    assert dav('GET',dav_folder+'/moved.txt')[1]=='updated via DAV'
+                    assert dav('PUT',dav_folder+'/replacement.txt',body='temporary save')[0]==201
+                    assert dav('MOVE',dav_folder+'/replacement.txt',{'Destination':app_url+dav_folder+'/moved.txt'})[0]==204
+                    assert dav('GET',dav_folder+'/replacement.txt')[0]==404
+                    assert dav('GET',dav_folder+'/moved.txt')[1]=='temporary save'
                     assert dav('GET',dav_file)[1]=='updated via DAV'
                     assert req('/files/detail?space='+space+'&entry='+entry)[0]==200
                     headers={'Content-Type':'multipart/form-data; boundary='+boundary}

@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.21
+Version: 1.22
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 20, siehe Abschnitt 30. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 21, siehe Abschnitt 31. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -795,3 +795,27 @@ Erster Lauf 39692714418: GitHub wies die Portabfrage in jobs.matrix.env vor Joba
 Folgelauf 39692926549: Beide MariaDB-Jobs sind erfolgreich. Die MySQL-Tests benötigen für ihre absichtlich fehlerauslösenden Triggerfixtures eine Binary-Logging-Testfreigabe (Fehler 1419 im gelesenen Joblog). Iteration 20.2 aktiviert diese ausschließlich im kurzlebigen isolierten MySQL-CI-Container über dessen Test-root. Das Anwendungskonto behält seine datenbankbegrenzten Rechte; produktive Migrationen benötigen diese Fehler-Trigger nicht. Der korrigierte Vierfachlauf wird erneut kontrolliert.
 
 Abgeschlossen: GitHub-Lauf 39693200739 zu cd92c7df05fba354f188a757052ade6649576d88 ist in allen vier Jobs erfolgreich. Status und Joblogs sind gelesen. PHP 8.4.27/8.5.12 mit MySQL 8.0.46/MariaDB 11.8.9: pro Job 376 Tests mit 1484 Assertions und vollständiger HTTP-/HTTPS-Prüfer. Der frühere lokale Nachweis mit PHP 8.4.5/8.5.4 und MariaDB 11.8.6 bleibt getrennt erhalten. Keine native Client- oder Betreiberabnahme behauptet. Die nächste Iteration ergänzt atomisches MOVE/COPY-Überschreiben statt vorangestellter Ziellöschung.
+
+## 31. Iteration 21: Atomares MOVE/COPY-Überschreiben
+
+### 31.1 Ein gemeinsamer Fachvorgang
+
+Der DAV-Adapter dispatcht MOVE/COPY nach den normalen Sabre-Bedingungs-/Sperrprüfungen in einen eigenen Handler, der exakt einen FileService-Vorgang ausführt. Die nicht atomare Bibliotheksfolge Ziellöschung/Transfer wird nicht benutzt. Ein vorhandenes ungesperrtes gleichartiges Ziel wird mit erwarteter Kennung und Revision erfasst. Innerhalb des gemeinsamen Mutationslocks wird sein bisheriger Eintrag in den Papierkorb gelegt und danach die Quelle verschoben beziehungsweise eine Kopie angelegt. Frühere Zielinhalte und Historien bleiben erhalten und zählen weiterhin zur Quote.
+
+Die Guards prüfen Quelle und Ziel, die zusätzlichen update/delete-Rechte, Revisionen, Namen, Orte, Sichtbarkeit, Sperren und Zyklen vor und nach Plugins. targets.replaced ergänzt die stabile bisherige Zielkennung im bestehenden StorageChange-/MutationContext-Vertrag; Audit/Outbox enthalten keine Freitextnamen oder Tokens. Ein Quoten-/Audit-/Outboxfehler rollt beide Seiten zurück. Eine nachträglich aufgetauchte oder geänderte Zieldatei wird nicht ungeprüft verdrängt. Overwrite F liefert 412, Quelle gleich Ziel und Typwechsel sind Konflikte. Das Ersetzen eines Vorfahren der Quelle wird abgewiesen.
+
+### 31.2 Leases und verbleibende Grenzen
+
+Ein vorhandener direkt oder im Teilbaum gesperrter Zieleintrag bleibt mit 423 geschützt, auch wenn der Benutzer dessen Token vorlegt. Das bewahrt die stabile Zuordnung statt einer stillen Neuzuordnung an die verschobene Quelle. Direkte versionierte PUT-Ersetzung bleibt mit gültigem Nachweis möglich; MOVE/COPY kann nach ausdrücklicher Zielfreigabe erfolgen. Übergeordnete Ordnersperren gelten weiterhin mit regulärer Nachweisprüfung.
+
+Ein autorisiertes DELETE mit vollständigen Nachweisen entfernt die betroffenen Leases im selben Papierkorb-/Audit-/Outboxvorgang. Danach entsteht unter dem wieder verwendeten Namen keine alte Sperre. Die begrenzte Teilbaumermittlung berücksichtigt auch aufbewahrte Nachfahren. Alte bereits auf unsichtbaren Papierkorbeinträgen liegende Leases aus Vorversionen werden nicht als ungültiger DAV-Pfad ausgegeben; die Kernprüfung bleibt bis Freigabe/Ablauf konservativ.
+
+Sabres nachgelagerte pfadbasierte afterUnbind-Sperrbereinigung ist im Adapter ausdrücklich deaktiviert. Die feste Kennung und die SQL-Transaktion sind maßgeblich; ähnlich beginnende Namen benachbarter gesperrter Dateien dürfen weder entsperrt werden noch nach erfolgreichem Commit einen falschen Fehler auslösen. Ein eigener Fall prüft dieses Präfixnachbarverhalten.
+
+Lock-null-Anlage, rekursive Ordnerkopien, bereichsübergreifende Vorgänge und der Umgang bestimmter nativer Programme mit gesperrten Überschreibzielen bleiben weiter umzusetzen beziehungsweise abzunehmen. Keine zusätzliche Migration oder Laufzeitabhängigkeit.
+
+### 31.3 Verifikation
+
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 382 Tests und 1523 Assertions (166 Unit-/Architekturtests, 216 Integrationstests), Syntax aller 174 eigenen PHP-Dateien und Migrations-CLI erfolgreich. HTTP/HTTPS bestätigt COPY/MOVE-Überschreiben samt korrekten Zielbytes und abgewiesenem Overwrite F. Erfolgreiches Überschreiben, aufbewahrte Ziele, Auditfehler mit gemeinsamem Rollback, Quotenfehler ohne Inhaltsverlust, gesperrte Ziele, DELETE-Leasebereinigung, geschützte Präfixnachbarn und konservative unsichtbare Alt-Leases sind geprüft. Die bereits erfolgreiche GitHub-Matrix wird nach Veröffentlichung auch diese neue Implementierung prüfen.
+
+Version 1.22: Atomarer Erhalt bisheriger MOVE/COPY-Ziele, doppelte Zielprüfung und transaktionale Leasebereinigung beim Papierkorb.

@@ -43,7 +43,8 @@ final class LockBackend extends DAV\Locks\Backend\AbstractBackend
             $parts = []; $current = $lease['entry_id'];
             while ($current !== '') {
                 if (count($parts) >= 128) { throw new DAV\Exception\ServiceUnavailable(); }
-                $row = $this->files->details($this->actor, $space, $current);
+                try { $row = $this->files->details($this->actor, $space, $current); }
+                catch (\InvalidArgumentException) { continue 2; } // Retained pre-upgrade leases on invisible trash have no DAV path.
                 array_unshift($parts, $row['name']); $current = $row['parent_id'];
             }
             $info->uri = $space . ($parts === [] ? '' : '/' . implode('/', $parts)); $result[] = $info;

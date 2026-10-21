@@ -144,21 +144,43 @@ final readonly class FileService
     }
     /** A single-entry lifecycle operation; folder copy is deliberately not recursive. */
     public function change(string $actor, string $space, string $id, string $operation, string $expectedName,
-        string $expectedParent, ?string $name = null, string $parent = '', ?int $expectedRevision = null): string
+        string $expectedParent, ?string $name = null, string $parent = '', ?int $expectedRevision = null,
+        ?string $replaceId = null, ?int $replaceRevision = null): string
     {
         $rights = ['rename' => ['files.update'], 'move' => ['files.update','files.create','files.delete'],
             'copy' => ['files.read','files.create'], 'trash' => ['files.delete'], 'restore' => ['files.restore','files.create']];
         if (!isset($rights[$operation])) { throw new \InvalidArgumentException('Unknown storage operation.'); }
+        if ($replaceId !== null) {
+            if (!in_array($operation, ['move','copy'], true) || $replaceId === $id || $replaceRevision === null) { throw new \InvalidArgumentException('Invalid overwrite.'); }
+            $rights[$operation] = array_values(array_unique([...$rights[$operation], 'files.update', 'files.delete']));
+        }
         if ($name !== null) { EntryName::validate($name); }
         $newId = $operation === 'copy' ? bin2hex(random_bytes(16)) : $id;
+        $targets = ['entry' => $id, 'result' => $newId]; if ($replaceId !== null) { $targets['replaced'] = $replaceId; }
         $context = new MutationContext(bin2hex(random_bytes(16)), $actor,
             $operation === 'copy' ? 'storage.file.copy' : 'storage.entry.' . $operation, Scope::Space, $space,
-            ['entry' => $id, 'result' => $newId], storageChange: new StorageChange($name, $parent));
-        $guard = function () use ($actor, $space, $id, $operation, $rights, $expectedName, $expectedParent, $parent, $expectedRevision): void {
+            $targets, storageChange: new StorageChange($name, $parent));
+        $guard = function () use ($actor, $space, $id, $operation, $rights, $expectedName, $expectedParent, $parent, $expectedRevision, $replaceId, $replaceRevision, $name): void {
             foreach ($rights[$operation] as $action) { $this->requireAccess($actor, $action, $space); }
             $row = $this->entry($space, $id);
             if ($row['name'] !== $expectedName || $row['parent_id'] !== $expectedParent) { throw new MutationConflict(); }
             if ($expectedRevision !== null && (int) $row['revision'] !== $expectedRevision) { throw new MutationConflict(); }
+            if ($replaceId !== null) {
+                $target = $this->entry($space, $replaceId);
+                if ($target['trashed_at'] !== null || (int) $target['revision'] !== $replaceRevision || $target['parent_id'] !== $parent
+                    || $target['name'] !== ($name ?? $row['name']) || $target['kind'] !== $row['kind']) { throw new MutationConflict(); }
+                $this->parent($space, $target['parent_id']);
+                $this->locks()->assertWritable($actor, $space, $replaceId, $this->proof(), $target['kind'] === 'folder', true);
+                $replacedIds = $this->subtreeEntryIds($space, $replaceId);
+                foreach ($this->locks()->conflicts($space, $replaceId, true) as $lease) {
+                    if (isset($replacedIds[$lease['entry_id']])) { throw new StorageLocked('Locked destinations cannot be replaced.'); }
+                }
+                $ancestor = $row['parent_id']; $visited = 0;
+                while ($ancestor !== '') {
+                    if ($ancestor === $replaceId || ++$visited > 128) { throw new MutationConflict(); }
+                    $ancestor = $this->entry($space, $ancestor)['parent_id'];
+                }
+            }
             if (($operation === 'restore') !== ($row['trashed_at'] !== null)) { throw new MutationConflict(); }
             $this->parent($space, $row['parent_id']);
             if ($operation !== 'copy') { $this->locks()->assertWritable($actor,$space,$id,$this->proof(),$row['kind'] === 'folder',true); }
@@ -175,7 +197,7 @@ final readonly class FileService
             }
             if ($operation === 'copy' && $row['kind'] !== 'file') { throw new \InvalidArgumentException('Only individual files can be copied.'); }
         };
-        $this->mutations->run($context, $guard, function () use ($space, $id, $newId, $operation, $name, $parent): bool {
+        $this->mutations->run($context, $guard, function () use ($space, $id, $newId, $operation, $name, $parent, $replaceId, $replaceRevision): bool {
             $row = $this->entry($space, $id);
             if ($operation === 'trash' || $operation === 'restore') {
                 if ($operation === 'restore') {
@@ -184,10 +206,21 @@ final readonly class FileService
                     if ($query->fetchColumn() !== false) { throw new MutationConflict(); }
                 }
                 $query = $this->pdo->prepare('UPDATE storage_entries SET trashed_at = ?, revision = revision + 1 WHERE id = ?');
-                $query->execute([$operation === 'trash' ? time() : null, $id]); return true;
+                $query->execute([$operation === 'trash' ? time() : null, $id]);
+                if ($operation === 'trash') {
+                    $ids = array_keys($this->subtreeEntryIds($space, $id));
+                    $delete = $this->pdo->prepare('DELETE FROM storage_locks WHERE space_id = ? AND entry_id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')');
+                    $delete->execute([$space, ...$ids]);
+                }
+                return true;
             }
             $newName = $name ?? $row['name']; $newParent = $operation === 'rename' ? $row['parent_id'] : $parent;
             if ($operation !== 'copy' && $newName === $row['name'] && $newParent === $row['parent_id']) { return false; }
+            if ($replaceId !== null) {
+                $query = $this->pdo->prepare('UPDATE storage_entries SET trashed_at = ?, revision = revision + 1 WHERE id = ? AND space_id = ? AND revision = ? AND trashed_at IS NULL');
+                $query->execute([time(), $replaceId, $space, $replaceRevision]);
+                if ($query->rowCount() !== 1) { throw new MutationConflict(); }
+            }
             $query = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ? AND id <> ? AND trashed_at IS NULL');
             $query->execute([$space, $newParent, $newName, $newId]); if ($query->fetchColumn() !== false) { throw new MutationConflict(); }
             if ($operation === 'copy') {
@@ -283,5 +316,18 @@ final readonly class FileService
             foreach ($children as $child) { $queue[] = [$child, $depth + 1]; }
         }
         return $height;
+    }
+    /** Include retained descendants so a deleted subtree cannot keep stale protocol leases. */
+    private function subtreeEntryIds(string $space, string $id): array
+    {
+        $q = $this->pdo->prepare('SELECT id, parent_id FROM storage_entries WHERE space_id = ? LIMIT 10001'); $q->execute([$space]);
+        $rows = $q->fetchAll(); if (count($rows) > 10000) { throw new \LengthException('Storage catalog capacity reached.'); }
+        $children = []; foreach ($rows as $row) { $children[$row['parent_id']][] = $row['id']; }
+        $seen = []; $queue = [$id];
+        while ($queue !== []) {
+            $current = array_pop($queue); if (isset($seen[$current])) { throw new \InvalidArgumentException('Cyclic subtree.'); }
+            $seen[$current] = true; foreach ($children[$current] ?? [] as $child) { $queue[] = $child; }
+        }
+        return $seen;
     }
 }

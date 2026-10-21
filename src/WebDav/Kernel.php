@@ -41,7 +41,7 @@ final class Kernel
             DAV\Server::$exposeVersion = false; $server->debugExceptions = false;
             $server->setBaseUri('/dav/'); $request->setBaseUrl('/dav/');
             $request->removeHeader('X-Sabre-Original-Method');
-            $server->addPlugin(new DAV\Locks\Plugin(new LockBackend($root, $this->files, $this->locks, $actor)));
+            $server->addPlugin(new LockPlugin(new LockBackend($root, $this->files, $this->locks, $actor)));
             $response = new HTTP\Response(); $server->httpRequest = $request; $server->httpResponse = $response;
             $server->on('beforeUnbind', static function (string $path) use ($method, $request): void {
                 if ($method === 'COPY' || ($method === 'MOVE' && $path !== $request->getPath())) { throw new DAV\Exception\Conflict(); }
@@ -49,17 +49,29 @@ final class Kernel
             $this->identity->lockTokens = ProtocolPaths::proofs($request, $server, $this->origin);
             if (strlen($request->getHeader('Lock-Token') ?? '') > 256) { throw new \InvalidArgumentException(); }
             if (in_array($method, ['MOVE','COPY'], true)) {
+                if (!in_array($request->getHeader('Overwrite'), [null,'T','F'], true)
+                    || ($method === 'COPY' && !in_array($request->getHeader('Depth'), [null,'0','infinity'], true))) { throw new \InvalidArgumentException(); }
                 $destination = ProtocolPaths::destination($request->getHeader('Destination') ?? '', $this->origin);
                 $request->setHeader('Destination', $this->origin . $destination);
-                // Sabre's default overwrite deletes the destination first. Never use that non-atomic fallback.
-                if ($server->tree->nodeExists(rawurldecode(substr($destination, 5)))) {
-                    return $this->error($request->getHeader('Overwrite') === 'F' ? 412 : 409);
-                }
+                // Use one core mutation rather than Sabre's delete-then-transfer fallback.
+                $destinationPath = rawurldecode(substr($destination, 5));
+                $targetEntry = $server->tree->nodeExists($destinationPath) ? $server->tree->getNodeForPath($destinationPath) : null;
+                if ($targetEntry !== null && $request->getHeader('Overwrite') === 'F') { return $this->error(412); }
                 $source = $server->tree->getNodeForPath($request->getPath());
-                [$targetParent] = \Sabre\Uri\split(rawurldecode(substr($destination, 5)));
+                [$targetParent, $targetName] = \Sabre\Uri\split($destinationPath);
                 $target = $server->tree->getNodeForPath($targetParent);
                 if (!$source instanceof StoredNode || !$target instanceof Directory || $source->getSpace() !== $target->getSpace()) { return $this->error(403); }
                 if ($method === 'COPY' && !$source instanceof File) { return $this->error(501); }
+                $sourceRow = $source->snapshot();
+                $targetRow = $targetEntry instanceof StoredNode ? $targetEntry->snapshot() : null;
+                if ($targetRow !== null && ($targetRow['id'] === $sourceRow['id'] || $targetRow['kind'] !== $sourceRow['kind'])) { return $this->error(409); }
+                if ($method === 'MOVE' && !in_array($request->getHeader('Depth'), [null, 'infinity'], true)) { throw new \InvalidArgumentException(); }
+                $server->on('method:' . $method, function (HTTP\RequestInterface $request, HTTP\ResponseInterface $response) use ($actor, $method, $source, $sourceRow, $targetRow, $target, $targetName): bool {
+                    $this->files->change($actor, $source->getSpace(), $sourceRow['id'], $method === 'MOVE' ? 'move' : 'copy',
+                        $sourceRow['name'], $sourceRow['parent_id'], $targetName, $target->entry, (int) $sourceRow['revision'],
+                        $targetRow['id'] ?? null, $targetRow === null ? null : (int) $targetRow['revision']);
+                    $response->setStatus($targetRow === null ? 201 : 204); $response->setHeader('Content-Length', '0'); return false;
+                }, 50);
             }
             if ($method === 'LOCK') {
                 // Lock-null creation needs an atomic create+lease service, never Sabre's two-write fallback.

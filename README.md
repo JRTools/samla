@@ -6,13 +6,13 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 20.2 (automatische GitHub-Prüfungen)
+## Entwicklungsstand: Iteration 21 (atomares WebDAV-Überschreiben)
 
 Vorhanden sind:
 
 - Erfolgreicher GitHub-Workflow für die vier PHP-/Datenbankkombinationen mit Plattform-/Syntaxprüfung, Unit-/Architektur-/Integrationstests und synthetischem OIDC-/DAV-Durchlauf über HTTP/HTTPS. Fixierte Actions, isolierte Testdatenbank und ausschließlich lesender Repository-Token. [Erster vollständiger erfolgreicher Lauf](https://github.com/JRTools/samla/actions/runs/39693200739), [Prüfprotokoll](docs/verification.md), [Ablauf und Grenzen](docs/continuous-integration.md).
 
-- WebDAV unter `/dav/` mit App-Passwörtern, Bereichsrechten, GET/HEAD/PROPFIND, ETags und gestreamten Teil-Downloads. PUT archiviert bisherige Inhalte; MKCOL, MOVE, Einzeldatei-COPY und DELETE verwenden die gemeinsamen Kerndienste. LOCK/UNLOCK schützt auch Browseränderungen. Widerruf, Kontosperre und Gruppenfrische werden erneut geprüft. Grenzen wie derzeit abgewiesenes MOVE/COPY-Überschreiben sind ausdrücklich dokumentiert. [Einrichtung und Grenzen](docs/webdav.md).
+- WebDAV unter `/dav/` mit App-Passwörtern, Bereichsrechten, GET/HEAD/PROPFIND, ETags und gestreamten Teil-Downloads. PUT archiviert bisherige Inhalte; MOVE/COPY kann ein ungesperrtes bestehendes Ziel atomar ersetzen und dessen bisherigen Eintrag im Papierkorb erhalten. LOCK/UNLOCK schützt auch Browseränderungen. Widerruf, Kontosperre und Gruppenfrische werden erneut geprüft. [Einrichtung und verbleibende Grenzen](docs/webdav.md).
 
 - Persistente exklusive Ressourcensperren mit stabilen Eintragskennungen, Ordner-/Teilbaumumfang, Eigentümer-/Nachweisprüfung, Ablauf/Verlängerung und transaktionalen Erweiterungspunkten. Browser und WebDAV verwenden dieselbe Sperrbasis.
 
@@ -114,7 +114,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 376 Tests mit 1484 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 382 Tests mit 1523 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 

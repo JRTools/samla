@@ -147,16 +147,18 @@ final class WebDavTest extends TestCase
         self::assertSame(204,$this->request('DELETE')->status);self::assertSame(201,$this->request('PUT',body:'third')->status);
         self::assertSame(2,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_entries WHERE trashed_at IS NOT NULL')->fetchColumn());
     }
-    public function testMoveCopyAndOverwriteDoNotDeleteDestinationOnFailure():void
+    public function testMoveCopyAndAtomicOverwritePreservePreviousTarget():void
     {
         $this->manage();self::assertSame(201,$this->request('MKCOL','/dav/a/Folder')->status);
         self::assertSame(201,$this->request('COPY',headers:['Destination'=>'/dav/a/copy.txt'])->status);
         self::assertSame(201,$this->request('MOVE',headers:['Destination'=>'https://samla.invalid/dav/a/Folder/moved.txt'])->status);
         self::assertSame(404,$this->request('GET')->status);
-        self::assertSame(409,$this->request('MOVE','/dav/a/copy.txt',['Destination'=>'/dav/a/Folder/moved.txt'])->status);
         self::assertSame(412,$this->request('MOVE','/dav/a/copy.txt',['Destination'=>'/dav/a/Folder/moved.txt','Overwrite'=>'F'])->status);
         self::assertSame('0123456789',$this->body($this->request('GET','/dav/a/copy.txt')));
+        self::assertSame(204,$this->request('MOVE','/dav/a/copy.txt',['Destination'=>'/dav/a/Folder/moved.txt'])->status);
+        self::assertSame(404,$this->request('GET','/dav/a/copy.txt')->status);
         self::assertSame('0123456789',$this->body($this->request('GET','/dav/a/Folder/moved.txt')));
+        self::assertNotNull($this->pdo->query("SELECT trashed_at FROM storage_entries WHERE id='".$this->file."'")->fetchColumn());
         self::assertSame(501,$this->request('COPY','/dav/a/Folder',['Destination'=>'/dav/a/Another'])->status);
     }
     public function testSharedLocksProtectDavAndBrowserAndRequireOwnerProof():void
@@ -216,5 +218,58 @@ final class WebDavTest extends TestCase
         self::assertSame(403,$this->request('PUT',body:'must roll back')->status);
         self::assertSame($before,(int)$pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
         self::assertTrue($this->passwords->isCredentialActive('alice',$id));self::assertSame('0123456789',$this->body($this->request('GET')));
+    }
+    public function testOverwriteAuditFailureRestoresSourceDestinationAndOutbox():void
+    {
+        $this->manage();self::assertSame(201,$this->request('PUT','/dav/a/target.txt',body:'previous target')->status);
+        $before=(int)$this->pdo->query('SELECT COUNT(*) FROM outbox_events')->fetchColumn();
+        $this->pdo->exec("CREATE TRIGGER test_dav_audit_failure BEFORE INSERT ON audit_events FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='fixture'");
+        try{self::assertSame(503,$this->request('MOVE',headers:['Destination'=>'/dav/a/target.txt'])->status);}
+        finally{$this->pdo->exec('DROP TRIGGER test_dav_audit_failure');}
+        self::assertSame('previous target',$this->body($this->request('GET','/dav/a/target.txt')));
+        self::assertSame('0123456789',$this->body($this->request('GET')));
+        self::assertSame($before,(int)$this->pdo->query('SELECT COUNT(*) FROM outbox_events')->fetchColumn());
+        self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_entries WHERE trashed_at IS NOT NULL')->fetchColumn());
+        self::assertSame(204,$this->request('COPY',headers:['Destination'=>'/dav/a/target.txt'])->status);
+        self::assertSame('0123456789',$this->body($this->request('GET','/dav/a/target.txt')));
+    }
+    public function testLockedOverwriteTargetIsPreservedUntilExplicitUnlock():void
+    {
+        $this->manage();self::assertSame(201,$this->request('PUT','/dav/a/target.txt',body:'previous')->status);$token=$this->lock('/dav/a/target.txt');
+        self::assertSame(423,$this->request('MOVE',headers:['Destination'=>'/dav/a/target.txt','If'=>'<https://samla.invalid/dav/a/target.txt> ('.$token.')'])->status);
+        self::assertSame('previous',$this->body($this->request('GET','/dav/a/target.txt')));
+        self::assertSame(204,$this->request('UNLOCK','/dav/a/target.txt',['Lock-Token'=>$token])->status);
+        self::assertSame(204,$this->request('MOVE',headers:['Destination'=>'/dav/a/target.txt'])->status);
+    }
+    public function testAuthorizedDeleteReleasesItsLeaseAndAllowsCleanNameReuse():void
+    {
+        $this->manage();$token=$this->lock();self::assertSame(204,$this->request('DELETE',headers:['If'=>'('.$token.')'])->status);
+        self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_locks')->fetchColumn());
+        self::assertSame(201,$this->request('PUT',body:'new')->status);
+        $this->lock();self::assertSame(207,$this->request('PROPFIND','/dav/a/',['Depth'=>'1'])->status);
+    }
+    public function testCopyOverwriteQuotaFailureKeepsBothEntries():void
+    {
+        $this->manage();self::assertSame(201,$this->request('PUT','/dav/a/target.txt',body:'old')->status);
+        $this->pdo->exec("UPDATE storage_spaces SET quota_bytes=13 WHERE id='a'");
+        self::assertSame(413,$this->request('COPY',headers:['Destination'=>'/dav/a/target.txt'])->status);
+        self::assertSame('old',$this->body($this->request('GET','/dav/a/target.txt')));
+        self::assertSame('0123456789',$this->body($this->request('GET')));
+        self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_entries WHERE trashed_at IS NOT NULL')->fetchColumn());
+    }
+    public function testPreUpgradeLeaseOnTrashedChildDoesNotBreakProtocolResolution():void
+    {
+        $this->manage();self::assertSame(201,$this->request('MKCOL','/dav/a/Folder')->status);
+        self::assertSame(201,$this->request('MOVE',headers:['Destination'=>'/dav/a/Folder/child'])->status);$this->lock('/dav/a/Folder/child');
+        $this->pdo->prepare('UPDATE storage_entries SET trashed_at=? WHERE id=?')->execute([time(),$this->file]);
+        self::assertSame(423,$this->request('MOVE','/dav/a/Folder',['Destination'=>'/dav/a/Renamed'])->status);
+    }
+    public function testDeleteDoesNotRunLibraryPrefixCleanupOnSiblingLease():void
+    {
+        $this->manage();$sibling='/dav/a/Gr%C3%BC%C3%9Fe.txt.other';self::assertSame(201,$this->request('PUT',$sibling,body:'keep')->status);
+        $this->lock($sibling);self::assertSame(204,$this->request('DELETE')->status);
+        self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_locks')->fetchColumn());
+        self::assertSame(423,$this->request('PUT',$sibling,body:'no proof')->status);
+        self::assertSame('keep',$this->body($this->request('GET',$sibling)));
     }
 }

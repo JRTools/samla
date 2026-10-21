@@ -1,24 +1,173 @@
-# Prüfung Iteration 20
+# Prüfung Iteration 21
 
-Die Änderungen betreffen ausschließlich GitHub-Workflow, fixierte Python-Testabhängigkeit und Dokumentation. Die produktive Laufzeit bleibt unverändert zum erfolgreich geprüften Stand der Iteration 19: vier Kombinationen mit jeweils 376 Tests und 1484 Assertions, 173 eigene PHP-Dateien sowie echte HTTP-/HTTPS-Abläufe.
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 382 Tests, 1523 Assertions (166 Unit-/Architekturtests, 216 Integrationstests). Syntax aller 174 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Keine zusätzliche Migration oder Laufzeitabhängigkeit.
 
-Workflow-YAML mit PyYAML 6.0.3 als YAML-Struktur geprüft: Push/Pull-Request/manuelle Trigger, zwei PHP-Versionen mal zwei Datenbanken, vollständige 40-stellige Actionpins, ausschließlich contents:read und Checkout ohne persistierte Credentials. Beide Actionkennungen wurden über die offiziellen GitHub-Quellen aufgelöst und action.yml gelesen. Die vorhandene lokal verwendete cryptography-Version 50.0.2 wird separat nur für die isolierte HTTP-Testumgebung fixiert. Kein zusätzlicher produktiver Laufzeitcode.
+MOVE/COPY auf vorhandene gleichartige ungesperrte Ziele ist atomar geprüft. Overwrite F verhindert die Ersetzung; bisherige Ziele bleiben im Papierkorb. Ein absichtlich ausgelöster Audit-INSERT-Fehler bestätigt den gemeinsamen Rollback von Quell-/Zielzustand und Outbox. Der gekürzte PDOException-Logeintrag im Matrixprotokoll stammt genau aus diesem erwarteten Fehlerfall; die DAV-Antwort enthält weder SQL noch Exceptiontext. Ein Quotenfehler erhält beide Inhalte ebenfalls. Gesperrte Ziele bleiben trotz passendem Token geschützt; nach ausdrücklichem UNLOCK ist Ersetzen möglich.
 
-Der erste veröffentlichte Lauf 39692714418 wurde vor Jobanlage wegen einer ungültigen Kontextposition abgewiesen: jobs.matrix.env konnte job.services.database.ports noch nicht auswerten. Die öffentliche Annotation wurde gelesen. Der Port wird nun in einem Ausführungsschritt aus dessen gültigem job-Kontext in GITHUB_ENV übernommen. Die YAML-Struktur wurde erneut gelesen. Ein erfolgreicher Folge-Lauf wird erst nach tatsächlicher Ausführung behauptet.
+Autorisierter DELETE entfernt die eigenen betroffenen Leases in derselben SQL-Transaktion. Neue Dateien gleichen Namens erben keine alte Sperre. Ein gesperrter ähnlich beginnender Nachbarname bleibt gesperrt; die Bibliotheksbereinigung nach Pfadpräfix wird nicht verwendet. Ein aus einer Vorversion simulierter Lease auf einem unsichtbaren Papierkorbnachfahren führt zur konservativen Kernablehnung statt einem defekten Protokollpfad.
 
-Referenznachweise und vollständige Anwendungsmatrix: verification-iteration-19.md. Native Clients und vollständige Crash-/Last-/Restore-Abnahme bleiben offen.
+Der echte HTTP-/HTTPS-Prüfer bestätigt zusätzlich COPY auf bestehendes Ziel mit Overwrite F (412), tatsächliche Ersetzung (204), MOVE einer temporären Datei auf ein bestehendes Ziel (204), Entfernen des Quellpfads und neue korrekte Zielbytes. Die vollständigen bisherigen OIDC-/DAV-/Browser-/Versions-/Quoten-/Konsistenzfälle bleiben erfolgreich. Ein Startversuch des lokalen HTTP-Harness scheiterte zunächst an einer noch nicht erreichbaren temporären Testdatenbank; der isolierte Wiederholungslauf ist vollständig grün. Der temporäre Harness prüft nun zusätzlich TCP-Erreichbarkeit, nicht nur die Startlogzeile.
 
-Folgelauf 39692926549: Beide MariaDB-Jobs durchlaufen die Anwendungstests einschließlich HTTP/HTTPS. MySQLs Binary-Logging-Regel verweigert zehn absichtlich fehlerauslösende Triggerfixtures mit Fehler 1419. Iteration 20.2 erlaubt die Fixtureanlage im isolierten MySQL-Testcontainer über log_bin_trust_function_creators, ohne dem Anwendungskonto globale Rechte zu geben. Die produktive Anwendung/Migration bleibt unverändert. Der anschließende Vierfachlauf wird kontrolliert.
+Der erfolgreich gelesene GitHub-Lauf der vorangegangenen Iteration bleibt in verification-iteration-20.md dokumentiert. Die neue Implementierung startet nach Veröffentlichung erneut die CI-Matrix. Native Geräteabnahme, vollständige Crash-/Last-/Restore-Prüfung und Betreiberdeployment sind nicht nachgewiesen. Offene Referenzclientliste und konkrete Prüfschritte: client-validation.md. Lock-null-Anlage, rekursive Ordnerkopien und bereichsübergreifende Operationen bleiben offen.
 
-## Tatsächlich erfolgreicher GitHub-Lauf
+### locked-matrix-results.txt
 
-[Lauf 39693200739](https://github.com/JRTools/samla/actions/runs/39693200739), Commit cd92c7df05fba354f188a757052ade6649576d88. Alle vier Jobs abgeschlossen mit success. Jobstatus und vollständige Logs wurden über GitHub gelesen:
+```text
+PHP 8.4, lint 174 files
 
-| Job | Jobkennung | Laufzeit | Datenbank | Unit/Architektur | Integration | HTTP/HTTPS |
-| --- | --- | --- | --- | --- | --- | --- |
-| PHP 8.4 / mysql | 119544163639 | PHP 8.4.27 | MySQL 8.0.46 | 166 / 538 | 210 / 946 | erfolgreich |
-| PHP 8.5 / mysql | 119544163288 | PHP 8.5.12 | MySQL 8.0.46 | 166 / 538 | 210 / 946 | erfolgreich |
-| PHP 8.4 / mariadb | 119544163610 | PHP 8.4.27 | MariaDB 11.8.9 | 166 / 538 | 210 / 946 | erfolgreich |
-| PHP 8.5 / mariadb | 119544163497 | PHP 8.5.12 | MariaDB 11.8.9 | 166 / 538 | 210 / 946 | erfolgreich |
+8.4 / phpunit.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 
-Die Zahlen sind Tests / Assertions. Pro Job insgesamt 376 Tests mit 1484 Assertions, zusätzlich vollständiger synthetischer HTTP-/HTTPS-Durchlauf unter derselben PHP-Version. Kein Betreiberdeployment oder nativer Clientnachweis daraus abgeleitet.
+Runtime:       PHP 8.4.5
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
+
+...............................................................  63 / 166 ( 37%)
+............................................................... 126 / 166 ( 75%)
+........................................                        166 / 166 (100%)
+
+Time: 00:05.429, Memory: 24.00 MB
+
+OK (166 tests, 540 assertions)
+
+
+8.4 / phpunit.integration.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.5
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
+
+...............................................................  63 / 216 ( 29%)
+............................................................... 126 / 216 ( 58%)
+............................................................... 189 / 216 ( 87%)
+...........................                                     216 / 216 (100%)
+
+Time: 01:25.497, Memory: 32.00 MB
+
+OK (216 tests, 983 assertions)
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
+
+
+8.4 / migrate CLI: Schema is current.
+
+
+PHP 8.5, lint 174 files
+
+8.5 / phpunit.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
+
+...............................................................  63 / 166 ( 37%)
+............................................................... 126 / 166 ( 75%)
+........................................                        166 / 166 (100%)
+
+Time: 00:04.927, Memory: 24.00 MB
+
+OK (166 tests, 540 assertions)
+
+
+8.5 / phpunit.integration.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
+
+...............................................................  63 / 216 ( 29%)
+............................................................... 126 / 216 ( 58%)
+............................................................... 189 / 216 ( 87%)
+...........................                                     216 / 216 (100%)
+
+Time: 01:03.312, Memory: 32.00 MB
+
+OK (216 tests, 983 assertions)
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
+
+
+8.5 / migrate CLI: Schema is current.
+```
+
+### mariadb-matrix-results.txt
+
+```text
+PHP 8.4, lint 174 files
+
+8.4 / phpunit.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.5
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
+
+...............................................................  63 / 166 ( 37%)
+............................................................... 126 / 166 ( 75%)
+........................................                        166 / 166 (100%)
+
+Time: 00:05.086, Memory: 24.00 MB
+
+OK (166 tests, 540 assertions)
+
+
+8.4 / phpunit.integration.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.5
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
+
+...............................................................  63 / 216 ( 29%)
+............................................................... 126 / 216 ( 58%)
+............................................................... 189 / 216 ( 87%)
+...........................                                     216 / 216 (100%)
+
+Time: 01:09.335, Memory: 32.00 MB
+
+OK (216 tests, 983 assertions)
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
+
+
+8.4 / migrate CLI: Schema is current.
+
+
+PHP 8.5, lint 174 files
+
+8.5 / phpunit.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
+
+...............................................................  63 / 166 ( 37%)
+............................................................... 126 / 166 ( 75%)
+........................................                        166 / 166 (100%)
+
+Time: 00:06.005, Memory: 24.00 MB
+
+OK (166 tests, 540 assertions)
+
+
+8.5 / phpunit.integration.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
+
+...............................................................  63 / 216 ( 29%)
+............................................................... 126 / 216 ( 58%)
+............................................................... 189 / 216 ( 87%)
+...........................                                     216 / 216 (100%)
+
+Time: 01:02.380, Memory: 32.00 MB
+
+OK (216 tests, 983 assertions)
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
+
+
+8.5 / migrate CLI: Schema is current.
+```
+
+### oidc-web-results.txt
+
+```text
+8.4 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+8.5 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+8.4 production HTTPS: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+```

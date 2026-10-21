@@ -76,6 +76,8 @@ MutationContext erhält das optionale readonly storageChange. Für storage.folde
 
 Kopieren/Ändern verwendet zusätzlich Ziel result; Metadatenoperationen prüfen nach Validatoren noch einmal Identität, sämtliche benötigten Rechte, aktuelle Name-/Elternerwartung, Papierkorbstatus, Elternkette und gegebenenfalls Zyklen. Eine Dateikopie referenziert unveränderlichen vorhandenen Inhalt, aber benötigt erneut logische Quote.
 
+Seit Iteration 21 enthält ein atomar überschreibendes storage.entry.move/storage.file.copy zusätzlich targets.replaced als stabile Kennung des bisherigen Ziels. StorageChange beschreibt den neuen Namen/Elternort; vor und nach Validatoren werden auch Art, erwartete Revision, Ort, Name und Sperren dieses Ziels sowie die zusätzlichen update/delete-Rechte geprüft. Die alte Referenz bleibt im Papierkorb, alle Teiländerungen und das eine abgeschlossene Fachereignis sind gemeinsam transaktional. Ein storage.entry.trash entfernt nach erfolgreicher Nachweisprüfung auch die Leases des betroffenen Teilbaums innerhalb derselben Transaktion. Plugins, die Lösch-/Sperrpolitik ergänzen, können diesen gesamten Vorschlag vorab ablehnen. Einzelne Tokens bleiben aus den öffentlichen Ereignissen ausgeschlossen.
+
 Der Offline-Installer storage.access.grant verwendet Space-Scope mit group/role. Die Offline-Bereinigung storage.orphan.purge verwendet Global-Scope, Systemakteur system.storage und Ziel object. Der Löschguard prüft alte nicht referenzierte reguläre Objekte unter dem Administrationslock erneut; Validatoren können jeden Schritt verhindern. Physische Löschungen haben keine gemeinsame Transaktion mit SQL und werden ausschließlich für nicht referenzierte Objekte eingesetzt.
 
 
