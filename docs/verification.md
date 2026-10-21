@@ -9,3 +9,16 @@ Der erste veröffentlichte Lauf 39692714418 wurde vor Jobanlage wegen einer ung�
 Referenznachweise und vollständige Anwendungsmatrix: verification-iteration-19.md. Native Clients und vollständige Crash-/Last-/Restore-Abnahme bleiben offen.
 
 Folgelauf 39692926549: Beide MariaDB-Jobs durchlaufen die Anwendungstests einschließlich HTTP/HTTPS. MySQLs Binary-Logging-Regel verweigert zehn absichtlich fehlerauslösende Triggerfixtures mit Fehler 1419. Iteration 20.2 erlaubt die Fixtureanlage im isolierten MySQL-Testcontainer über log_bin_trust_function_creators, ohne dem Anwendungskonto globale Rechte zu geben. Die produktive Anwendung/Migration bleibt unverändert. Der anschließende Vierfachlauf wird kontrolliert.
+
+## Tatsächlich erfolgreicher GitHub-Lauf
+
+[Lauf 39693200739](https://github.com/JRTools/samla/actions/runs/39693200739), Commit cd92c7df05fba354f188a757052ade6649576d88. Alle vier Jobs abgeschlossen mit success. Jobstatus und vollständige Logs wurden über GitHub gelesen:
+
+| Job | Jobkennung | Laufzeit | Datenbank | Unit/Architektur | Integration | HTTP/HTTPS |
+| --- | --- | --- | --- | --- | --- | --- |
+| PHP 8.4 / mysql | 119544163639 | PHP 8.4.27 | MySQL 8.0.46 | 166 / 538 | 210 / 946 | erfolgreich |
+| PHP 8.5 / mysql | 119544163288 | PHP 8.5.12 | MySQL 8.0.46 | 166 / 538 | 210 / 946 | erfolgreich |
+| PHP 8.4 / mariadb | 119544163610 | PHP 8.4.27 | MariaDB 11.8.9 | 166 / 538 | 210 / 946 | erfolgreich |
+| PHP 8.5 / mariadb | 119544163497 | PHP 8.5.12 | MariaDB 11.8.9 | 166 / 538 | 210 / 946 | erfolgreich |
+
+Die Zahlen sind Tests / Assertions. Pro Job insgesamt 376 Tests mit 1484 Assertions, zusätzlich vollständiger synthetischer HTTP-/HTTPS-Durchlauf unter derselben PHP-Version. Kein Betreiberdeployment oder nativer Clientnachweis daraus abgeleitet.
