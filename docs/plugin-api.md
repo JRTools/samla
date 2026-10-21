@@ -1,4 +1,4 @@
-# Experimentelle Plugin-API 0.7
+# Experimentelle Plugin-API 0.8
 
 Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog.
 
@@ -102,3 +102,7 @@ StorageLockChange(recursive, seconds) ist ein unveränderlicher Vorschlag für s
 Token und frei übermitteltes Owner-Label werden weder im Vorschlag noch in Audit/Outbox gespeichert. Der persistente Lock-Datensatz enthält sie für die Protokollintegration. Ein Token ist ein Nachweis zur eigenen Sperre, ersetzt aber keine Ressourcenberechtigung. Andere Benutzer können auch mit bekanntem Token die Sperre nicht übergehen.
 
 Alle geschützten Speichermutationen prüfen aktive Sperren vor und nach Validatoren unter dem gemeinsamen Administrationslock. Dateiinhalt, Elternmitgliedschaft und betroffene Teilbäume werden getrennt berücksichtigt. Ein Plugin-Veto rollt Sperranlage/-verlängerung/-freigabe samt Audit/Outbox zurück. Ressourcensperren geben keine Erlaubnis durch generische Hooks. Der API-Major bleibt experimentell 0.
+
+## Gemeinsame Datei-/Sperranlage ab API 0.8
+
+storage.file.create_locked verlangt gleichzeitig StorageChange für den neuen leeren Inhalt und StorageLockChange mit positiver Laufzeit sowie targets.entry und targets.lock. Beide Vorschläge fehlen niemals teilweise. files.create und files.update gelten gemeinsam im exakten Bereich. Die Guards prüfen Namen, Ziel, Eltern, Kapazität, Quote und überlappende Sperren vor und nach Validatoren. Neue Dateireferenz, Lease, Audit und Outbox sind ein SQL-Vorgang. Token und Owner-XML bleiben aus dem Vorschlag und den Ereignissen ausgeschlossen. Ein Veto kann damit beide Teilanlagen gemeinsam verhindern; es gibt keine vorab bereits sichtbare leere Datei.

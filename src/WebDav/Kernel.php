@@ -41,7 +41,7 @@ final class Kernel
             DAV\Server::$exposeVersion = false; $server->debugExceptions = false;
             $server->setBaseUri('/dav/'); $request->setBaseUrl('/dav/');
             $request->removeHeader('X-Sabre-Original-Method');
-            $server->addPlugin(new LockPlugin(new LockBackend($root, $this->files, $this->locks, $actor)));
+            $server->addPlugin(new LockPlugin(new LockBackend($root, $this->files, $this->locks, $actor), $this->files, $actor));
             $response = new HTTP\Response(); $server->httpRequest = $request; $server->httpResponse = $response;
             $server->on('beforeUnbind', static function (string $path) use ($method, $request): void {
                 if ($method === 'COPY' || ($method === 'MOVE' && $path !== $request->getPath())) { throw new DAV\Exception\Conflict(); }
@@ -74,8 +74,6 @@ final class Kernel
                 }, 50);
             }
             if ($method === 'LOCK') {
-                // Lock-null creation needs an atomic create+lease service, never Sabre's two-write fallback.
-                $server->tree->getNodeForPath($request->getPath());
                 if (!in_array($request->getHeader('Depth'), [null,'0','infinity'], true)) { throw new \InvalidArgumentException(); }
             }
             if ($method === 'PUT') {
@@ -106,6 +104,7 @@ final class Kernel
         catch (StorageUnavailable) { return $this->error(503); }
         catch (\LengthException) { return $this->error(413); }
         catch (\InvalidArgumentException) { return $this->error(400); }
+        catch (\Sabre\Xml\ParseException) { return $this->error(400); }
         catch (DAV\Exception $error) { return $this->error($error->getHTTPCode()); }
         catch (\Throwable $error) {
             error_log(sprintf('Samla DAV failed: %s in %s:%d', get_class($error), $error->getFile(), $error->getLine()));

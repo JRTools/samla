@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Samla\Core\Storage;
 
-use Samla\PluginApi\{AccessDenied, AuthorizationChecker, AuthorizationRequest, Decision, MutationConflict, MutationContext, MutationRunner, Scope, StorageChange};
+use Samla\PluginApi\{AccessDenied, AuthorizationChecker, AuthorizationRequest, Decision, MutationConflict, MutationContext, MutationRunner, Scope, StorageChange, StorageLockChange};
 
 final readonly class FileService
 {
@@ -46,6 +46,7 @@ final readonly class FileService
         // Reject unauthorized and invalid targets before reading or staging any content.
         $this->requireAccess($actor, 'files.create', $space); EntryName::validate($name);
         $this->space($space); $this->parent($space, $parent);
+        $this->assertCatalogSpace($space);
         $this->locks()->assertWritable($actor,$space,$parent,$this->proof());
         $blob = $this->content->publish($source);
         // On ambiguous transaction failure keep the immutable object. Never delete a potentially committed object.
@@ -60,6 +61,7 @@ final readonly class FileService
             storageChange: new StorageChange($name, $parent, $blob['size'] ?? null, $blob['sha256'] ?? null));
         $guard = function () use ($actor, $space, $parent): void {
             $this->requireAccess($actor, 'files.create', $space); $this->space($space); $this->parent($space, $parent, 1);
+            $this->assertCatalogSpace($space);
             $this->locks()->assertWritable($actor,$space,$parent,$this->proof());
         };
         $this->mutations->run($context, $guard, function () use ($space, $parent, $name, $id, $blob): bool {
@@ -72,6 +74,46 @@ final readonly class FileService
             return true;
         });
         return $id;
+    }
+    /** Create an empty file and its exclusive lease in one guarded transaction. */
+    public function createLockedFile(string $actor, string $space, string $parent, string $name, string $token,
+        bool $recursive = false, int $seconds = 3600, string $owner = ''): string
+    {
+        EntryName::validate($name); StorageWriteGuard::token($token);
+        if ($seconds < 1 || $seconds > 3600 || strlen($owner) > 4096 || preg_match('//u', $owner) !== 1) { throw new \InvalidArgumentException('Invalid lock request.'); }
+        $id = bin2hex(random_bytes(16)); $lock = bin2hex(random_bytes(16));
+        $guard = function () use ($actor, $space, $parent, $name): void {
+            $this->requireAccess($actor, 'files.create', $space); $this->requireAccess($actor, 'files.update', $space);
+            $catalog = $this->space($space); $this->parent($space, $parent, 1); $this->assertCatalogSpace($space);
+            $this->locks()->assertWritable($actor, $space, $parent, $this->proof());
+            foreach ($this->locks()->conflicts($space, $parent) as $lease) {
+                if ((bool) $lease['recursive_lock']) { throw new StorageLocked('Overlapping exclusive lock.'); }
+            }
+            $q = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ? AND trashed_at IS NULL');
+            $q->execute([$space, $parent, $name]); if ($q->fetchColumn() !== false) { throw new MutationConflict(); }
+            $q = $this->pdo->prepare('SELECT COUNT(*) FROM storage_locks WHERE space_id = ? AND expires_at > ?'); $q->execute([$space, $this->locks()->now()]);
+            if ((int) $q->fetchColumn() >= 1000) { throw new \LengthException('Lock capacity reached.'); }
+            if (StorageUsage::bytes($this->pdo, $space) > (int) $catalog['quota_bytes']) { throw new \LengthException('Space quota exceeded.'); }
+        };
+        $guard(); $empty = fopen('php://temp', 'w+b');
+        try { $blob = $this->content->publish($empty); } finally { fclose($empty); }
+        $targets = ['entry' => $id, 'lock' => $lock]; if ($parent !== '') { $targets['parent'] = $parent; }
+        $context = new MutationContext(bin2hex(random_bytes(16)), $actor, 'storage.file.create_locked', Scope::Space, $space, $targets,
+            storageChange: new StorageChange($name, $parent, $blob['size'], $blob['sha256']), storageLock: new StorageLockChange($recursive, $seconds));
+        $this->mutations->run($context, $guard, function () use ($id, $lock, $space, $parent, $name, $token, $recursive, $seconds, $owner, $actor, $blob): bool {
+            $now = $this->locks()->now();
+            $q = $this->pdo->prepare("INSERT INTO storage_entries (id, space_id, parent_id, name, kind, blob_id, size_bytes, sha256, created_at) VALUES (?, ?, ?, ?, 'file', ?, 0, ?, ?)");
+            $q->execute([$id, $space, $parent, $name, $blob['id'], $blob['sha256'], $now]);
+            $q = $this->pdo->prepare('DELETE FROM storage_locks WHERE space_id = ? AND expires_at <= ?'); $q->execute([$space, $now]);
+            $q = $this->pdo->prepare('INSERT INTO storage_locks (id, token, space_id, entry_id, actor_id, recursive_lock, owner_label, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+            $q->execute([$lock, $token, $space, $id, $actor, $recursive ? 1 : 0, $owner, $now + $seconds]); return true;
+        });
+        return $id;
+    }
+    private function assertCatalogSpace(string $space): void
+    {
+        $q = $this->pdo->prepare('SELECT COUNT(*) FROM storage_entries WHERE space_id = ?'); $q->execute([$space]);
+        if ((int) $q->fetchColumn() >= 10000) { throw new \LengthException('Storage catalog capacity reached.'); }
     }
     /** @return array{row:array,stream:resource} */
     public function download(string $actor, string $space, string $id, ?int $expectedRevision = null): array
@@ -196,6 +238,7 @@ final readonly class FileService
                 }
             }
             if ($operation === 'copy' && $row['kind'] !== 'file') { throw new \InvalidArgumentException('Only individual files can be copied.'); }
+            if ($operation === 'copy') { $this->assertCatalogSpace($space); }
         };
         $this->mutations->run($context, $guard, function () use ($space, $id, $newId, $operation, $name, $parent, $replaceId, $replaceRevision): bool {
             $row = $this->entry($space, $id);

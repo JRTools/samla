@@ -53,7 +53,8 @@ final class LockBackend extends DAV\Locks\Backend\AbstractBackend
     }
     public function lock($uri, DAV\Locks\LockInfo $lockInfo)
     {
-        if ($lockInfo->scope !== DAV\Locks\LockInfo::EXCLUSIVE) { throw new DAV\Exception\NotImplemented(); }
+        if ($lockInfo->scope === DAV\Locks\LockInfo::SHARED) { throw new DAV\Exception\NotImplemented(); }
+        if ($lockInfo->scope !== DAV\Locks\LockInfo::EXCLUSIVE) { throw new DAV\Exception\BadRequest(); }
         [$space, $entry] = $this->location($this->resolve($uri));
         $seconds = $lockInfo->timeout === null || $lockInfo->timeout <= 0 ? 3600 : min(3600, $lockInfo->timeout);
         $existing = null;

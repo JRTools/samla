@@ -173,12 +173,12 @@ final class WebDavTest extends TestCase
         self::assertSame(204,$this->request('UNLOCK',headers:['Lock-Token'=>$token])->status);
         self::assertSame(204,$this->request('PUT',body:'unlocked')->status);
     }
-    public function testRecursiveLockAndMissingLockTargetHaveNoPartialCreation():void
+    public function testRecursiveLockAndMalformedNewLockHaveNoPartialCreation():void
     {
         $this->manage();self::assertSame(201,$this->request('MKCOL','/dav/a/Folder')->status);$token=$this->lock('/dav/a/Folder','infinity');
         self::assertSame(423,$this->request('PUT','/dav/a/Folder/child',body:'blocked')->status);
         self::assertSame(201,$this->request('PUT','/dav/a/Folder/child',['If'=>'('.$token.')'],body:'allowed')->status);
-        self::assertSame(404,$this->request('LOCK','/dav/a/missing',['Depth'=>'0'],'<d:lockinfo xmlns:d="DAV:"/>')->status);
+        self::assertSame(400,$this->request('LOCK','/dav/a/missing',['Depth'=>'0'],'<d:lockinfo xmlns:d="DAV:"/>')->status);
         self::assertNull($this->files()->child('alice','a','','missing'));
     }
     public function testMalformedConditionsForeignDestinationAndOversizedPutAreRejected():void
@@ -271,5 +271,87 @@ final class WebDavTest extends TestCase
         self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_locks')->fetchColumn());
         self::assertSame(423,$this->request('PUT',$sibling,body:'no proof')->status);
         self::assertSame('keep',$this->body($this->request('GET',$sibling)));
+    }
+    private function lockXml(bool $shared=false):string
+    {return '<d:lockinfo xmlns:d="DAV:"><d:lockscope><d:'.($shared?'shared':'exclusive').'/></d:lockscope><d:locktype><d:write/></d:locktype></d:lockinfo>';}
+    public function testLockOnNewFileCreatesFileAndLeaseAtomically():void
+    {
+        $this->manage();$path='/dav/a/new%20Gr%C3%BC%C3%9Fe';$before=(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn();
+        $response=$this->request('LOCK',$path,['Depth'=>'0','Timeout'=>'Second-60'],$this->lockXml());self::assertSame(201,$response->status,$response->body);
+        $token=$response->headers['Lock-Token'];self::assertStringContainsString($path,$response->body);
+        self::assertSame('',$this->body($this->request('GET',$path)));
+        self::assertSame(423,$this->request('PUT',$path,body:'no proof')->status);
+        self::assertSame(204,$this->request('PUT',$path,['If'=>'('.$token.')'],body:'first content')->status);
+        self::assertSame($before+2,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+        $event=$this->pdo->query("SELECT targets FROM audit_events WHERE operation='storage.file.create_locked'")->fetchColumn();
+        self::assertArrayHasKey('lock',json_decode($event,true));self::assertStringNotContainsString(substr($token,1,-1),$event);
+        self::assertSame(204,$this->request('UNLOCK',$path,['Lock-Token'=>$token])->status);
+    }
+    public function testNewLockNeedsCreateAndUpdateRightsAndRejectsSharedScope():void
+    {
+        self::assertSame(403,$this->request('LOCK','/dav/a/new',['Depth'=>'0'],$this->lockXml())->status);self::assertNull($this->files()->child('alice','a','','new'));
+        $this->manage();self::assertSame(501,$this->request('LOCK','/dav/a/new',['Depth'=>'0'],$this->lockXml(true))->status);
+        self::assertNull($this->files()->child('alice','a','','new'));self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_locks')->fetchColumn());
+    }
+    public function testSupportedLockAdvertisesOnlyExclusiveAndEncodedUris():void
+    {
+        $this->manage();$this->lock();$xml='<d:propfind xmlns:d="DAV:"><d:prop><d:supportedlock/><d:lockdiscovery/></d:prop></d:propfind>';
+        $response=$this->request('PROPFIND',headers:['Depth'=>'0'],body:$xml);self::assertSame(207,$response->status);$body=$this->body($response);
+        self::assertStringContainsString('exclusive',$body);self::assertStringNotContainsString('shared',$body);self::assertStringContainsString('Gr%C3%BC%C3%9Fe.txt',$body);
+        $document=new \DOMDocument();self::assertTrue($document->loadXML($body));$xpath=new \DOMXPath($document);$xpath->registerNamespace('d','DAV:');
+        self::assertSame(1,$xpath->query('//d:supportedlock/d:lockentry/d:lockscope/d:exclusive')->length);
+    }
+    public function testNewLockCannotOverlapARecursiveAncestorOrLeavePartialState():void
+    {
+        $this->manage();$token=$this->lock('/dav/a','infinity');
+        self::assertSame(423,$this->request('LOCK','/dav/a/new',['Depth'=>'0','If'=>'('.$token.')'],$this->lockXml())->status);
+        self::assertNull($this->files()->child('alice','a','','new'));self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_locks')->fetchColumn());
+    }
+    public function testFailedLeaseInsertRollsBackNewFileAndAudit():void
+    {
+        $this->manage();$before=(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn();
+        $this->pdo->exec("CREATE TRIGGER test_dav_lock_failure BEFORE INSERT ON storage_locks FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='fixture'");
+        try{self::assertSame(503,$this->request('LOCK','/dav/a/new',['Depth'=>'0'],$this->lockXml())->status);}
+        finally{$this->pdo->exec('DROP TRIGGER test_dav_lock_failure');}
+        self::assertNull($this->files()->child('alice','a','','new'));self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_locks')->fetchColumn());
+        self::assertSame($before,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+    }
+    public function testCatalogCapacityRejectsAllCreationPathsButStillAllowsDeletion():void
+    {
+        $this->manage();$this->pdo->beginTransaction();
+        try{
+            for($start=1;$start<10000;$start+=500){$values=[];$params=[];
+                for($i=$start;$i<min(10000,$start+500);++$i){$values[]="(?, 'a', '', ?, 'folder', 1)";$params[]=str_pad(dechex($i),32,'0',STR_PAD_LEFT);$params[]='capacity.'.$i;}
+                $this->pdo->prepare('INSERT INTO storage_entries (id,space_id,parent_id,name,kind,created_at) VALUES '.implode(',',$values))->execute($params);
+            }
+            $this->pdo->commit();
+        }catch(\Throwable $error){$this->pdo->rollBack();throw $error;}
+        self::assertSame(413,$this->request('MKCOL','/dav/a/overflow')->status);
+        self::assertSame(413,$this->request('PUT','/dav/a/overflow',body:'new')->status);
+        self::assertSame(413,$this->request('COPY',headers:['Destination'=>'/dav/a/overflow'])->status);
+        self::assertSame(413,$this->request('LOCK','/dav/a/overflow',['Depth'=>'0'],$this->lockXml())->status);
+        self::assertSame(10000,(int)$this->pdo->query("SELECT COUNT(*) FROM storage_entries WHERE space_id='a'")->fetchColumn());
+        self::assertSame(204,$this->request('DELETE')->status);
+    }
+    public function testPluginCanVetoCombinedCreationBeforeEitherReferenceExists():void
+    {
+        $this->manage();$before=(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn();
+        $extension=new \Samla\Tests\Fixtures\Extension('test.veto_lock_create',static function(\Samla\PluginApi\PluginRegistrar $r):void{
+            $r->validator(new class implements \Samla\PluginApi\ChangeValidator{
+                public function priority():int{return 0;}
+                public function validate(\Samla\PluginApi\MutationContext $context):void{
+                    if($context->operation==='storage.file.create_locked'){
+                        self::check($context);throw new \Samla\PluginApi\AccessDenied();
+                    }
+                }
+                private static function check(\Samla\PluginApi\MutationContext $context):void{
+                    if($context->storageChange===null||$context->storageLock===null||!isset($context->targets['entry'],$context->targets['lock'])){throw new \LogicException();}
+                }
+            });
+        });
+        $this->runtime=PluginRuntime::boot([new IdentityPlugin(),new StoragePlugin(),new RbacPlugin($this->roles,$this->identity),$extension]);
+        self::assertSame(403,$this->request('LOCK','/dav/a/new',['Depth'=>'0'],$this->lockXml())->status);
+        self::assertNull($this->files()->child('alice','a','','new'));self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_locks')->fetchColumn());
+        self::assertSame($before,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
     }
 }

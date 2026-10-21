@@ -220,6 +220,11 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert dav('PUT',dav_file,body='blocked')[0]==423
                     assert dav('PUT',dav_file,{'If':'('+device_lock+')','If-Match':dav_headers['ETag']},'updated via DAV')[0]==204
                     assert dav('UNLOCK',dav_file,{'Lock-Token':device_lock})[0]==204
+                    status,_,new_lock_headers=dav('LOCK',dav_folder+'/locked-new.txt',{'Depth':'0','Content-Type':'application/xml'},lock_xml)
+                    assert status==201
+                    new_device_lock=new_lock_headers['Lock-Token']
+                    assert dav('PUT',dav_folder+'/locked-new.txt',{'If':'('+new_device_lock+')'},'atomic new file')[0]==204
+                    assert dav('UNLOCK',dav_folder+'/locked-new.txt',{'Lock-Token':new_device_lock})[0]==204
                     assert dav('COPY',dav_file,{'Destination':app_url+dav_folder+'/copy.txt'})[0]==201
                     assert dav('MOVE',dav_folder+'/copy.txt',{'Destination':app_url+dav_folder+'/moved.txt'})[0]==201
                     assert dav('DELETE',dav_folder+'/moved.txt')[0]==204

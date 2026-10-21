@@ -32,13 +32,13 @@ final readonly class MutationContext
             }
         }
         $groupOperation = in_array($operation, ['identity.group.create', 'identity.group.rename'], true);
-        $lockOperation = in_array($operation, ['storage.lock.acquire','storage.lock.renew','storage.lock.release'], true);
+        $lockOperation = in_array($operation, ['storage.lock.acquire','storage.lock.renew','storage.lock.release','storage.file.create_locked'], true);
         if ($lockOperation !== ($storageLock !== null) || ($lockOperation && ($scope !== Scope::Space || !isset($targets['lock'])
             || (($operation === 'storage.lock.release') !== ($storageLock->seconds === 0))))) {
             throw new \InvalidArgumentException('Lock proposal must match its operation.');
         }
         $storageOperation = in_array($operation, ['storage.folder.create', 'storage.file.upload', 'storage.entry.rename', 'storage.entry.move',
-            'storage.file.copy', 'storage.entry.trash', 'storage.entry.restore', 'storage.file.replace', 'storage.version.restore'], true);
+            'storage.file.copy', 'storage.entry.trash', 'storage.entry.restore', 'storage.file.replace', 'storage.version.restore', 'storage.file.create_locked'], true);
         if ($storageOperation !== ($storageChange !== null) || ($storageOperation && ($scope !== Scope::Space || !isset($targets['entry'])))) {
             throw new \InvalidArgumentException('Storage proposal must match its operation.');
         }

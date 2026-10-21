@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.22
+Version: 1.23
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 21, siehe Abschnitt 31. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 22, siehe Abschnitt 32. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -819,3 +819,27 @@ Lock-null-Anlage, rekursive Ordnerkopien, bereichsübergreifende Vorgänge und d
 Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 382 Tests und 1523 Assertions (166 Unit-/Architekturtests, 216 Integrationstests), Syntax aller 174 eigenen PHP-Dateien und Migrations-CLI erfolgreich. HTTP/HTTPS bestätigt COPY/MOVE-Überschreiben samt korrekten Zielbytes und abgewiesenem Overwrite F. Erfolgreiches Überschreiben, aufbewahrte Ziele, Auditfehler mit gemeinsamem Rollback, Quotenfehler ohne Inhaltsverlust, gesperrte Ziele, DELETE-Leasebereinigung, geschützte Präfixnachbarn und konservative unsichtbare Alt-Leases sind geprüft. Die bereits erfolgreiche GitHub-Matrix wird nach Veröffentlichung auch diese neue Implementierung prüfen.
 
 Version 1.22: Atomarer Erhalt bisheriger MOVE/COPY-Ziele, doppelte Zielprüfung und transaktionale Leasebereinigung beim Papierkorb.
+
+GitHub-Nachweis Iteration 21: Lauf 39695089226 zu 022ee2f9a5626b51b06b6cebfbf713ed552ab0a8 erfolgreich in allen vier Jobs. Status und vollständige Joblogs gelesen: PHP 8.4.27/8.5.12, jeweils 166 Unit-/Architekturtests mit 540 Assertions, 216 Integrationstests mit 983 Assertions sowie HTTP/HTTPS. Damit 382 Tests und 1523 Assertions pro Job. Keine native Geräteabnahme daraus abgeleitet.
+
+## 32. Iteration 22: Neue Datei und exklusive Sperre atomar anlegen
+
+### 32.1 Gemeinsamer Änderungsvorschlag
+
+LOCK auf einen noch nicht vorhandenen Dateinamen legt die neue leere Datei und ihre exklusive Sperre in einem einzigen FileService-/MutationRunner-Vorgang an. Der Status ist 201; nachfolgender PUT braucht den erhaltenen Token und archiviert den bisherigen leeren Stand regulär. Es gibt keine vorangestellte, bereits sichtbar gewordene Bibliotheks-Dateianlage. Dateien bleiben außerhalb des öffentlichen Verzeichnisses und werden vor SQL-Referenzierung unveränderlich veröffentlicht.
+
+API 0.8 ergänzt die zusammengesetzte Operation storage.file.create_locked: StorageChange und StorageLockChange sind beide verpflichtend, targets enthält entry und lock. Guards prüfen files.create und files.update, Namen, Eltern, Sichtbarkeit, Quote, Sperr-/Katalogkapazität und Konflikte vor und nach Plugins. Ein Veto oder fehlgeschlagener Lease-INSERT rollt Dateireferenz, Lease, Audit und Outbox gemeinsam zurück. Bereits veröffentlichte unreferenzierte Objekte folgen wie andere unklare/fallierte Veröffentlichungen der kontrollierten Bereinigung; Token und freie Ownerdaten bleiben aus Fachvorschlag/Ereignissen ausgeschlossen.
+
+### 32.2 Korrekte Protokollgrenzen
+
+Der Lock-Adapter validiert die zwingenden lockinfo-/lockscope-/locktype-Strukturen nach der bestehenden begrenzten und DTD-freien XML-Prüfung. Leere Bodys verlängern ausschließlich vorhandene Sperren. Gemeinsame Sperren sind nicht implementiert und werden auch nicht mehr in supportedlock beworben. Lockroot-URIs für Unicode-/Leerzeichen-/Prozentnamen werden genau einmal pro Komponente kodiert, während interne Operationen weiterhin dekodierte Pfade verwenden. Exklusive rekursive Vorfahrensperren dürfen nicht durch eine weitere überlappende Neuanlage dupliziert werden.
+
+Die bereits vorhandene technische Grenze von 10000 aufbewahrten Einträgen pro Bereich wird jetzt vor jeder Datei-/Ordner-/Kopier-/LOCK-Neuanlage geprüft. Das verhindert das bisher mögliche Überschreiten um einen Eintrag und erhält die Nutzbarkeit des gemeinsamen Sperrguards an der Grenze. Bestehende Einträge können weiterhin gelöscht werden. Papierkorbeinträge zählen zur Grenze; endgültige Bereinigung wird separat ausdrücklich berechtigt ergänzt.
+
+### 32.3 Prüfung und Fortsetzung
+
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 390 Tests und 1567 Assertions (167 Unit-/Architekturtests, 223 Integrationstests), Syntax aller 174 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Neue Fälle prüfen neue leere Datei samt Lease, korrektes Schreiben/Entsperren, ausgeschlossene Tokens im Audit, getrennte Rechte, abgewiesene Shared-Sperre, tatsächliche supportedlock-XML-Struktur, kodierte Lockroots, überlappende Vorfahren, Lease-INSERT-Fehler ohne Teilzustand, Plugin-Veto und die 10000-Eintragsgrenze über alle Anlagewege bei weiter möglichem DELETE. Ein zunächst falsch klassifiziertes unvollständiges Lock-XML wird nun als ungültige Struktur mit 400 abgewiesen; Shared bleibt davon getrennt 501.
+
+Echte HTTP-/HTTPS-Anfragen bestätigen zusätzlich LOCK-Neuanlage (201), PUT mit If-Nachweis (204) und UNLOCK (204). Alle bisherigen OIDC-/DAV-/Browser-/Versions-/Quoten-/Konsistenzprüfungen bleiben erfolgreich. Keine neue Migration oder Laufzeitabhängigkeit. Der folgende Schritt ist die explizit berechtigte endgültige Papierkorbbereinigung, danach die verbleibenden Baum-/Bereichsoperationen. Medien-, administrative Restfunktionen und native Clientabnahme bleiben offen; die Fortsetzung bleibt autorisiert.
+
+Version 1.23: Atomare Datei-/Sperranlage, vollständiger gemeinsamer Plugin-Vorschlag, korrekt beworbene Sperren und eingehaltene Kataloggrenze.
