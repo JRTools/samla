@@ -1,4 +1,4 @@
-# Prüfprotokoll: Iteration 2
+# Prüfprotokoll: Iteration 3
 
 Datum: 21. Oktober 2026. Projekt: Samla.
 
@@ -8,6 +8,8 @@ Datum: 21. Oktober 2026. Projekt: Samla.
 |---|---|---|---|---|---|
 | 8.4.5 | 13.4.3 aus composer.lock | MySQL 8.0.46 | 47 Tests, 111 Assertions | 14 Tests, 36 Assertions | 61 Tests, 147 Assertions |
 | 8.5.4 | 13.4.3 aus composer.lock | MySQL 8.0.46 | 47 Tests, 111 Assertions | 14 Tests, 36 Assertions | 61 Tests, 147 Assertions |
+| 8.4.5 | 13.4.3 aus composer.lock | MariaDB 11.8.6 | 47 Tests, 111 Assertions | 14 Tests, 36 Assertions | 61 Tests, 147 Assertions |
+| 8.5.4 | 13.4.3 aus composer.lock | MariaDB 11.8.6 | 47 Tests, 111 Assertions | 14 Tests, 36 Assertions | 61 Tests, 147 Assertions |
 
 Alle aufgeführten Suiten sind erfolgreich, ohne gemeldete Deprecations, PHPUnit-Deprecations oder Warnungen. Die Konfiguration lässt diese Probleme den Lauf fehlschlagen. Die PHP-Syntaxprüfung aller 46 eigenen PHP-Dateien war unter beiden PHP-Unterversionen erfolgreich.
 
@@ -34,7 +36,7 @@ Für Integration und Migration müssen die in config/environment.example beschri
 
 ## Noch nicht nachgewiesen
 
-- MariaDB 11.8 und weitere konkrete PHP-Patchversionen.
+- Weitere konkrete Datenbank- und PHP-Patchversionen.
 - Coverage, vollständige Nebenläufigkeitsprüfung sowie Update und Restore.
 - HTTP, OIDC, App-Passwörter, WebDAV, Dateioperationen und Browserbedienung, da diese Funktionen noch nicht implementiert sind.
 - Vollständige Betriebsabnahme; die Fähigkeitsdiagnose wurde nicht als solche gewertet.
@@ -99,6 +101,73 @@ Configuration: Samla-Projekt/phpunit.integration.xml
 ..............                                                    14 / 14 (100%)
 
 Time: 00:00.821, Memory: 20.00 MB
+
+OK (14 tests, 36 assertions)
+
+
+8.5 / migrate CLI: Schema is current.
+```
+
+## MariaDB-Zielmatrix
+
+Die unveränderten Migrationen und Testklassen liefen gegen eine isolierte MariaDB-11.8.6-Instanz. Es waren keine SQL-Anpassungen erforderlich. Auch die Migrations-CLI ist unter beiden PHP-Versionen erfolgreich ausgeführt.
+
+```text
+PHP 8.4, lint 46 files
+
+8.4 / phpunit.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.5
+Configuration: Samla-Projekt/phpunit.xml
+
+...............................................                   47 / 47 (100%)
+
+Time: 00:00.016, Memory: 20.00 MB
+
+OK (47 tests, 111 assertions)
+
+
+8.4 / phpunit.integration.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.5
+Configuration: Samla-Projekt/phpunit.integration.xml
+
+..............                                                    14 / 14 (100%)
+
+Time: 00:00.283, Memory: 20.00 MB
+
+OK (14 tests, 36 assertions)
+
+
+8.4 / migrate CLI: Schema is current.
+
+
+PHP 8.5, lint 46 files
+
+8.5 / phpunit.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: Samla-Projekt/phpunit.xml
+
+...............................................                   47 / 47 (100%)
+
+Time: 00:00.015, Memory: 20.00 MB
+
+OK (47 tests, 111 assertions)
+
+
+8.5 / phpunit.integration.xml
+PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: Samla-Projekt/phpunit.integration.xml
+
+..............                                                    14 / 14 (100%)
+
+Time: 00:00.249, Memory: 20.00 MB
 
 OK (14 tests, 36 assertions)
 

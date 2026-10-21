@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.3
+Version: 1.4
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 2, siehe Abschnitt 12. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 3, siehe Abschnitt 13. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -256,3 +256,14 @@ Der GitHub-Zugriff auf das zuvor leere Repository wurde am 21. Oktober 2026 erfo
 5. Erweiterungsverträge für die neuen Anwendungsfälle unmittelbar ergänzen und testen.
 
 OIDC-Discovery, Testregistrierung, anonymisierter groups-Claim, Hostingdetails, Referenzclient und zulässige Verzögerung zentraler Gruppenänderungen bleiben erforderlich. Projektlizenz und weitere Komponentenentscheidungen sind weiterhin offen.
+
+
+## 13. Iteration 3: MariaDB-Kompatibilität bestätigt
+
+Am 21. Oktober 2026 wurde die bestehende Matrix zusätzlich gegen MariaDB 11.8.6 ausgeführt. Unter PHP 8.4.5 und PHP 8.5.4 mit PHPUnit 13.4.3 sind jeweils 61 Tests mit 147 Assertions erfolgreich. Alle bisherigen Migrationen, die Migrations-CLI und die Fehler-/Rollback-Prüfungen funktionieren unverändert. Es wurden keine zusätzlichen Laufzeitkomponenten in Samla eingeführt; der Datenbankserver dient nur der isolierten Prüfung.
+
+Die dokumentierten Zielkombinationen umfassen damit beide PHP-Unterversionen mit MySQL 8.0.46 sowie MariaDB 11.8.6. Dies ersetzt keine umfassende Last-, Nebenläufigkeits- oder Betriebsabnahme.
+
+Die vom Nutzer bereitgestellte Discovery-URL https://id.jrtools.org/.well-known/openid-configuration wurde als Integrationsgrundlage dokumentiert. Testregistrierung, Callback-URL, Gruppenclaim und Gruppenfrische-Richtlinie bleiben offen. README, Prüfprotokoll und Entscheidungen wurden aktualisiert. Nächster Implementierungsumfang ist die geschützte, explizit delegierte Rollenzuweisung innerhalb eines Speicherbereichs mit Audit und Erweiterungsvalidierung.
+
+Version 1.4: MariaDB-Nachweis und bekannte OIDC-Discovery ergänzt.

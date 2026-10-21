@@ -14,12 +14,12 @@
 
 ## Bestätigte Datenbankziele
 
-Am 21. Oktober 2026 bestätigt: MariaDB 11.8 oder MySQL 8.0 stehen zur Verfügung. Beide werden als Zielplattformen eingeplant. Die tatsächlich eingesetzte Produktivdatenbank bleibt konfigurierbar. Die vorhandenen Migrationen und Integrationstests wurden gegen MySQL 8.0.46 geprüft. Die entsprechende MariaDB-11.8-Prüfung bleibt offen.
+Am 21. Oktober 2026 bestätigt: MariaDB 11.8 oder MySQL 8.0 stehen zur Verfügung. Beide werden als Zielplattformen eingeplant. Die tatsächlich eingesetzte Produktivdatenbank bleibt konfigurierbar. Die vorhandenen Migrationen und Integrationstests wurden gegen MySQL 8.0.46 geprüft. Die entsprechende MariaDB-11.8-Prüfung ist unter MariaDB 11.8.6 ebenfalls erfolgreich.
 
 ## Vor Integration erforderlich
 
 - Hosting: Webserver, PHP-Unterversionen und Erweiterungen, Dateisystem, Uploadgrenzen sowie isolierte Datenbank-Testzugänge.
-- OIDC: Discovery-URL, Testregistrierung, erlaubte Algorithmen, anonymisierter groups-Claim, Logout.
+- OIDC: Testregistrierung, Callback-URL, Algorithmusauswahl, anonymisierter groups-Claim und Integrationserprobung von Logout. Discovery ist unter https://id.jrtools.org/.well-known/openid-configuration bekannt; siehe oidc-provider.md.
 - Maximal zulässiges Alter zentral bestätigter Gruppen und Verhalten bei Ablauf.
 - WebDAV-Referenzclient und Grenzen für Datei- und Datenmengen.
 - Freigabe konkreter OIDC- und WebDAV-Bibliotheken sowie Routing und Templates.

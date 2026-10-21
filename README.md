@@ -6,7 +6,7 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 2
+## Entwicklungsstand: Iteration 3
 
 Vorhanden sind:
 
@@ -69,7 +69,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: unter PHP 8.4.5 und PHP 8.5.4 jeweils 61 Tests mit 147 Assertions, PHPUnit 13.4.3 und MySQL 8.0.46. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. MariaDB 11.8 ist noch nicht praktisch geprüft. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: unter PHP 8.4.5 und PHP 8.5.4 jeweils 61 Tests mit 147 Assertions, PHPUnit 13.4.3 und MySQL 8.0.46. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Dieselbe Matrix ist auch gegen MariaDB 11.8.6 erfolgreich. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## Architektur und Dokumentation
 
