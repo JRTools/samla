@@ -6,12 +6,13 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 14 (Dateioperationen und Papierkorb)
+## Entwicklungsstand: Iteration 15 (App-Passwörter und WebDAV-Abhängigkeit)
 
 Vorhanden sind:
 
 - Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads bis 16 MiB, geschützten Attachment-Downloads, Umbenennen, Verschieben, Einzeldateikopien und Papierkorb/Wiederherstellung. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
 
+- Eigene App-Passwörter nach OIDC-Anmeldung: einmalige Anzeige, sichere Hashes, Ablauf und Einzelwiderruf, aktuelle Identitätsprüfung, begrenzte Authentifizierungsversuche und Audit/Outbox. [Dokumentation](docs/app-passwords.md).
 - Gemeinsame `.env`-Konfiguration für Web und CLI mit Prozessvorrang und sicherer Vorlage `example.env`.
 - OIDC-Weblogin mit Authorization Code/PKCE S256, Basic, RS256-Tokenprüfung, kurzlebiger einmaliger Callbacktransaktion, sicheren HTTPS-Sitzungen und lokaler Abmeldung. Neues Konto ohne automatische Rollen; kontrollierte initiale Administratoreinrichtung per CLI.
 - Erste responsive PHP-Weboberfläche mit Übersicht, Benutzer-/Gruppenverzeichnissen, Statusänderungen, Gruppenanlage/Umbenennung und manuellen Mitgliedschaften.
@@ -36,13 +37,13 @@ Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise 
 
 ## Voraussetzungen
 
-- PHP 8.4 oder 8.5, Composer, PDO/pdo_mysql, ctype, JSON, OpenSSL, iconv und mbstring.
+- PHP 8.4 oder 8.5, Composer, PDO/pdo_mysql, ctype, JSON, OpenSSL, iconv, mbstring sowie cURL, DOM, SimpleXML, XMLReader und XMLWriter/libxml.
 - MySQL 8.0 oder MariaDB 11.8. Die konkrete Prüfabdeckung steht im Prüfprotokoll.
 - PHPUnit 13 als Entwicklungsabhängigkeit und dessen erforderliche PHP-Erweiterungen.
 - PHP-Sessionfunktion und ein beschreibbares, nicht öffentliches Sessionverzeichnis. HTTPS-Streams, allow_url_fopen und gültiger CA-Vertrauensspeicher für OIDC.
 - GD für die späteren Medienfunktionen.
 
-Ein zusätzlicher Framework-, Node.js-, Redis- oder Suchdienst ist derzeit nicht eingebaut. Der freigegebene OIDC-Client samt 23 transitiven Paketen ist in composer.lock festgeschrieben; Composer-Plugins bleiben gesperrt. Projektlizenz und WebDAV-Bibliothek sind noch offen.
+Ein zusätzlicher Framework-, Node.js-, Redis- oder Suchdienst ist derzeit nicht eingebaut. Der freigegebene OIDC-Client und SabreDAV 4.7.1 samt ihren transitiven Paketen sind in composer.lock festgeschrieben; Composer-Plugins bleiben gesperrt. Die Projektlizenz bleibt offen; die WebDAV-Protokollintegration wird fortgesetzt.
 
 ## Installation und Konfiguration
 
@@ -106,7 +107,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 304 Tests mit 1153 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 312 Tests mit 1202 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 
@@ -152,4 +153,6 @@ Nach jeder Implementierungsphase werden README, Umsetzungsplan und Prüfergebnis
 
 Plesk-Korrektur 13.1: Die private Pfadprüfung berücksichtigt open_basedir und untersucht keine verbotenen übergeordneten Verzeichnisse. Interne Symlinks und nicht erlaubte Speicherwurzeln bleiben gesperrt. Nach einem Codeupdate Speichermigrationen ausdrücklich ausführen.
 
-Iteration 14 ergänzt typisierte StorageChange-Vorschläge für Plugin-Validatoren, explizite Offline-Bereichsprofile read/contribute/manage und eine kontrollierte Objektbereinigung mit Probelauf. Gelöschte Ordner sperren auch direkte Links auf ihren Inhalt. Einrichtung und Grenzen: [Dateiablage](docs/storage.md). WebDAV ist als nächste Integration konkret vorbereitet. SabreDAV ist vom Betreiber freigegeben, die Aufnahme folgt in der nächsten Phase: [Entscheidungsvorlage](docs/webdav-library-decision.md).
+Iteration 14 ergänzt typisierte StorageChange-Vorschläge für Plugin-Validatoren, explizite Offline-Bereichsprofile read/contribute/manage und eine kontrollierte Objektbereinigung mit Probelauf. Gelöschte Ordner sperren auch direkte Links auf ihren Inhalt. Einrichtung und Grenzen: [Dateiablage](docs/storage.md). WebDAV ist als nächste Integration konkret vorbereitet. SabreDAV ist vom Betreiber freigegeben und seit Iteration 15 installiert. Die eigentliche Protokoll-/Lock-Anbindung folgt: [Entscheidungsvorlage](docs/webdav-library-decision.md).
+
+Iteration 15: App-Passwörter sind über den OIDC-Kontobereich verwaltbar; ein angeschlossener WebDAV-Endpunkt folgt erst mit den gemeinsamen Sperr-/Versionierungsdiensten. Fehlender privater Speicher führt jetzt zu einer verständlichen Antwort; bin/storage-init.php unterstützt die sichere Ersteinrichtung mit ausdrücklichem PHP-FPM-Eigentümer.

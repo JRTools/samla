@@ -67,3 +67,12 @@ API 0.6 ergänzt einen typisierten StorageChange, ohne Rohinhalt oder Betriebssy
 SabreDAV 4.7.1 wurde außerhalb der Anwendung isoliert aufgelöst und unter PHP 8.4/8.5 protokollseitig erprobt. Die konkrete zusätzliche Anwendungsabhängigkeit benötigt gemäß AGENTS.md noch Freigabe. Entscheidungsvorlage: webdav-library-decision.md. Kein zusätzlicher Netzwerkdienst wird vorgeschlagen. Versionen, weitere Speicherfunktionen, Medienfunktionen und andere Konzeptpunkte sind damit nicht als abgeschlossen erklärt.
 
 Die anschließende Betreiberanweisung vom 22. Oktober 2026 gibt SabreDAV konkret frei. Iteration 15 darf die zusätzliche Bibliothek samt benötigter transitiver Abhängigkeiten aufnehmen.
+
+
+## Iteration 15: freigegebene WebDAV-Abhängigkeit und eigene Gerätezugänge
+
+SabreDAV 4.7.1 und fünf neue transitive Pakete sind in der Anwendung installiert, ohne Änderungen bestehender Paketversionen. XML-Plattformanforderungen sind explizit. Die App-Passwortverwaltung ist ausschließlich an den OIDC-Kontobereich angebunden. Eine frische aktive eigene Identität ist die Berechtigung für diesen Kontoselbstservice; dadurch entstehen keine Dateirollen. App-Passwörter haben voneinander unabhängige zufällige Selektoren/Geheimnisse, geeignete Hashes, Ablauf und Einzelwiderruf. Eigene Geheimnisse werden nicht in Sitzungen, Audit oder Outbox gespeichert.
+
+Die aktuelle Implementierung bindet noch keinen DAV-Endpunkt an. Gemeinsame dauerhafte Schreibsperren und Versions-/Konfliktschutz müssen vor Schreibfreigabe auch für Browseränderungen wirksam sein. Ein späterer DAV-Autorisierungsadapter muss Credential-Widerruf neben Identität/Rollen bei konkreten Ressourcenzugriffen prüfen, auch bei geschützten Mutationen.
+
+Der Betreiber bestätigt das fehlende Speicherverzeichnis als Ursache des Uploadfehlers. Ein eigenes StorageUnavailable-Signal erzeugt eine verständliche Antwort; storage-init.php legt nur die angeforderte Wurzel mit 0700 und optional ausdrücklich genanntem Eigentümer an. Keine automatische rekursive Umstellung vorhandener Inhalte.

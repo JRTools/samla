@@ -110,3 +110,10 @@ Sitzungen enden spätestens nach einer Stunde beziehungsweise dem früheren ID-T
 Nach erfolgreichem Login und Erstadministration folgen die neue Speichermigration, ein privates für PHP beschreibbares Speicherverzeichnis und die ausdrückliche Bereichsanlage. [storage.md](storage.md) beschreibt Plesk-PHP-Limits, Bereichsrechte, Quoten, Konsistenzprüfung und Backup/Restore. Globale Administration allein berechtigt nicht zum Lesen fremder Dateien.
 
 Bei 503 protokolliert der Webeinstieg jetzt Exception-Klasse sowie Quelldatei und Zeile, ohne Exception-Nachricht, Tokens oder Credentials. oidc-check.php prüft zusätzlich zentrale OIDC-Composer-Klassen; ein erfolgreicher Discovery-Aufruf allein beweist weiterhin keinen vollständigen Weblogin.
+
+
+## Zusätzliche Voraussetzungen ab Iteration 15
+
+Die freigegebene SabreDAV-Bibliothek ist im Lockfile enthalten. Composer install erneut ausführen. cURL, DOM, SimpleXML, XMLReader und XMLWriter einschließlich libxml müssen in CLI und PHP-FPM verfügbar sein; sie sind ausdrücklich im Composer-Plattformvertrag enthalten. Es wird kein zusätzlicher Serverdienst benötigt.
+
+Die App-Passwortmigration ausdrücklich anwenden. Unter „Mein Zugang“ können eigene App-Passwörter erzeugt und einzeln widerrufen werden. Die Oberfläche zeigt neue Geheimnisse einmalig an. Der WebDAV-Endpunkt folgt erst mit dem vollständigen Protokoll-/Lock-Adapter; installierte Bibliotheken allein aktivieren ihn nicht. Weitere Hinweise: app-passwords.md.

@@ -46,7 +46,7 @@ final readonly class LocalContentStore
     public function publish($source): array
     {
         if (!is_resource($source) || get_resource_type($source) !== 'stream') { throw new \InvalidArgumentException('A readable stream is required.'); }
-        if (!is_dir($this->root) || !is_writable($this->root) || is_link($this->root)) { throw new \RuntimeException('Private storage is unavailable.'); }
+        if (!is_dir($this->root) || !is_writable($this->root) || is_link($this->root)) { throw new StorageUnavailable('Private storage is unavailable.'); }
         $id = bin2hex(random_bytes(32)); $temporary = $this->root . '/.stage.' . $id;
         $output = @fopen($temporary, 'xb');
         if ($output === false) { throw new \RuntimeException('Cannot stage content.'); }

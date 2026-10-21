@@ -1,6 +1,6 @@
 # Konkrete WebDAV-Entscheidung
 
-Status: isoliert geprüft und am 22. Oktober 2026 vom Betreiber ausdrücklich freigegeben. Aufnahme und Integration folgen in Iteration 15.
+Status: isoliert geprüft und am 22. Oktober 2026 vom Betreiber ausdrücklich freigegeben. Die Aufnahme ist in Iteration 15 erfolgt; Protokoll- und Lock-Integration folgen.
 
 ## Vorschlag
 
@@ -46,3 +46,7 @@ Die Projektregel in AGENTS.md lautet: „Keine zusätzlichen Laufzeitkomponenten
 ## Betreiberfreigabe
 
 Die Anweisung „nimm die abhängigkeit mit auf“ gibt die konkrete SabreDAV-Abhängigkeit einschließlich benötigter transitiver Pakete frei. Die zusätzliche gemeinsame Auflösung mit Samlas bestehendem Lockfile erfordert sechs neue Pakete, keine Updates oder Entfernungen bestehender Pakete, und meldet keine bekannten Advisories. Die bestehende Anwendung ist zum Abschluss von Iteration 14 noch unverändert; die folgende Integrationsphase setzt die Freigabe um.
+
+## Umsetzung Iteration 15
+
+Die Anwendung nimmt sabre/dav 4.7.1, sabre/event 5.1.9, sabre/http 5.1.13, sabre/uri 2.3.4, sabre/vobject 4.6.1 und sabre/xml 2.2.11 auf. Keine bestehenden Pakete aktualisiert oder entfernt. cURL, DOM, SimpleXML, XMLReader und XMLWriter sind ausdrücklich im Plattformvertrag genannt. Der Protokollprüfer besteht auch mit dem tatsächlichen Anwendungs-Autoloader. App-Passwortverwaltung und deren persistente Migration sind implementiert. Der WebDAV-Endpunkt und dauerhafte gemeinsame Sperren sind damit noch nicht angeschlossen.

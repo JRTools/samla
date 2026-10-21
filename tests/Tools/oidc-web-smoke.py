@@ -118,9 +118,19 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,body,_=req('/account');assert status==200 and 'OIDC Test User' in body,(status,body)
                     user=re.search(r'oidc\.[a-f0-9]{59}',body).group()
                     assert req('/users')[0]==403
+                    status,credentials,_=req('/account/app-passwords');assert status==200
+                    status,created,headers=req('/account/app-passwords/create',{'csrf':csrf(credentials),'label':'HTTP laptop','days':'30'})
+                    assert status==201 and headers['Cache-Control']=='no-store'
+                    secret=re.search(r'samla_[a-f0-9]{32}\.[a-f0-9]{64}',created).group()
+                    status,credentials,_=req('/account/app-passwords');assert status==200 and secret not in credentials
+                    credential=re.search(r'name="credential" value="([a-f0-9]{32})"',credentials).group(1)
+                    assert req('/account/app-passwords/revoke',{'csrf':csrf(credentials),'credential':credential})[0]==303
+                    assert 'Widerrufen' in req('/account/app-passwords')[1]
                     assert req(callback)[0]==401
                     assert req('/account')[0]==200,'Invalid callback must not log out a signed-in user'
                     bootstrap=dict(env,APP_MAINTENANCE='1')
+                    initialized=subprocess.run(php+['bin/storage-init.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                    assert initialized.returncode==0,initialized.stdout+initialized.stderr
                     for _ in range(2):
                         result=subprocess.run(php+['bin/admin-bootstrap.php',user],cwd=project,env=bootstrap,capture_output=True,text=True)
                         assert result.returncode==0,result.stdout+result.stderr
@@ -146,6 +156,11 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                         return ''.join(parts).encode()
                     path='/files/upload';headers={'Content-Type':'multipart/form-data; boundary='+boundary}
                     assert req(path,multipart('bad'),headers)[0]==403
+                    held=Path(str(storage)+'-held');storage.rename(held)
+                    try:
+                        unavailable=req(path,multipart(token),headers)
+                        assert unavailable[0]==503 and 'Dateispeicher' in unavailable[1]
+                    finally:held.rename(storage)
                     assert req(path,multipart(token),headers)[0]==303
                     assert req(path,multipart(token),headers)[0]==409
                     status,files,_=req('/files?space='+space+'&parent='+parent);assert status==200 and 'test.php' in files

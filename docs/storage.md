@@ -14,7 +14,7 @@ Zuerst Code und Composer-Abhängigkeiten aktualisieren. Das Schema während eine
 APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/migrate.php
 ```
 
-Standardmäßig verwendet Samla `var/storage` im Projektverzeichnis. Lege das Verzeichnis mit Modus 0700 unter dem tatsächlichen PHP-FPM-Benutzer an. Alternativ in `.env` einen absoluten privaten Pfad setzen:
+Standardmäßig verwendet Samla `var/storage` im Projektverzeichnis. Lege das Verzeichnis mit Modus 0700 unter dem tatsächlichen PHP-FPM-Benutzer an. Der Betreiber bestätigt ein fehlendes Verzeichnis als Ursache des Uploadfehlers; die Anwendung meldet diesen Fall jetzt verständlich. Alternativ in `.env` einen absoluten privaten Pfad setzen:
 
 ```dotenv
 APP_STORAGE_ROOT=/var/lib/samla/storage
@@ -85,3 +85,20 @@ Pro Lauf werden höchstens 1000 nicht referenzierte reguläre Objekte beziehungs
 ## Noch offene Produktfunktionen
 
 Versionen, endgültige Löschung, rekursive Ordnerkopien, bereichsübergreifende und Massenoperationen, persönliche Speicherbereiche, Medienmetadaten und WebDAV werden schrittweise ergänzt. Die Dateiansicht ist keine Freigabe des gesamten Konzeptumfangs.
+
+
+## Einrichtungswerkzeug ab Iteration 15
+
+Der Elternordner muss vorhanden und für PHP durchquerbar sein. Unter dem PHP-FPM-Benutzer ausführen:
+
+```bash
+APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/storage-init.php
+```
+
+Als root stattdessen den tatsächlichen Plesk-Systembenutzer ausdrücklich angeben (Platzhalter ersetzen):
+
+```bash
+APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/storage-init.php PLESK_SYSTEMBENUTZER
+```
+
+Der Befehl legt ausschließlich das konfigurierte Speicherverzeichnis an, setzt 0700, bei ausdrücklicher Angabe dessen Eigentümer und führt einen Schreibprobe durch. Vorhandene Originaldateien und deren Eigentümer werden nicht rekursiv verändert. Eine Eigentümeränderung ist daher kein Migrationswerkzeug für bestehende Bestände. Übergeordnete Verzeichnisse werden nicht automatisch mit fremdem Eigentümer angelegt. PHP-FPM muss das Verzeichnis zusätzlich innerhalb seines open_basedir erreichen können.

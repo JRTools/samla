@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.15
+Version: 1.16
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 14, siehe Abschnitt 24. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 15, siehe Abschnitt 25. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -623,3 +623,34 @@ Version 1.15: Datei-Lebenszyklus mit expliziten Rechten, typisierter Speicherpro
 ### 24.6 Freigabe für Iteration 15
 
 Am 22. Oktober 2026 gibt der Betreiber die konkret geprüfte SabreDAV-Abhängigkeit ausdrücklich frei. Eine zusätzliche isolierte gemeinsame Auflösung mit Samlas vorhandenen Paketen ergänzt sechs Pakete ohne bestehende Updates/Entfernungen und ohne gemeldete Advisories. Die Freigabe ist erteilt; ein Anhalten zur Bibliotheksentscheidung entfällt. Nach Veröffentlichung der abgeschlossenen Iteration 14 folgt die Integration einschließlich App-Passwörtern und gemeinsamem Lock-Vertrag.
+
+
+## 25. Iteration 15: Freigegebene Bibliothek, eigene App-Passwörter und Speichereinrichtung
+
+### 25.1 Abhängigkeiten
+
+Die ausdrückliche Betreiberfreigabe ist umgesetzt. SabreDAV 4.7.1 und fünf neue transitive Pakete sind in composer.json/composer.lock aufgenommen und installiert. Bestehende Paketversionen wurden nicht verändert. Composer-Plugins/Scripts bleiben deaktiviert. cURL, DOM, SimpleXML, XMLReader und XMLWriter/libxml sind explizite Plattformanforderungen. Die Plattformprüfung besteht unter PHP 8.4.5 und 8.5.4; der Protokollprüfer besteht mit dem tatsächlichen Anwendungsautoloader unter beiden Versionen. Composer meldet keine bekannten Advisories. validate bestätigt die Struktur, mit bekannten Warnungen zur noch offenen Projektlizenz und bewusst exakten OIDC-/DAV-Pins. dependencies.md führt die tatsächlichen Laufzeitpakete und deklarierten Lizenzen auf.
+
+### 25.2 Eigene Gerätezugänge
+
+Der OIDC-Kontobereich bietet App-Passwortanlage, begrenzte Auflistung und Einzelwiderruf. Die eigene aktive frische Identität ist die Berechtigung für diesen Selbstservice; der Akteur stammt ausschließlich aus der Sitzung. Fremde Credentials können weder aufgelistet noch widerrufen werden. Es werden keine Dateirollen erzeugt. Die lokale Entwicklungsanmeldung erhält diese Funktion nicht.
+
+Jeder Zugang hat zufällige unabhängige Credential-Kennung und 256-Bit-Geheimnis, sicheren PASSWORD_DEFAULT-Hash, Bezeichnung sowie Erzeugungs-/Ablauf-/Widerrufszeitpunkt. Gültigkeit 1 bis 90 Tage, maximal 20 aktive Zugänge, begrenzte Übersicht mit aktiven Einträgen zuerst. Das vollständige Geheimnis erscheint nur in der unmittelbaren Erstellungsantwort, nicht in Sitzung, Audit, Outbox oder späterer Liste. POST-/CSRF-Schutz, no-store und bestehende Sicherheitsheader gelten.
+
+Die Authentifizierungsfunktion verweigert Ablauf, Widerruf, lokale Sperren und fehlende Gruppenfrische. Sie begrenzt Hashversuche je Benutzer und serverseitiger Clientadresse pro Minutenfenster und räumt alte gehashte Buckets begrenzt auf. Unbekannte/inaktive Konten erzeugen keine Buckets. Ein positives Credential-Ergebnis ersetzt keine spätere Ressourcenautorisierung. Änderungen verwenden MutationRunner/Validatoren, erneute Eigentümer-/Frischeprüfung und atomare Credentials/Audit/Outbox.
+
+### 25.3 Speichereinrichtung nach Betreiberprüfung
+
+Der Betreiber bestätigt das fehlende Speicherverzeichnis als Ursache der Uploadfehlermeldung. StorageUnavailable liefert jetzt eine verständliche 503-Antwort ohne private Hostpfade. storage-init.php unterstützt die ausdrückliche Ersteinrichtung der konfigurierten Wurzel mit 0700, optional genanntem PHP-FPM-Eigentümer und Schreibprobe. Der Elternordner muss vorhanden/durchquerbar sein. Keine automatische rekursive Eigentümeränderung vorhandener Inhalte.
+
+### 25.4 Prüfung
+
+Vierfachmatrix unter PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 312 Tests, 1202 Assertions (142 Unit-/Architekturtests, 170 Integrationstests). Syntax von 148 eigenen PHP-Dateien geprüft, Migrationen erfolgreich. Neue Fälle prüfen unabhängige Hashes, Ausschluss von Geheimnissen aus Persistenzereignissen und Listen, Widerruf/Idempotenz, fremde Konten, Sperren/Frische, Ablauf, Fehlversuchbegrenzung, unbekannte Konten ohne Buckets, Plugin-Veto/Rollback und einmalige Anzeige/CSRF/Escaping.
+
+Die echten HTTP-/HTTPS-Prüfungen ergänzen App-Passwortanlage ohne Verwaltungsrolle, einmalige Geheimnisanzeige, spätere Liste ohne Geheimnis, Einzelwiderruf und CLI-Speichereinrichtung. Der Speicherfehlerfall wird ebenfalls über einen tatsächlichen Multipart-Upload mit vorübergehend fehlender privater Wurzel geprüft. Detailergebnisse stehen im Prüfprotokoll. Kein Deployment neuer Kontofunktionen auf dem Betreiberhost wird behauptet.
+
+### 25.5 Fortsetzung
+
+Der WebDAV-Endpunkt ist noch nicht angeschlossen. Vor Schreibfreigabe folgen Versions-/Konfliktschutz, gemeinsam für Browser und DAV gültige dauerhafte Sperren und der Protokolladapter. Credential-Widerruf muss auch bei konkreten Ressourcen-/Mutationsprüfungen berücksichtigt werden. Native Clientabnahme, Medienumfang, weitere administrative Oberflächen, vollständiger Recovery-/Lastnachweis und alle in 24.5 genannten übrigen Konzeptpunkte bleiben offen. Die fortlaufende Umsetzung ist weiterhin autorisiert; eine neue Bibliotheksfreigabe für SabreDAV ist nicht mehr erforderlich.
+
+Version 1.16: Tatsächlich installierte freigegebene WebDAV-Bibliothek, sichere OIDC-Kontoselbstverwaltung eigener App-Passwörter und verbesserte private Speichereinrichtung.

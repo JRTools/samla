@@ -58,6 +58,7 @@ final readonly class FileController
             else { $data += $this->files->listing($actor, $space, $this->query($request, 'parent', 32), $request->after()); $page = 'files'; }
             return new Response(200, $this->renderer->render($page, $data));
         } catch (AccessDenied) { return $this->error(403, 'Für diesen Speicherbereich fehlt die Berechtigung oder dein Gruppenstand ist nicht mehr aktuell.', $data); }
+        catch (\Samla\Core\Storage\StorageUnavailable) { return $this->error(503, 'Der private Dateispeicher ist noch nicht eingerichtet oder für PHP nicht beschreibbar. Bitte die Administration um Prüfung bitten.', $data); }
         catch (MutationConflict) { return $this->error(409, 'Dieser Name ist im Zielordner bereits vergeben. Es wurde nichts überschrieben.', $data); }
         catch (\LengthException) { return $this->error(413, 'Die Datei überschreitet 16 MiB oder die Quote des Speicherbereichs.', $data); }
         catch (\InvalidArgumentException) { return $this->error(400, 'Bitte prüfe Dateiname, Zielordner und die Uploadgrenzen des Servers.', $data); }

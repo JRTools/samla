@@ -11,7 +11,8 @@ use Samla\PluginApi\AccessDenied;
 final readonly class OidcWebController
 {
     public function __construct(private OidcConfig $config, private \PDO $pdo, private PdoIdentityRepository $identities,
-        private LoginProvisioner $provisioner, private AdminController $admin, private PageRenderer $renderer = new PageRenderer()) {}
+        private LoginProvisioner $provisioner, private AdminController $admin, private PageRenderer $renderer = new PageRenderer(),
+        private ?AppPasswordController $appPasswords = null) {}
 
     public function handle(Request $request): Response
     {
@@ -56,6 +57,10 @@ final readonly class OidcWebController
             if ($user === false || $user['status'] !== 'active') {
                 unset($_SESSION['identity']);
                 return $this->page('error', 403, ['status' => 403, 'error' => 'Dieser Zugang ist gesperrt.']);
+            }
+            if (str_starts_with($request->path, '/account/app-passwords') && $this->appPasswords !== null) {
+                return $this->appPasswords->handle($request, $session['id'], $_SESSION['csrf'], ['actor' => $session['id'],
+                    'csrf' => $_SESSION['csrf'], 'caps' => $this->admin->capabilities($session['id']), 'flash' => null, 'oidc' => true]);
             }
             if ($request->path === '/account' || $request->path === '/') {
                 if ($request->method !== 'GET') { return new Response(405, headers: ['Allow' => 'GET']); }

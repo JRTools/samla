@@ -77,3 +77,10 @@ MutationContext erhält das optionale readonly storageChange. Für storage.folde
 Kopieren/Ändern verwendet zusätzlich Ziel result; Metadatenoperationen prüfen nach Validatoren noch einmal Identität, sämtliche benötigten Rechte, aktuelle Name-/Elternerwartung, Papierkorbstatus, Elternkette und gegebenenfalls Zyklen. Eine Dateikopie referenziert unveränderlichen vorhandenen Inhalt, aber benötigt erneut logische Quote.
 
 Der Offline-Installer storage.access.grant verwendet Space-Scope mit group/role. Die Offline-Bereinigung storage.orphan.purge verwendet Global-Scope, Systemakteur system.storage und Ziel object. Der Löschguard prüft alte nicht referenzierte reguläre Objekte unter dem Administrationslock erneut; Validatoren können jeden Schritt verhindern. Physische Löschungen haben keine gemeinsame Transaktion mit SQL und werden ausschließlich für nicht referenzierte Objekte eingesetzt.
+
+
+## Eigene App-Passwörter ab Iteration 15
+
+identity.app_password.create und identity.app_password.revoke verwenden Global-Scope und Ziel credential. Der Akteur stammt ausschließlich aus der verifizierten OIDC-Websitzung, nie aus dem Formular. Die eigene Kontoberechtigung verlangt eine aktive frische Identität, Änderungen an fremden Credentials werden abgewiesen. Es erfolgt keine automatische Dateirechtevergabe. Der bestehende MutationRunner ermöglicht Veto und erneute Identitäts-/Eigentümerprüfung sowie atomare Credentials/Audit/Outbox. Geheimnis, Hash und Label werden nicht in Audit/Outbox übernommen.
+
+Die Authentifizierung eines App-Passworts liefert nur ein positives Credential-Ergebnis; die spätere Protokollanbindung muss jede konkrete Ressource erneut über die zentrale Autorisierung prüfen. Ein gültiges App-Passwort ersetzt keine Bereichsrolle. API 0.6 bleibt unverändert.
