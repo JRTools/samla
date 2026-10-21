@@ -1,68 +1,52 @@
-# Prüfprotokoll: Iteration 9
+# Prüfprotokoll: Iteration 10
 
 Datum: 21. Oktober 2026. Projekt: Samla. PHPUnit 13.4.3 aus composer.lock.
 
 | PHP | Datenbank | Unit und Architektur | Integration | Gesamt |
 |---|---|---|---|---|
-| 8.4.5 | MySQL 8.0.46 | 90 Tests, 205 Assertions | 136 Tests, 599 Assertions | 226 Tests, 804 Assertions |
-| 8.5.4 | MySQL 8.0.46 | 90 Tests, 205 Assertions | 136 Tests, 599 Assertions | 226 Tests, 804 Assertions |
-| 8.4.5 | MariaDB 11.8.6 | 90 Tests, 205 Assertions | 136 Tests, 599 Assertions | 226 Tests, 804 Assertions |
-| 8.5.4 | MariaDB 11.8.6 | 90 Tests, 205 Assertions | 136 Tests, 599 Assertions | 226 Tests, 804 Assertions |
+| 8.4.5 | MySQL 8.0.46 | 105 Tests, 317 Assertions | 136 Tests, 599 Assertions | 241 Tests, 916 Assertions |
+| 8.5.4 | MySQL 8.0.46 | 105 Tests, 317 Assertions | 136 Tests, 599 Assertions | 241 Tests, 916 Assertions |
+| 8.4.5 | MariaDB 11.8.6 | 105 Tests, 317 Assertions | 136 Tests, 599 Assertions | 241 Tests, 916 Assertions |
+| 8.5.4 | MariaDB 11.8.6 | 105 Tests, 317 Assertions | 136 Tests, 599 Assertions | 241 Tests, 916 Assertions |
 
-Alle Suiten erfolgreich, ohne PHPUnit-Warnungen oder Deprecations. Die Syntax aller 96 eigenen PHP-Dateien ist unter beiden PHP-Unterversionen geprüft. Die Migrations-CLI meldet unter allen vier Kombinationen ein aktuelles Schema. Keine neuen Migrationen oder Anwendungsbibliotheken. Die PHP-Sessionfunktion wird für die Oberfläche verwendet und von der Diagnose berücksichtigt.
+Alle Suiten erfolgreich, ohne PHPUnit-Warnungen oder Deprecations. Syntax aller 103 eigenen PHP-Dateien unter beiden Versionen geprüft. Migrations-CLI unter allen vier Kombinationen erfolgreich: Schema is current. Keine neuen Migrationen oder Laufzeitbibliotheken. Composer validate erfolgreich, mit dem bereits offenen Hinweis auf die fehlende Projektlizenz.
 
-## Neue Unit- und Integrationsnachweise
+## Neue Protokollnachweise
 
-6 zusätzliche Unitfälle und 14 zusätzliche Integrationsfälle prüfen:
+15 zusätzliche Unitfälle mit synthetischen Zugangsdaten prüfen:
 
-- Entwicklungsadapter nur mit explizitem Opt-in, separatem Datenbankpräfix, Loopback-Bindung/-Client, lokalem Host und gültigem serverseitigem Akteur.
-- Produktions-/Testmodus, FPM, Remoteclient, breite Bindung, falscher Host und Forwarded-Header aktivieren den Adapter nicht.
-- Array-/Überlängenfelder, ungültige Cursor und freie Templatepfade werden abgelehnt; dynamische HTML-Werte werden escaped.
-- Übersicht, Benutzer- und Gruppenseiten mit tatsächlichen Verzeichnisdaten und eigenen globalen Leseberechtigungen.
-- Verwaltungsrechte implizieren keine Leserechte. Reine Leser erhalten keine Formulare und können gefälschte Schreibaufrufe nicht verwenden.
-- Plugin-Einschränkungen sperren Verzeichniszugriffe; unbekannte, lokal gesperrte und veraltete Akteure erhalten keine Daten.
-- CSRF-Fehler verhindern Änderungen und Audit. Erfolgreiche Formulare verwenden 303, feste interne Redirectziele und Sessionmeldungen.
-- Akteurangaben aus Formularen überschreiben den vertrauenswürdig übergebenen Akteur nicht.
-- Statusformulare bewahren den letzten Administrator. Mitgliedschaftsformulare verwenden Delegation und schützen administrative Gruppen.
-- Gruppenanlage/-umbenennung verwenden die vorhandenen Dienste; veraltete Namen führen zu 409.
-- Begrenzte, überlappungsfreie Cursorseiten und keine Issuer-/Subjectausgabe.
-- Mitgliederzahlen zählen unterschiedliche Personen statt manuelle/externe Quellen doppelt.
-- Ungültige Operationen, falsche HTTP-Methode und unbekannte Route erzeugen keine Änderung.
+- Standardmäßig deaktivierte Konfiguration, explizites Opt-in und Fehler bei unvollständigen Einstellungen.
+- HTTPS in Produktion, begrenzte lokale HTTP-Ausnahme, fester Callbackpfad, keine URL-Zugangsdaten, Querys oder Fragmente.
+- Exakten Discovery-Issuer, HTTPS-Endpunkte desselben Origin und angekündigte Unterstützung für Code/S256/Basic.
+- Unabhängige zufällige State-/Nonce-/Verifierwerte und S256-Challenge mit unabhängig berechnetem SHA-256-Vektor.
+- Kein Secret oder Verifier im Authorization-Request; optionale Projekt-Audience als Scope.
+- Einmaligen Callback-Verbrauch einschließlich Fehlern, ersetzte Versuche, Ablaufgrenze und zukünftige Zeitstempel.
+- Strikten State-/Issuervergleich, verpflichtenden Antwort-Issuer bei angekündigter Unterstützung und Ablehnung von Array-/Überlängen-/Steuerzeichenwerten.
+- Ungültigkeit einer ausstehenden Anmeldung nach Client-, Callback- oder Scopewechsel.
+- Token-Requestvorbereitung mit ursprünglichem Callback/Verifier, korrekt percent-kodiertem Basic-Header und ohne Secret im Requestbody.
+- Client-ID als erwartete ID-Token-Audience, unabhängig von der Projektkennung.
+- Redigierte Debugausgaben und keine Reflexion von IdP-Fehlerbeschreibungen.
 
-## Echte HTTP- und Browserprüfungen
+AuthorizationCodeGrant bleibt unbestätigtes Protokollmaterial und wird nicht als Identität verwendet. Diese Tests prüfen keine Tokensignatur.
 
-Zusätzlich zu PHPUnit wurde der eingebaute PHP-Webserver mit einer getrennten samla_dev_*-Datenbank verwendet. Unter PHP 8.4.5 und 8.5.4 mit MySQL 8.0.46 sind die echten HTTP-Prüfungen erfolgreich: Sessioncookie mit HttpOnly/SameSite=Strict, CSRF, Anlage und Umbenennung über POST/Redirect/GET, Namenskonflikt, Sperren/Entsperren, Mitgliedschaftsformulare, Schutz administrativer Gruppen, falscher Host, falsche Methode, unbekannte Route, Schutz nicht öffentlicher Dateien und CSS-Auslieferung. Derselbe Entwicklungsadapter liefert mit APP_ENV=production jeweils 503.
+## CLI und Provider
 
-Ein Headless-Chrome-Browser 156.0.8078.47 mit Playwright prüfte Übersicht, Benutzer und Gruppen unter PHP 8.4.5/MySQL bei 1440×1080 und 390×844 Pixeln. Gruppenanlage, Umbenennung, Mitgliedschaftsformular und Navigation wurden über tatsächliche Bedienelemente ausgeführt. Kein horizontaler Seitenüberlauf und keine pageerror-Ereignisse. Die Desktop- und Mobilansichten wurden zusätzlich anhand interner Screenshots visuell geprüft. Der im Repository enthaltene optionale browser-smoke.cjs lief ebenfalls erfolgreich. Die Browserprüfung wurde nicht zusätzlich gegen MariaDB wiederholt; deren PHP-/Controllerintegration ist in der Vierfachmatrix enthalten.
+Ein isolierter lokaler HTTPS-Testserver mit eigener temporärer Test-CA wurde unter beiden PHP-Versionen verwendet. Je Version wurden gültige Discovery, HTTP-Redirect, falscher Issuer, fremder Token-Origin, ungültiges JSON, Antwort über 64 KiB, nicht vertrauenswürdiges TLS-Zertifikat, deaktiviertes OIDC und HTTP-Callback unter Produktion geprüft. Gültige Discovery ist erfolgreich; alle Fehlerfälle werden mit Exitcode 1 und generischer Fehlermeldung beendet. Redirects lösen keinen zweiten Request aus. Client-Secrets und Benutzerzugangsdaten werden nicht übertragen; die Testserver-Anfragen enthalten keinen Authorization-Header.
 
-Die Testbrowser und ihre Downloads sind temporäre Prüfwerkzeuge und keine Runtime-/Node-Abhängigkeiten von Samla. Produktions-OIDC und echtes HTTPS-Sitzungsverhalten sind dadurch nicht abgenommen.
+Das aktuelle echte Discovery-Dokument von id.jrtools.org wurde separat über HTTPS abgerufen und erfolgreich durch ProviderMetadata geprüft. Die direkte PHP-Streamverbindung zum Live-Provider scheitert in dieser temporären Testumgebung an der DNS-Auflösung. Die erfolgreiche lokale HTTPS-Prüfung und die Metadatenprüfung sind daher ausdrücklich kein erfolgreicher Online-CLI-Durchstich.
 
-## Reproduktion und Grenzen
+Vor dieser Implementierung wurde der echte Authorization-Endpunkt mit neuer Client-ID, lokalem Callback, Code und PKCE S256 geprüft: HTTP 302 zur Login-Seite. Die Login-Seite wurde im Browser erreicht und die Testanmeldung über das geschützte Formular abgesendet. Nach diesem Schritt verhinderte die Browser-Sicherheitsrichtlinie eine weitere Beobachtung. Vollständiger Login, Basic-Tokenaustausch und Claims sind nicht bestätigt. Es wurden keine Tokens oder Secrets in Prüfprotokolle übernommen.
 
-```sh
-composer install
-composer test
-APP_ENV=test composer test:integration
-APP_MAINTENANCE=1 composer migrate
-```
+## Grenzen
 
-Für echte HTTP-/Browserprüfungen eine ausschließlich dafür vorgesehene lokale Entwicklungsinstanz nach web.md bereitstellen. Diese Prüfer legen Gruppen an und verändern Demoidentitäten:
+Keine angeschlossenen OIDC-Webrouten, kein Tokenadapter, keine Signaturprüfung, keine produktive Sitzung und keine Gruppensynchronisierung. Die Weboberfläche bleibt ausschließlich über den bisherigen lokalen Entwicklungsadapter zugänglich. Die Protokolltests ersetzen keine OIDC-Browserabnahme oder Produktivfreigabe. Die HTTP-/Browserbelege der unveränderten Oberfläche stehen im [vorherigen Prüfprotokoll](verification-iteration-9.md); diese Prüfungen wurden in Iteration 10 nicht wiederholt. Die Bibliotheksauswahl, Gruppenclaims und Gruppenfrischerichtlinie bleiben offen.
 
-```sh
-python3 tests/http-smoke.py http://127.0.0.1:8080
-node tests/browser-smoke.cjs http://127.0.0.1:8080
-```
+## Ausgaben der Datenbankmatrix
 
-Der zweite Prüfer braucht separat bereitgestelltes Playwright und einen Browser. Die Anwendung selbst benötigt beides nicht. Die Konfiguration und Testsicherheitsgrenzen stehen in database.md und web.md.
-
-Keine produktive Authentifizierung, kein öffentlicher Betrieb, keine OIDC-/WebDAV-Integration, keine Datei-/Mapping-/Rollenoberfläche. Keine vollständige Accessibility-/Browsermatrix, Coverage-Messung, Last-/Nebenläufigkeitsabnahme oder Restore-Prüfung. Der Entwicklungsadapter bleibt lokal und explizit beschränkt. Outbox-Ereignisse sind persistiert, noch nicht zugestellt.
-
-Historische Ergebnisse: verification-iteration-8.md und die vorherigen Iterationsprotokolle. Laufzeiten, Browserdateien, Screenshots und Datenbanken liegen außerhalb des Repositorys.
-
-## MySQL-Ausgabe
+### MySQL
 
 ```text
-PHP 8.4, lint 96 files
+PHP 8.4, lint 103 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -70,12 +54,12 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: Samla-Projekt/phpunit.xml
 
-................................................................. 65 / 90 ( 72%)
-.........................                                         90 / 90 (100%)
+...............................................................  63 / 105 ( 60%)
+..........................................                      105 / 105 (100%)
 
-Time: 00:00.021, Memory: 20.00 MB
+Time: 00:00.033, Memory: 20.00 MB
 
-OK (90 tests, 205 assertions)
+OK (105 tests, 317 assertions)
 
 
 8.4 / phpunit.integration.xml
@@ -88,7 +72,7 @@ Configuration: Samla-Projekt/phpunit.integration.xml
 ............................................................... 126 / 136 ( 92%)
 ..........                                                      136 / 136 (100%)
 
-Time: 00:08.124, Memory: 28.00 MB
+Time: 00:16, Memory: 28.00 MB
 
 OK (136 tests, 599 assertions)
 
@@ -96,7 +80,7 @@ OK (136 tests, 599 assertions)
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 96 files
+PHP 8.5, lint 103 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -104,12 +88,12 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: Samla-Projekt/phpunit.xml
 
-................................................................. 65 / 90 ( 72%)
-.........................                                         90 / 90 (100%)
+...............................................................  63 / 105 ( 60%)
+..........................................                      105 / 105 (100%)
 
-Time: 00:00.014, Memory: 20.00 MB
+Time: 00:00.034, Memory: 20.00 MB
 
-OK (90 tests, 205 assertions)
+OK (105 tests, 317 assertions)
 
 
 8.5 / phpunit.integration.xml
@@ -122,7 +106,7 @@ Configuration: Samla-Projekt/phpunit.integration.xml
 ............................................................... 126 / 136 ( 92%)
 ..........                                                      136 / 136 (100%)
 
-Time: 00:07.054, Memory: 28.00 MB
+Time: 00:13.723, Memory: 28.00 MB
 
 OK (136 tests, 599 assertions)
 
@@ -130,10 +114,10 @@ OK (136 tests, 599 assertions)
 8.5 / migrate CLI: Schema is current.
 ```
 
-## MariaDB-Ausgabe
+### MariaDB
 
 ```text
-PHP 8.4, lint 96 files
+PHP 8.4, lint 103 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -141,12 +125,12 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: Samla-Projekt/phpunit.xml
 
-................................................................. 65 / 90 ( 72%)
-.........................                                         90 / 90 (100%)
+...............................................................  63 / 105 ( 60%)
+..........................................                      105 / 105 (100%)
 
-Time: 00:00.018, Memory: 20.00 MB
+Time: 00:00.034, Memory: 20.00 MB
 
-OK (90 tests, 205 assertions)
+OK (105 tests, 317 assertions)
 
 
 8.4 / phpunit.integration.xml
@@ -159,7 +143,7 @@ Configuration: Samla-Projekt/phpunit.integration.xml
 ............................................................... 126 / 136 ( 92%)
 ..........                                                      136 / 136 (100%)
 
-Time: 00:05.113, Memory: 28.00 MB
+Time: 00:10.314, Memory: 28.00 MB
 
 OK (136 tests, 599 assertions)
 
@@ -167,7 +151,7 @@ OK (136 tests, 599 assertions)
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 96 files
+PHP 8.5, lint 103 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -175,12 +159,12 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: Samla-Projekt/phpunit.xml
 
-................................................................. 65 / 90 ( 72%)
-.........................                                         90 / 90 (100%)
+...............................................................  63 / 105 ( 60%)
+..........................................                      105 / 105 (100%)
 
-Time: 00:00.015, Memory: 20.00 MB
+Time: 00:00.038, Memory: 20.00 MB
 
-OK (90 tests, 205 assertions)
+OK (105 tests, 317 assertions)
 
 
 8.5 / phpunit.integration.xml
@@ -193,19 +177,10 @@ Configuration: Samla-Projekt/phpunit.integration.xml
 ............................................................... 126 / 136 ( 92%)
 ..........                                                      136 / 136 (100%)
 
-Time: 00:04.748, Memory: 28.00 MB
+Time: 00:08.182, Memory: 28.00 MB
 
 OK (136 tests, 599 assertions)
 
 
 8.5 / migrate CLI: Schema is current.
-```
-
-## HTTP-Ausgabe
-
-```text
-8.4 {"http_smoke": "passed", "checks": "session cookie, CSRF, CRUD forms, conflict, protected admin, membership delegation, host gate, routes, headers"}
-8.4 production dev-access gate: 503
-8.5 {"http_smoke": "passed", "checks": "session cookie, CSRF, CRUD forms, conflict, protected admin, membership delegation, host gate, routes, headers"}
-8.5 production dev-access gate: 503
 ```

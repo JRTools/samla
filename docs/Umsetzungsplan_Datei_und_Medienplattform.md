@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.10
+Version: 1.11
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 9, siehe Abschnitt 19. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 10, siehe Abschnitt 20. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -427,3 +427,35 @@ Zusätzliche echte HTTP-Prüfungen unter beiden PHP-Versionen mit MySQL bestäti
 Es gibt weiterhin keine öffentliche UI-Beitrags-API für Pluginseiten oder Navigation; geschützte Fachabläufe und Leseberechtigungen nutzen bereits die bestehenden Erweiterungsverträge. Browserprüfungen ersetzen keine vollständige Barrierefreiheits-, Last-, Restore- oder produktive OIDC-Sicherheitsabnahme. README, HTTP-Handbuch, API-Hinweise, Entscheidungen, Prüfprotokoll und Plan werden mit dem Code veröffentlicht.
 
 Version 1.10: Erste responsive PHP-Verwaltungsoberfläche mit geschützten Lese-/Schreibabläufen, ausdrücklich lokalem Entwicklungszugang, HTTP-/Browsernachweisen und fortgeschriebener OIDC-Roadmap.
+
+
+## 20. Iteration 10: OIDC-Protokollbasis aus bestätigter Testregistrierung
+
+Die neue Clientregistrierung wird am Authorization-Endpunkt akzeptiert; die Login-Seite ist erreichbar. Authorization Code, PKCE S256 und Basic sind als Integrationsweg bestätigt. Der lokale Callback lautet http://127.0.0.1:8080/auth/callback. Ein kompletter Login einschließlich Token-Austausch ist weiterhin nicht nachgewiesen. Nach dem Absenden des geschützten Loginformulars verhinderte eine Browser-Sicherheitsrichtlinie die weitere Beobachtung. Die Projekt-Audience ist von der für das ID-Token erwarteten Client-ID getrennt. Zugangsdaten werden nicht im Repository oder in diesem Plan gespeichert.
+
+### 20.1 Implementiert
+
+- Separate, standardmäßig deaktivierte OIDC-Prozesskonfiguration mit strikter URL-/Callbackprüfung, Basic-Vorgabe und optionalem ZITADEL-Projekt-Audience-Scope. Produktion verlangt HTTPS; lokale HTTP-Callbacks sind nur unter development/test möglich.
+- Discovery-Metadatenprüfung mit exaktem Issuer, angekündigtem Code/S256/Basic und auf den konfigurierten HTTPS-Origin begrenzten Endpunkten.
+- Interner Login-Ablauf mit unabhängigen zufälligen State-/Nonce-/Verifierwerten, S256-Challenge und serverseitig zu speichernder, fünf Minuten gültiger Transaktion. Jede neue Anmeldung ersetzt den bisherigen Versuch.
+- Einmalige Callback-Verarbeitung, Ablauf-/Konfigurationsbindung und Ablehnung unpassender States, Issuer, Codes und IdP-Fehler. Das Ergebnis bleibt ein unbestätigter Code-Grant und verleiht keine Identität oder Rechte.
+- Vorbereitete serverseitige Token-Requestdaten für Basic und PKCE, ohne Secret im Requestbody. Debugausgaben geben keine Zugangsdaten oder Login-Transaktionswerte aus.
+- CLI-Vorabprüfung über Composer, ohne Datenbank oder Übertragung von Client-/Benutzerzugangsdaten. HTTPS-Zertifikatsprüfung, begrenzte Antwortgröße und keine Redirectfolge.
+
+Keine zusätzliche Laufzeitbibliothek, Migration oder öffentliche Plugin-API wird eingeführt. Die Klassen sind interne Protokollvorbereitung; eine Fachintegration darf weiterhin nur verifizierte Identitäten und die vorhandenen Autorisierungsverträge verwenden.
+
+### 20.2 Prüfung
+
+Vierfachmatrix erfolgreich: PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6 jeweils 241 Tests, 916 Assertions (105 Unit-/Architekturtests, 136 Integrationstests). 103 eigene PHP-Dateien sind syntaktisch geprüft; die Migrations-CLI meldet überall aktuelles Schema. 15 zusätzliche Unitfälle prüfen Konfigurationsgrenzen, Discovery-Vertrauen, PKCE, State, Nonce, Callback-Ablauf, Replay, Konfigurationswechsel, Basic-Kodierung und redigierte Debugausgaben.
+
+Zusätzliche lokale HTTPS-Prüfungen unter beiden PHP-Versionen bestätigen gültige Discovery, Ablehnung nicht vertrauenswürdiger TLS-Zertifikate, keine Redirectfolge, Größen-/JSON-/Issuer-/Originprüfungen, standardmäßiges Opt-in und fehlende Übertragung von Clientzugangsdaten. Das frisch abgerufene Live-Discovery-Dokument erfüllt den neuen Metadatenvertrag. Die direkte PHP-CLI-Verbindung zum Live-Provider scheitert in dieser Testumgebung an der DNS-Auflösung; dies wird nicht als erfolgreicher Online-CLI-Test ausgegeben. Composer-Validierung ist erfolgreich, mit dem bereits offenen Lizenzhinweis.
+
+### 20.3 Offen und nächste Schritte
+
+Die neue Protokollbasis ist noch nicht an den Webeinstieg angeschlossen. OIDC_ENABLED aktiviert keinen Weblogin; /auth/login und /auth/callback sind noch keine aktiven OIDC-Routen. Der lokale Entwicklungszugang bleibt unverändert. Es gibt keine Tokenverifikation, produktive Sitzung oder Gruppensynchronisierung und keine Produktivfreigabe.
+
+Als Nächstes konkrete OIDC-Bibliothek auswählen und vor Einführung abstimmen, Tokenadapter samt Signatur-/Issuer-/Client-Audience-/Nonce-/Zeitprüfung implementieren, serverseitigen Transaktionsverbrauch vor Netzwerk-I/O absichern und Webrouten mit HTTPS-/SameSite-/Logoutvertrag anschließen. Tatsächliche Gruppenclaims, Frischerichtlinie und Erstadministration bleiben festzulegen. Danach vollständigen Login mit dem echten Testprovider und erlaubtem/verweigertem Zugriff abnehmen. Dateidurchstich, WebDAV und die weiteren offenen Pakete bleiben unverändert vorgesehen.
+
+README, OIDC-Handbuch, Entscheidungen, Webhinweise, Prüfprotokoll und dieser Plan werden mit der Phase veröffentlicht.
+
+Version 1.11: Bestätigte OIDC-Testregistrierung in eine getestete Konfigurations-, Discovery-, State-/Nonce-/PKCE- und Callback-Protokollbasis umgesetzt; vollständige Anmeldung bleibt ausdrücklich offen.

@@ -22,7 +22,7 @@ Am 21. Oktober 2026 bestätigt: MariaDB 11.8 oder MySQL 8.0 stehen zur Verfügun
 ## Vor Integration erforderlich
 
 - Hosting: Webserver, PHP-Unterversionen und Erweiterungen, Dateisystem, Uploadgrenzen sowie isolierte Datenbank-Testzugänge.
-- OIDC: Testregistrierung, Callback-URL, Algorithmusauswahl, anonymisierter groups-Claim und Integrationserprobung von Logout. Discovery ist unter https://id.jrtools.org/.well-known/openid-configuration bekannt; siehe oidc-provider.md.
+- OIDC: Testregistrierung, lokaler Callback, Code/PKCE S256 und Basic sind bestätigt. Algorithmusauswahl, tatsächliche Gruppenclaims, Tokenprüfung und Integrationserprobung von Logout bleiben offen; siehe oidc-provider.md.
 - Maximal zulässiges Alter zentral bestätigter Gruppen und Verhalten bei Ablauf.
 - WebDAV-Referenzclient und Grenzen für Datei- und Datenmengen.
 - Freigabe konkreter OIDC- und WebDAV-Bibliotheken. Routing und Templates der ersten lokalen Oberfläche funktionieren mit vorhandenem PHP ohne neue Bibliothek; eine spätere Frameworkentscheidung bleibt gesondert abzustimmen.
@@ -36,3 +36,7 @@ Am 21. Oktober 2026 bestätigt: MariaDB 11.8 oder MySQL 8.0 stehen zur Verfügun
 - https://phpunit.de/announcements/phpunit-13.html
 
 Geprüft am 21. Oktober 2026: PHPUnit 13 ist für PHP 8.4 und neuer vorgesehen. Die aktuelle Testmatrix ist in verification.md dokumentiert.
+
+## OIDC-Protokollbasis ohne zusätzliche Laufzeitbibliothek
+
+Iteration 10 setzt die bestätigten Providerangaben in Konfiguration, Metadatenprüfung und den internen State-/Nonce-/PKCE-Ablauf um. Eine CLI-Vorabprüfung sendet keine Zugangsdaten. Sie verwendet vorhandene PHP-HTTPS-Streams und benötigt erlaubtes allow_url_fopen sowie einen CA-Vertrauensspeicher. Zusätzliche Pakete oder ein eigener Token-Signaturprüfer werden nicht eingeführt. Die Webanmeldung bleibt bis zu Bibliotheksadapter, Sitzungsintegration und erfolgreichem Durchstich gesperrt.

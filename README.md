@@ -6,10 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 9
+## Entwicklungsstand: Iteration 10
 
 Vorhanden sind:
 
+- Getestete OIDC-Protokollbasis: Laufzeitkonfiguration, Discovery-Prüfung, Authorization Code mit PKCE S256, State/Nonce und einmalige Callback-Verarbeitung. Noch keine angeschlossene Webanmeldung oder Tokenprüfung.
 - Erste responsive PHP-Weboberfläche mit Übersicht, Benutzer-/Gruppenverzeichnissen, Statusänderungen, Gruppenanlage/Umbenennung und manuellen Mitgliedschaften.
 - Eigene Leseberechtigungen, begrenzte Verzeichnisseiten, CSRF-Schutz, HTML-Escaping, Sicherheitsheader und ausschließlich lokaler Entwicklungszugang.
 - Experimentelle Plugin-API, atomare Registrierung und zentrale Autorisierung.
@@ -100,7 +101,17 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 81 Tests mit 236 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 241 Tests mit 916 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+
+## OIDC vorbereiten
+
+Die bestätigte Testregistrierung verwendet Authorization Code mit PKCE S256 und `client_secret_basic` (ZITADEL: Basic). `config/environment.example` beschreibt die `OIDC_*`-Prozessvariablen. Client-ID und Secret werden ausschließlich in der eigenen Laufzeitumgebung gesetzt. Eine `.env`-Datei wird nicht automatisch geladen.
+
+```sh
+composer oidc:check
+```
+
+Mit `OIDC_ENABLED=1` und vollständiger OIDC-Konfiguration prüft dieser CLI-Aufruf das Discovery-Dokument über HTTPS. Er sendet weder Client-Secret noch Benutzerzugangsdaten und meldet keine erfolgreiche Anmeldung. PHP benötigt dafür HTTPS-Streams, erlaubtes `allow_url_fopen` und einen gültigen CA-Vertrauensspeicher. `OIDC_ENABLED` aktiviert aktuell ausschließlich die Protokollvorbereitung, keinen Weblogin. Der vorhandene Webzugang bleibt lokal begrenzt. Ablauf, Konfiguration und nächste Integrationsschritte: [OIDC](docs/oidc-provider.md).
 
 ## Architektur und Dokumentation
 

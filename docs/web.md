@@ -6,6 +6,8 @@ Samla hat eine erste responsive, serverseitig gerenderte Oberfläche ohne zusät
 
 Der produktive OIDC-Login ist noch nicht implementiert. Ohne ausdrücklich erlaubten lokalen Entwicklungszugang liefert der Einstiegspunkt 503 und keine Verzeichnisdaten. Die Anwendung ist damit noch nicht produktiv einsetzbar. Die Oberfläche wird als Teil des bestehenden PHP-Repositorys betrieben, ohne separaten Frontendserver oder JavaScript-Build.
 
+Iteration 10 ergänzt die interne OIDC-Protokollbasis und die CLI-Vorabprüfung, schließt aber noch keine OIDC-Webrouten an. `OIDC_ENABLED=1` aktiviert keinen Login und verändert diese Zugangsgrenzen nicht. Siehe [OIDC-Integration](oidc-provider.md).
+
 ## Lokal starten
 
 Eine eigene leere Datenbank mit Namen `samla_dev_local` oder einem anderen `samla_dev_*`-Namen sowie ein darauf begrenztes Konto bereitstellen. Die normalen DB_HOST-, DB_PORT-, DB_USER- und DB_PASSWORD-Prozessvariablen müssen gesetzt sein; die Beispieldatei wird nicht automatisch geladen. Niemals Zugangsdaten committen.

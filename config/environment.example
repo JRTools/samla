@@ -26,3 +26,15 @@ TEST_DB_PASSWORD=
 # Production and FPM reject this adapter even when the flag is enabled.
 APP_WEB_DEV_ACCESS=0
 APP_DEV_ACTOR_ID=
+
+# OIDC protocol preparation and read-only preflight, not yet a web login switch.
+# Values are trusted process variables. No real credentials belong in this file.
+OIDC_ENABLED=0
+OIDC_ISSUER=https://id.jrtools.org
+OIDC_CLIENT_ID=
+OIDC_CLIENT_SECRET=
+OIDC_TOKEN_AUTH_METHOD=client_secret_basic
+# This HTTP callback is permitted only in development/test. Production requires HTTPS.
+OIDC_REDIRECT_URI=http://127.0.0.1:8080/auth/callback
+# Optional ZITADEL project audience, distinct from the ID token's client audience.
+OIDC_ZITADEL_PROJECT_ID=
