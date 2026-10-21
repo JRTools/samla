@@ -29,7 +29,7 @@ final readonly class FileService
     {
         $this->requireAccess($actor, 'files.list', $space);
         $catalog = $this->space($space); $folder = $this->parent($space, $parent);
-        $query = $this->pdo->prepare('SELECT id, name, kind, size_bytes FROM storage_entries WHERE space_id = ? AND parent_id = ? AND id > ? AND trashed_at IS NULL ORDER BY id LIMIT 101');
+        $query = $this->pdo->prepare('SELECT id, parent_id, name, kind, size_bytes, revision, created_at FROM storage_entries WHERE space_id = ? AND parent_id = ? AND id > ? AND trashed_at IS NULL ORDER BY id LIMIT 101');
         $query->execute([$space, $parent, $after ?? '']); $rows = $query->fetchAll(); $next = null;
         if (count($rows) > 100) { array_pop($rows); $next = $rows[99]['id']; }
         return ['space' => $catalog, 'folder' => $folder, 'parent' => $parent, 'rows' => $rows, 'next' => $next,
@@ -72,12 +72,13 @@ final readonly class FileService
         return $id;
     }
     /** @return array{row:array,stream:resource} */
-    public function download(string $actor, string $space, string $id): array
+    public function download(string $actor, string $space, string $id, ?int $expectedRevision = null): array
     {
         $this->requireAccess($actor, 'files.read', $space);
-        $query = $this->pdo->prepare("SELECT name, parent_id, blob_id, size_bytes, sha256 FROM storage_entries WHERE id = ? AND space_id = ? AND kind = 'file' AND trashed_at IS NULL");
+        $query = $this->pdo->prepare("SELECT name, parent_id, blob_id, size_bytes, sha256, revision FROM storage_entries WHERE id = ? AND space_id = ? AND kind = 'file' AND trashed_at IS NULL");
         $query->execute([$id, $space]); $row = $query->fetch();
         if ($row === false) { throw new \InvalidArgumentException('Unknown file.'); }
+        if ($expectedRevision !== null && (int) $row['revision'] !== $expectedRevision) { throw new MutationConflict(); }
         $this->parent($space, $row['parent_id']);
         return ['row' => $row, 'stream' => $this->content->open($row['blob_id'], (int) $row['size_bytes'])];
     }
@@ -114,6 +115,16 @@ final readonly class FileService
         $this->requireAccess($actor, 'files.list', $space); $row = $this->entry($space, $id); $this->parent($space, $row['parent_id']);
         if ($row['trashed_at'] !== null) { throw new \InvalidArgumentException('Entry is trashed.'); }
         return $row;
+    }
+    /** Exact active child lookup. Names are decoded by the transport once, never by this service. */
+    public function child(string $actor, string $space, string $parent, string $name): ?array
+    {
+        $this->requireAccess($actor, 'files.list', $space); EntryName::validate($name);
+        $this->space($space); $this->parent($space, $parent);
+        $q = $this->pdo->prepare('SELECT * FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ? AND trashed_at IS NULL');
+        $q->execute([$space, $parent, $name]); $row = $q->fetch();
+        // The database collation may be case insensitive. DAV paths are exact names.
+        return $row !== false && $row['name'] === $name ? $row : null;
     }
     public function folderChoices(string $actor, string $space): array
     {

@@ -48,6 +48,14 @@ final readonly class AppPasswordService
                 return $q->rowCount() === 1;
             });
     }
+    /** Request-local transports use this selector check again during resource authorization. */
+    public function isCredentialActive(string $actor, string $id): bool
+    {
+        if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !$this->identity->isAccessAllowed($actor)) { return false; }
+        $q = $this->pdo->prepare('SELECT 1 FROM identity_app_passwords WHERE id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > ?');
+        $q->execute([$id, $actor, $this->now()]);
+        return $q->fetchColumn() !== false;
+    }
     /** Validate only the app credential. Callers must separately authorize every requested resource operation. */
     public function authenticate(string $actor, #[\SensitiveParameter] string $password, string $clientAddress): bool
     {

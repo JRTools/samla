@@ -58,6 +58,9 @@ class AppTls(BaseHTTPRequestHandler):
         self.send_header('Content-Length',str(len(payload)));self.end_headers();self.wfile.write(payload);conn.close()
     do_GET=relay
     do_POST=relay
+    do_PROPFIND=relay
+    do_HEAD=relay
+    do_OPTIONS=relay
 with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
     p=Path(temp);name=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME,'Samla test CA')]);now=datetime.datetime.now(datetime.timezone.utc)
     cert=(x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key()).serial_number(x509.random_serial_number()).not_valid_before(now-datetime.timedelta(minutes=1)).not_valid_after(now+datetime.timedelta(hours=1)).add_extension(x509.BasicConstraints(ca=True,path_length=None),critical=True).add_extension(x509.SubjectAlternativeName([x509.IPAddress(ipaddress.ip_address('127.0.0.1'))]),critical=False).sign(key,hashes.SHA256()))
@@ -168,6 +171,29 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,content,headers=req('/files/download?space='+space+'&entry='+entry)
                     assert status==200 and content=='<?php echo 123;'
                     assert headers['Content-Type']=='application/octet-stream' and headers['Content-Disposition'].startswith('attachment;')
+                    # DAV is independent of browser cookies and accepts only an active app password.
+                    status,credentials,_=req('/account/app-passwords')
+                    status,created,_=req('/account/app-passwords/create',{'csrf':csrf(credentials),'label':'DAV HTTP','days':'30'})
+                    assert status==201
+                    dav_secret=re.search(r'samla_[a-f0-9]{32}\.[a-f0-9]{64}',created).group()
+                    dav_auth='Basic '+base64.b64encode((user+':'+dav_secret).encode()).decode()
+                    def dav(method,path,headers=None):
+                        request=urllib.request.Request(app_url+path,headers={'Authorization':dav_auth,**(headers or {})},method=method)
+                        # A separate opener deliberately has no browser cookie jar.
+                        try:response=urllib.request.build_opener(NoRedirect,urllib.request.HTTPSHandler(context=ssl.create_default_context(cafile=str(p/'cert.pem')))).open(request,timeout=20)
+                        except urllib.error.HTTPError as error:response=error
+                        return response.status,response.read().decode(),response.headers
+                    dav_path='/dav/'+space+'/Documents/test.php'
+                    dav_listing=dav('PROPFIND','/dav/'+space+'/Documents/',{'Depth':'1'})
+                    assert dav_listing[0]==207,dav_listing[:2]
+                    status,content,dav_headers=dav('GET',dav_path)
+                    assert status==200 and content=='<?php echo 123;' and 'Set-Cookie' not in dav_headers
+                    assert dav_headers['Content-Type']=='application/octet-stream' and dav_headers['Content-Disposition'].startswith('attachment;')
+                    assert dav('GET',dav_path,{'Range':'bytes=2-4'})[:2]==(206,'php')
+                    assert dav('GET',dav_path,{'If-None-Match':dav_headers['ETag']})[0]==304
+                    status,credentials,_=req('/account/app-passwords')
+                    assert req('/account/app-passwords/revoke',{'csrf':csrf(credentials),'credential':dav_secret[6:38]})[0]==303
+                    assert dav('GET',dav_path)[0]==401
                     for _ in range(2):
                         granted=subprocess.run(php+['bin/storage-space-access.php',user,space,'samla.administrators','manage'],cwd=project,env=bootstrap,capture_output=True,text=True)
                         assert granted.returncode==0,granted.stdout+granted.stderr
@@ -227,7 +253,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV listing/download/range/conditional read/revocation, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

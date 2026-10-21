@@ -14,4 +14,4 @@ Die Authentifizierungsfunktion begrenzt Hashprüfungen auf zehn Versuche je Benu
 
 App-Passwörter verleihen keine Rollen. Jede spätere WebDAV-Anfrage muss zusätzlich für den Benutzer und den konkreten Speicherbereich autorisiert werden. Ein bestehender Browserlogin verwendet weiterhin OIDC und Session/CSRF. App-Passwörter sind keine Browser-Anmeldedaten. Die Oberfläche ist ausschließlich über die verifizierte OIDC-Sitzung erreichbar, nicht über den lokalen Entwicklungsadapter.
 
-SabreDAV ist installiert, aber in dieser Phase noch kein öffentlicher WebDAV-Endpunkt angeschlossen. Dauerhafte gemeinsame Schreibsperren, Versionen und der eigentliche Protokolladapter folgen. Bis dahin sind die Credentials vorbereitet und verwaltbar, aber nicht für Dateizugriffe verwendbar.
+Seit Iteration 18 verwendet der öffentliche WebDAV-Lesezugang diese Credentials für Bereichslisten und Downloads. Bei jeder Ressourcenautorisierung wird der Credentialstatus erneut geprüft. Der Schreibadapter mit gemeinsamen Sperren wird anschließend ergänzt. Einrichtung und derzeitige Grenzen: [webdav.md](webdav.md).

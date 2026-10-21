@@ -13,8 +13,18 @@ $renderer = new PageRenderer();
 $data = ['actor' => null, 'csrf' => '', 'caps' => [], 'flash' => null];
 try {
     $environment = EnvironmentLoader::fromGlobals();
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     $actor = DevelopmentAccess::actor($environment, $_SERVER, PHP_SAPI);
-    if ($actor === null) {
+    if ($path === '/dav' || str_starts_with((string) $path, '/dav/')) {
+        $config = AppConfig::fromEnvironment($environment); $oidc = OidcConfig::fromEnvironment($environment);
+        if ($config->maintenance || $oidc === null) { $response = new Response(503); }
+        elseif (!OidcOrigin::accepts($oidc, $_SERVER, PHP_SAPI)) { $response = new Response(400); }
+        elseif ($path === '/dav') { $response = new Response(308, headers: ['Location' => '/dav/']); }
+        else {
+            $response = (require dirname(__DIR__) . '/bootstrap/dav.php')((new ConnectionFactory())->connect($config->database), $config)
+                ->handle(\Sabre\HTTP\Sapi::getRequest(), (string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+        }
+    } elseif ($actor === null) {
         $oidc = OidcConfig::fromEnvironment($environment);
         if ($oidc === null) {
             $response = new Response(503, $renderer->render('error', $data + ['status' => 503, 'error' => 'Die Anmeldung für diese Installation ist noch nicht eingerichtet.']));

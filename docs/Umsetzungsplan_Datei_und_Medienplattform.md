@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.18
+Version: 1.19
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 17, siehe Abschnitt 27. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 18, siehe Abschnitt 28. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -729,3 +729,27 @@ Echte HTTP-/HTTPS-Anfragen bestätigen zusätzlich 423 für Browser-Papierkorb u
 Die Sperrbasis ist abgeschlossen; der konkrete WebDAV-Protokolladapter wird nun darauf aufgebaut. Eine separate nur von Sabre verwaltete Locktabelle wird ausdrücklich vermieden. Credential-Widerruf, Origin-/Destination-/XML-/If-/ETag-Grenzen und native Clientabnahme müssen im Adapter geprüft werden. Die übrigen Konzeptpunkte bleiben gemäß Statusmatrix offen. Die Fortsetzung ist weiterhin autorisiert.
 
 Version 1.18: Gemeinsame transaktionale Ressourcensperren mit stabiler Zuordnung, differenziertem Ordnerumfang und nachgewiesenem Browser-Schutz.
+
+## 28. Iteration 18: Geschützter WebDAV-Lesezugang
+
+### 28.1 Öffentlicher Adapter
+
+Der öffentliche Einstiegspunkt leitet /dav/ nach derselben kanonischen Origin-/HTTPS- und Wartungsprüfung an einen eigenen Request-lokalen SabreDAV-Adapter weiter. Browser-Sessions und der lokale Entwicklungsakteur sind kein DAV-Authentifizierungsweg. Basic verwendet ausschließlich eigene App-Passwörter; Benutzername ist die bereits angezeigte interne Samla-Kennung. Neue Abhängigkeiten oder Migrationen sind dafür nicht nötig.
+
+OPTIONS, PROPFIND Depth 0/1, GET und HEAD sind freigeschaltet. Alle Schreibmethoden werden vor Seiteneffekten mit 405 verweigert; OPTIONS meldet ausschließlich den aktuellen Funktionsumfang. Die Liste zeigt nur explizit lesbare Bereiche, stabile Bereichskennungen bilden URL-Wurzeln und displayname liefert lesbare Namen. Ordnernamen werden einmal dekodiert und exakt abgefragt. Für Inhaltszugriffe bleibt zusätzlich files.read nötig, ausdrücklich auch vor HEAD und bedingten Antworten.
+
+### 28.2 Sicherheits- und Streaminggrenzen
+
+Ein AuthorizationChecker-Dekorator verbindet die vorhandene vollständige Plugin-/RBAC-Autorisierung mit erneuter Prüfung des konkreten Credentials auf Eigentümer, Ablauf, Widerruf und aktuellen Identitätsstatus. Der Requestkontext speichert nur Kennungen, kein Passwort. Bereits authentifizierte Requests können mit einem zwischenzeitlich widerrufenen Credential keine weitere Ressourcenfreigabe erhalten.
+
+XML ist auf 64 KiB begrenzt; DTDs einschließlich UTF-16-Darstellung und externe Entitäten werden abgewiesen. Ungültige Prozentkodierung, Steuerzeichen, kodierte Trenner, Punktsegmente, Query und Fragment sind keine Dateipfade. Unendliche PROPFIND-Tiefe und Listen oberhalb der technischen Kataloggrenze sind gesperrt. Fehlerantworten enthalten keine Exceptiontexte, Tokens, SQL oder internen Pfade.
+
+Dateien bleiben private Streams mit Attachment und application/octet-stream. Range-Antworten kopieren exakt Content-Length statt bis zum Dateiende. Auch aufrufbare Multipart-Antworten werden erst bei Ausgabe ausgeführt. ETags verwenden Kennung und Revision; der tatsächliche Download prüft den zur Metadatenaufnahme erwarteten Stand erneut. Ein veralteter Knoten liefert keine neuen Bytes unter alten ETag-/Größenangaben. Sabres eigener SAPI-Ausgabepfad ist gepuffert, damit insbesondere 304-Antworten nicht versehentlich vor Samlas Sicherheitsheadern senden. Last-Modified wird noch nicht behauptet.
+
+### 28.3 Verifikation und Fortsetzung
+
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 366 Tests und 1423 Assertions (164 Unit-/Architekturtests, 202 Integrationstests), Syntax aller 168 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Echte HTTP-/HTTPS-Anfragen über den öffentlichen Einstiegspunkt bestätigen den Leseadapter einschließlich Range/304/Widerruf. Neue Fälle decken Bereichssichtbarkeit, Pfadkodierung, GET/HEAD/ETag/Range, Leserecht vor 304, Header-Spoofing, Credentialwiderruf nach Authentifizierung, Kontosperre, XML-/DTD-/Tiefengrenzen, verweigerte Schreibmethoden, Papierkorb-Nachfahren, veraltete Downloadknoten und kontrollierte Streamausgabe ab. Der HTTP-Prüfer verwendet einen separaten Client ohne Browser-Cookies.
+
+Der nächste Schritt ist der Schreibadapter für dieselben Kerndienste und persistenten Sperren. Vor Freischaltung sind If-/Destination-Validierung, begrenzte PUT-Streams, Lock-Backend und atomare Namens-/Versionskonflikte nachzuweisen. Native Clients auf iOS, Android, Windows und macOS bleiben gesondert abzunehmen; derzeit wird keine konkrete Gerätekompatibilität behauptet. Weitere Konzeptpunkte bleiben gemäß vorheriger Statusmatrix offen. Die durchgehende Fortsetzung bleibt autorisiert.
+
+Version 1.19: Öffentlicher DAV-Lesezugang mit App-Passwörtern, wiederholter Ressourcenprüfung, bedingten/gestreamten Downloads und begrenztem XML-Protokolladapter.
