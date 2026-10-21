@@ -15,5 +15,6 @@ final class StoragePlugin implements Plugin
         foreach (['list', 'read', 'create', 'update', 'delete', 'restore'] as $action) {
             $registrar->permission(new Permission('files.' . $action, $this->id(), [Scope::Space]));
         }
+        $registrar->permission(new Permission('files.versions.read', $this->id(), [Scope::Space]));
     }
 }

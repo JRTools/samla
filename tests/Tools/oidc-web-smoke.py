@@ -148,11 +148,11 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,files,_=req('/files?space='+space)
                     parent=re.search(r'parent=([a-f0-9]{32})',files).group(1)
                     boundary='SamlaBoundary'+os.urandom(8).hex()
-                    def multipart(token):
+                    def multipart(token,extra=None,content='<?php echo 123;'):
                         parts=[]
-                        for field,value in [('csrf',token),('space',space),('parent',parent)]:
+                        for field,value in [('csrf',token),('space',space),('parent',parent)]+list((extra or {}).items()):
                             parts.append('--'+boundary+'\r\nContent-Disposition: form-data; name="'+field+'"\r\n\r\n'+value+'\r\n')
-                        parts.append('--'+boundary+'\r\nContent-Disposition: form-data; name="file"; filename="test.php"\r\nContent-Type: application/x-php\r\n\r\n<?php echo 123;\r\n--'+boundary+'--\r\n')
+                        parts.append('--'+boundary+'\r\nContent-Disposition: form-data; name="file"; filename="test.php"\r\nContent-Type: application/x-php\r\n\r\n'+content+'\r\n--'+boundary+'--\r\n')
                         return ''.join(parts).encode()
                     path='/files/upload';headers={'Content-Type':'multipart/form-data; boundary='+boundary}
                     assert req(path,multipart('bad'),headers)[0]==403
@@ -172,6 +172,19 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                         granted=subprocess.run(php+['bin/storage-space-access.php',user,space,'samla.administrators','manage'],cwd=project,env=bootstrap,capture_output=True,text=True)
                         assert granted.returncode==0,granted.stdout+granted.stderr
                     assert req('/files/detail?space='+space+'&entry='+entry)[0]==200
+                    headers={'Content-Type':'multipart/form-data; boundary='+boundary}
+                    replacement=multipart(token,{'entry':entry,'revision':'1'},'updated version')
+                    assert req('/files/replace',replacement,headers)[0]==303
+                    assert req('/files/replace',replacement,headers)[0]==409
+                    assert req('/files/download?space='+space+'&entry='+entry)[1]=='updated version'
+                    assert req('/files/versions?space='+space+'&entry='+entry)[0]==403
+                    granted=subprocess.run(php+['bin/storage-space-access.php',user,space,'samla.administrators','history'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                    assert granted.returncode==0,granted.stdout+granted.stderr
+                    status,versions,_=req('/files/versions?space='+space+'&entry='+entry);assert status==200
+                    historical_version=re.search(r'name="version" value="([a-f0-9]{32})"',versions).group(1)
+                    assert req('/files/version/download?space='+space+'&entry='+entry+'&version='+historical_version)[1]=='<?php echo 123;'
+                    assert req('/files/version/restore',{'csrf':token,'space':space,'entry':entry,'parent':parent,'version':historical_version,'revision':'2'})[0]==303
+                    assert req('/files/download?space='+space+'&entry='+entry)[1]=='<?php echo 123;'
                     def change(identifier,operation,name,expected_parent,target='',new_name=''):
                         return req('/files/change',{'csrf':token,'space':space,'entry':identifier,'operation':operation,'expected_name':name,'expected_parent':expected_parent,'parent':target,'name':new_name})[0]
                     assert change(entry,'rename','test.php',parent,new_name='renamed.php')==303
@@ -205,7 +218,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, sessions, bootstrap, RBAC, space CLI, folders, multipart upload, duplicate/CSRF rejection, streamed attachment, orphan check, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

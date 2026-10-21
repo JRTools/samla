@@ -117,3 +117,14 @@ Bei 503 protokolliert der Webeinstieg jetzt Exception-Klasse sowie Quelldatei un
 Die freigegebene SabreDAV-Bibliothek ist im Lockfile enthalten. Composer install erneut ausführen. cURL, DOM, SimpleXML, XMLReader und XMLWriter einschließlich libxml müssen in CLI und PHP-FPM verfügbar sein; sie sind ausdrücklich im Composer-Plattformvertrag enthalten. Es wird kein zusätzlicher Serverdienst benötigt.
 
 Die App-Passwortmigration ausdrücklich anwenden. Unter „Mein Zugang“ können eigene App-Passwörter erzeugt und einzeln widerrufen werden. Die Oberfläche zeigt neue Geheimnisse einmalig an. Der WebDAV-Endpunkt folgt erst mit dem vollständigen Protokoll-/Lock-Adapter; installierte Bibliotheken allein aktivieren ihn nicht. Weitere Hinweise: app-passwords.md.
+
+
+## Update auf Iteration 16
+
+Neue Versionsmigration vor Verwendung der Dateiablage im Wartungsfenster ausführen:
+
+```bash
+APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/migrate.php
+```
+
+Es gibt keine automatische Vergabe des zusätzlichen Historienleserechts. Gruppen bei Bedarf ausdrücklich mit dem history-Profil ergänzen (storage.md). Die vorhandene Uploadgrenze bleibt standardmäßig unverändert; APP_MAX_UPLOAD_BYTES macht sie konfigurierbar. Eine höhere Grenze verlangt auch passende PHP-/Webserverwerte und verfügbare Bereichsquote. Die neuen Versionstabellen gehören in das konsistente Datenbank-/Dateisystembackup.

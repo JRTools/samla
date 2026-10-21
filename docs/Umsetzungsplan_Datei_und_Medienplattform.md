@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.16.1
+Version: 1.17
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 15, siehe Abschnitt 25. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 16, siehe Abschnitt 26. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -663,3 +663,38 @@ Konzeptabschnitt 8.2 verlangt vor Implementierung verbindliche Referenzclients u
 Die bisherige 16-MiB-Uploadgrenze, 100-Einträge-Seiten und begrenzten Ordnerbaumprüfungen sind vorläufige technische Schutzgrenzen der vorhandenen Umsetzung und keine mit dem Betreiber vereinbarten Zielkapazitäten. Ein erfolgreicher Testlauf beweist diese künftigen Betriebsziele nicht. Die Bibliotheksfreigabe liegt bereits vor; die benötigte Rückfrage betrifft ausschließlich diese im Konzept ausdrücklich geforderten Betriebsangaben, kein erneutes allgemeines Go.
 
 Bis zur Antwort sind die vollständig geprüften und veröffentlichten Phasen einschließlich App-Passwörtern gespeichert. Weiterer Konzeptumfang bleibt gemäß Statusmatrix offen. Weitere konkrete Bild-/Export-/Antwortzeitgrenzen sind spätestens vor den entsprechenden Medien-/Exportphasen festzulegen.
+
+
+## 26. Iteration 16: Betriebsziel, Dateiversionen und konfigurierbare Uploadgrenze
+
+### 26.1 Geklärte Betriebsangaben
+
+Der Betreiber nennt als Größenordnung etwa 1000 Dateien und fünf aktive Benutzer sowie iOS, Android, Windows und macOS als Zielplattformen. Die in 25.6 angefragten Größen-/Clientangaben sind damit für die Fortsetzung ausreichend eingegrenzt; ein weiteres allgemeines Go ist nicht nötig. Konkrete Dateigröße und Gesamtvolumen bleiben offen und werden durch Konfiguration/Quoten nicht als erfundene Betriebsziele festgesetzt. Konkrete native Client-/OS-Versionen und deren Abnahme bleiben vor Auslieferung nachzuweisen.
+
+APP_MAX_UPLOAD_BYTES ersetzt den hart eingebauten Maximalwert. Standard bleibt die bisherige technische Schutzgrenze 16 MiB, technisch konfigurierbar zwischen 1 Byte und 1 TiB. Streaming, tatsächliche Inhaltsbegrenzung und unveränderliche private Objekte bleiben erhalten. Browser-Requests haben 1 MiB zusätzlichen Multipart-Spielraum; PHP- und Webserver-Limits sind separat anzupassen. Die individuelle Bereichsquote ist davon unabhängig.
+
+### 26.2 Versionierung und Konflikte
+
+Die neue Migration ergänzt Eintragsrevisionen und historische Objektverweise. Die Oberfläche bietet Ersetzen eines Dateiinhalts, begrenzte Historienliste neueste Revision zuerst, geschützten Download früherer Inhalte und Wiederherstellung als neuer aktueller Stand. Jede Ersetzung archiviert den bisherigen Inhalt, jede Wiederherstellung sichert vorher den bisherigen aktuellen Stand. Kennung und Name bleiben bestehen. Metadaten-/Papierkorbänderungen erhöhen ebenfalls die Revision.
+
+Ein veralteter erwarteter Revisionsstand oder veränderte Name-/Elternmetadaten verhindern Überschreiben. Autorisierung, Sichtbarkeit, Eltern und Erwartung werden unter dem bestehenden MutationRunner vor und nach Validatoren geprüft. Archivierung, Referenzwechsel, Audit und Outbox sind eine SQL-Transaktion. Physisch bereits veröffentlichte Objekte bleiben bei unklarem Commit sicher erhalten und können als verwaist gemeldet werden.
+
+files.versions.read ist ein zusätzliches atomisches Bereichsrecht, ohne automatische Erweiterung vorhandener Rollen. Der Offline-Installer ergänzt ausdrücklich das separate history-Profil. Historienanzeige/-download verlangen weiterhin files.read/list; Wiederherstellung zusätzlich files.update. Normales Ersetzen verlangt update/list. Kopieren übernimmt den aktuellen Inhalt und startet ohne kopierte Vorgeschichte. Eine technische Schutzgrenze von 1000 historischen Zuständen pro Datei stoppt neue Ersetzungen, ohne eine automatische Lösch-/Retentionsregel zu erfinden.
+
+### 26.3 Quoten, Konsistenz und Erweiterungen
+
+Die gemeinsame Quotenprojektion zählt aktuelle, historische und Papierkorbinhalte. Wiederherstellung und Dateikopien zählen logisch auch dann erneut, wenn physischer unveränderlicher Inhalt geteilt wird. Der bestehende Administrationslock serialisiert die Quote über alle Schreibwege. Konsistenzprüfung und GC berücksichtigen historische Referenzen; eine alte noch referenzierte Version darf nicht gelöscht werden.
+
+MutationContext/StorageChange unterstützen storage.file.replace und storage.version.restore mit neuen Inhaltseigenschaften und Zielkennungen entry/version. Plugins können Inhalte anhand des vorgeschlagenen Hash-/Größen-/Namensvertrags weiterhin ablehnen. Audit/Outbox speichern keine Freitextnamen oder Rohinhalte. Der API-Stand bleibt 0.6.
+
+### 26.4 Nachweis und Fortsetzung
+
+Vierfachmatrix unter PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6: 324 Tests mit 1277 Assertions (144 Unit-/Architekturtests und 180 Integrationstests), 152 eigene PHP-Dateien syntaktisch geprüft, Migrationen erfolgreich. Neue Fälle prüfen Konfigurationsgrenzen, tatsächliche Streamgrenze, historische Inhalte und Wiederherstellung, Revisionserwartungen, Quoten, getrennte Rechte, fremde Versionen, Papierkorb-Nachfahren, GC-Schutz und Plugin-Rollback.
+
+Ein isolierter 1000-Dateien-Katalog wird über zehn Seiten ohne fehlende oder doppelte Einträge gelesen. Fünf tatsächlich gleichzeitig gestartete PHP-Prozesse werden über eine Startbarriere freigegeben; bei Quote für drei Uploads werden exakt drei gespeichert und zwei abgewiesen. Die Prozesse verwenden denselben berechtigten Testakteur. Das prüft gemeinsame Quotenserialisierung, nicht einen vollständigen Fünfbenutzer-/Crash-/Leistungsnachweis.
+
+Die echte HTTP-/HTTPS-Prüfung ergänzt Multipart-Ersetzen, Abweisung eines veralteten Replacements mit 409, zunächst verweigerte Historie, ausdrückliche history-Freigabe, Historien-Attachmentdownload und Wiederherstellung. Die bestehenden OIDC-, App-Passwort-, Rollen-, Papierkorb-, Konsistenz- und Einrichtungsprüfungen bleiben erhalten. Detaillierte Ergebnisse stehen im Prüfprotokoll; neue Funktionen sind nicht auf dem Betreiberhost deployed.
+
+Nächste Phase: dauerhafte gemeinsame Ressourcensperren für Browser und DAV, danach der konkrete WebDAV-Protokolladapter. Native Clients, erweiterte Dateioperationen, Medien, administrative Restfunktionen und die übrige Konzeptabnahme bleiben offen. Die Fortsetzung ist durchgehend autorisiert.
+
+Version 1.17: Abgestimmter Größen-/Plattformrahmen, versionierte Inhalte mit separatem Historienrecht, quotenkorrekte Referenzen und tatsächlich geprüfte Parallelitätsgrenze.

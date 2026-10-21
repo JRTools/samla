@@ -84,3 +84,10 @@ Der Offline-Installer storage.access.grant verwendet Space-Scope mit group/role.
 identity.app_password.create und identity.app_password.revoke verwenden Global-Scope und Ziel credential. Der Akteur stammt ausschließlich aus der verifizierten OIDC-Websitzung, nie aus dem Formular. Die eigene Kontoberechtigung verlangt eine aktive frische Identität, Änderungen an fremden Credentials werden abgewiesen. Es erfolgt keine automatische Dateirechtevergabe. Der bestehende MutationRunner ermöglicht Veto und erneute Identitäts-/Eigentümerprüfung sowie atomare Credentials/Audit/Outbox. Geheimnis, Hash und Label werden nicht in Audit/Outbox übernommen.
 
 Die Authentifizierung eines App-Passworts liefert nur ein positives Credential-Ergebnis; die spätere Protokollanbindung muss jede konkrete Ressource erneut über die zentrale Autorisierung prüfen. Ein gültiges App-Passwort ersetzt keine Bereichsrolle. API 0.6 bleibt unverändert.
+
+
+## Versionierte Inhalte ab Iteration 16
+
+MutationContext akzeptiert storage.file.replace und storage.version.restore mit verpflichtendem StorageChange im exakten Space-Scope und Zielen entry/version. Vorschlag: unveränderlicher logischer Name, Elternkennung, neue Größe und SHA-256. Das Ziel version ist die Kennung der neu archivierten bisherigen Revision. Audit/Outbox behalten ausschließlich Kennungen. Die Revisionserwartung, aktuelle Rechte, Eltern-/Papierkorbsichtbarkeit und Metadaten werden unter MutationRunner vor und nach Validatoren geprüft. Quotenberechnung, Archivierung, Referenzwechsel und Audit/Outbox sind atomar.
+
+Das zusätzliche atomare Bereichsrecht files.versions.read erlaubt keine aktuelle Dateioperation und wird nicht automatisch vergeben. Historienanzeige/-download verlangen außerdem files.read und files.list. Wiederherstellung benötigt zusätzlich files.update. Plugin-Veto lässt aktuellen Inhalt und Historie unverändert; ein bereits physisch publiziertes unreferenziertes Objekt kann bis zur kontrollierten Bereinigung erhalten bleiben.

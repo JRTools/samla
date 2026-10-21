@@ -42,3 +42,8 @@ Variablenersetzung, `${NAME}`, Shellausführung, PHP-Ausführung, mehrzeilige Li
 Die sichere Vorlage verwendet `APP_ENV=production`, deaktivierten Entwicklungszugang und deaktiviertes OIDC. Für die lokale UI-Erprobung die in [web.md](web.md) genannten Entwicklungswerte in `.env` setzen oder explizit als Prozessvariablen übersteuern. Alle vorhandenen Loopback-/SAPI-/Host-/Datenbankgrenzen bleiben wirksam.
 
 `OIDC_ENABLED=1` aktiviert den angeschlossenen Weblogin, sobald Clientkonfiguration, Datenbank und HTTPS-Routing eingerichtet sind. Die Erstadministration erfordert einen ausdrücklichen CLI-Schritt. Siehe [installation.md](installation.md). Die sichere Vorlage aktiviert den Login nicht automatisch; der lokale Entwicklungsadapter bleibt unabhängig begrenzt.
+
+
+## Uploadgrenze ab Iteration 16
+
+APP_MAX_UPLOAD_BYTES ist eine positive ganze Bytezahl zwischen 1 und 1099511627776. Standard 16777216 bleibt eine technische Schutzgrenze. Der Inhalt wird gestreamt begrenzt; Browser-Requests haben zusätzlich 1 MiB Multipart-Spielraum. PHP-/Webserver-Limits müssen separat passen. Die individuelle Bereichsquote bleibt unabhängig und umfasst seit Iteration 16 aktuelle, historische und Papierkorbinhalte.

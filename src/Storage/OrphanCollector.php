@@ -35,6 +35,8 @@ final readonly class OrphanCollector
         if ($stat === false || $stat['mtime'] > $cutoff || $stat['nlink'] !== 1) { return false; }
         $blob = str_starts_with($name, '.stage.') ? substr($name, 7) : $name;
         $query = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE blob_id = ? LIMIT 1'); $query->execute([$blob]);
+        if ($query->fetchColumn() !== false) { return false; }
+        $query = $this->pdo->prepare('SELECT 1 FROM storage_versions WHERE blob_id = ? LIMIT 1'); $query->execute([$blob]);
         return $query->fetchColumn() === false;
     }
 }

@@ -20,5 +20,5 @@ return static function (\PDO $pdo, AppConfig $config): AdminController {
         new UserStatusService($identity, $auth, $mutations), new GroupDetailsService($identity, $auth, $mutations),
         new GroupMembershipService($identity, $auth, new RbacGroupMembershipPolicy($roles, $identity, $auth, $runtime, $resources), $resources, $mutations),
         new PageRenderer(), new FileController(new FileService($pdo, $auth, $mutations,
-            new LocalContentStore($config->storageRoot))));
+            new LocalContentStore($config->storageRoot, $config->maxUploadBytes))));
 };

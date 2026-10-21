@@ -32,7 +32,7 @@ final readonly class MutationContext
         }
         $groupOperation = in_array($operation, ['identity.group.create', 'identity.group.rename'], true);
         $storageOperation = in_array($operation, ['storage.folder.create', 'storage.file.upload', 'storage.entry.rename', 'storage.entry.move',
-            'storage.file.copy', 'storage.entry.trash', 'storage.entry.restore'], true);
+            'storage.file.copy', 'storage.entry.trash', 'storage.entry.restore', 'storage.file.replace', 'storage.version.restore'], true);
         if ($storageOperation !== ($storageChange !== null) || ($storageOperation && ($scope !== Scope::Space || !isset($targets['entry'])))) {
             throw new \InvalidArgumentException('Storage proposal must match its operation.');
         }

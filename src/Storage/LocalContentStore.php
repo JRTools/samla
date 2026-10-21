@@ -7,8 +7,9 @@ final readonly class LocalContentStore
 {
     public const MAX_BYTES = 16777216;
     public string $root;
-    public function __construct(string $root)
+    public function __construct(string $root, public int $maxBytes = self::MAX_BYTES)
     {
+        if ($maxBytes < 1 || $maxBytes > 1099511627776) { throw new \InvalidArgumentException('Invalid upload limit.'); }
         if (!str_starts_with($root, '/') || str_contains($root, "\0")) { throw new \InvalidArgumentException('Absolute storage root required.'); }
         // A hosting sandbox may prohibit stat() on ancestors above its allowed root.
         // Treat that server-configured boundary as trusted and inspect only within it.
@@ -57,7 +58,7 @@ final readonly class LocalContentStore
                 $chunk = fread($source, 65536);
                 if ($chunk === false || ($chunk === '' && !feof($source))) { throw new \RuntimeException('Content read failed.'); }
                 $size += strlen($chunk);
-                if ($size > self::MAX_BYTES) { throw new \LengthException('Upload exceeds 16 MiB.'); }
+                if ($size > $this->maxBytes) { throw new \LengthException('Upload exceeds the configured limit.'); }
                 hash_update($hash, $chunk);
                 $offset = 0;
                 while ($offset < strlen($chunk)) {

@@ -56,4 +56,13 @@ final class LocalContentStoreTest extends TestCase
             self::assertSame("ROOT_OK\nLINK_REJECTED\nROOT_REJECTED\n", $out); self::assertSame('', $err);
         } finally { unlink($script); unlink($allowed . '/link'); rmdir($allowed . '/src/Storage'); rmdir($allowed . '/src'); rmdir($allowed . '/public'); rmdir($root); rmdir($allowed); }
     }
+    public function testConfiguredLimitIsEnforcedByTheStreamWriter(): void
+    {
+        $root = sys_get_temp_dir() . '/samla-configured-' . bin2hex(random_bytes(8)); mkdir($root,0700);
+        $stream = fopen('php://temp','w+b'); fwrite($stream,'four'); rewind($stream);
+        try {
+            try { (new LocalContentStore($root,3))->publish($stream); self::fail('Configured limit ignored.'); }
+            catch (\LengthException) { self::assertSame([],array_values(array_diff(scandir($root),['.','..']))); }
+        } finally { fclose($stream); rmdir($root); }
+    }
 }

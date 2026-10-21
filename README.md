@@ -6,11 +6,12 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 15 (App-Passwörter und WebDAV-Abhängigkeit)
+## Entwicklungsstand: Iteration 16 (Dateiversionen und konfigurierbare Uploads)
 
 Vorhanden sind:
 
-- Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads bis 16 MiB, geschützten Attachment-Downloads, Umbenennen, Verschieben, Einzeldateikopien und Papierkorb/Wiederherstellung. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
+- Dateiversionen mit Konfliktschutz, getrenntem Historienleserecht, Download alter Inhalte und Wiederherstellung als neuer Stand. Frühere Inhalte zählen zur Quote und werden durch Konsistenzprüfung/Bereinigung geschützt.
+- Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads mit konfigurierbarer Grenze (Standard 16 MiB), geschützten Attachment-Downloads, Umbenennen, Verschieben, Einzeldateikopien und Papierkorb/Wiederherstellung. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
 
 - Eigene App-Passwörter nach OIDC-Anmeldung: einmalige Anzeige, sichere Hashes, Ablauf und Einzelwiderruf, aktuelle Identitätsprüfung, begrenzte Authentifizierungsversuche und Audit/Outbox. [Dokumentation](docs/app-passwords.md).
 - Gemeinsame `.env`-Konfiguration für Web und CLI mit Prozessvorrang und sicherer Vorlage `example.env`.
@@ -107,7 +108,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 312 Tests mit 1202 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 324 Tests mit 1277 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 
@@ -158,3 +159,5 @@ Iteration 14 ergänzt typisierte StorageChange-Vorschläge für Plugin-Validator
 Iteration 15: App-Passwörter sind über den OIDC-Kontobereich verwaltbar; ein angeschlossener WebDAV-Endpunkt folgt erst mit den gemeinsamen Sperr-/Versionierungsdiensten. Fehlender privater Speicher führt jetzt zu einer verständlichen Antwort; bin/storage-init.php unterstützt die sichere Ersteinrichtung mit ausdrücklichem PHP-FPM-Eigentümer.
 
 Die vorhandenen Upload-/Listen-/Baumgrenzen sind vorläufige technische Schutzgrenzen. Vor der nächsten WebDAV-Schreib-/Lastabnahme werden gemäß Konzept 8.2 Bestandsgröße, maximale Dateigröße, parallele Nutzung und konkrete Referenzclients mit dem Betreiber festgelegt.
+
+Iteration 16: Betriebsziel sind etwa 1000 Dateien und fünf gleichzeitig aktive Benutzer, mit iOS, Android, Windows und macOS als Zielplattformen. Ein 1000-Dateien-Katalog und fünf gleichzeitig gestartete PHP-Uploadprozesse sind in der Datenbankmatrix geprüft. Das ist keine native Geräteclientabnahme und kein vollständiger Lastnachweis. APP_MAX_UPLOAD_BYTES macht die vorläufige 16-MiB-Schutzgrenze konfigurierbar; konkrete größere Datei-/Volumenziele sind noch nicht vereinbart. WebDAV-Schreibsperren und Protokollanbindung werden weiter umgesetzt.

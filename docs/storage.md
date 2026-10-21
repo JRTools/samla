@@ -84,7 +84,7 @@ Pro Lauf werden höchstens 1000 nicht referenzierte reguläre Objekte beziehungs
 
 ## Noch offene Produktfunktionen
 
-Versionen, endgültige Löschung, rekursive Ordnerkopien, bereichsübergreifende und Massenoperationen, persönliche Speicherbereiche, Medienmetadaten und WebDAV werden schrittweise ergänzt. Die Dateiansicht ist keine Freigabe des gesamten Konzeptumfangs.
+Endgültige Löschung, rekursive Ordnerkopien, bereichsübergreifende und Massenoperationen, persönliche Speicherbereiche, Medienmetadaten und WebDAV werden schrittweise ergänzt. Die Dateiansicht ist keine Freigabe des gesamten Konzeptumfangs.
 
 
 ## Einrichtungswerkzeug ab Iteration 15
@@ -102,3 +102,28 @@ APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/storage-init.php PLESK_SYSTEMBE
 ```
 
 Der Befehl legt ausschließlich das konfigurierte Speicherverzeichnis an, setzt 0700, bei ausdrücklicher Angabe dessen Eigentümer und führt einen Schreibprobe durch. Vorhandene Originaldateien und deren Eigentümer werden nicht rekursiv verändert. Eine Eigentümeränderung ist daher kein Migrationswerkzeug für bestehende Bestände. Übergeordnete Verzeichnisse werden nicht automatisch mit fremdem Eigentümer angelegt. PHP-FPM muss das Verzeichnis zusätzlich innerhalb seines open_basedir erreichen können.
+
+
+## Dateiversionen ab Iteration 16
+
+„Eintrag verwalten“ bietet „Dateiinhalt ersetzen“. Die Datei behält ihre Kennung und ihren Namen; ihr vorheriger unveränderlicher Inhalt wird als Historie gesichert. Ein Formular enthält die erwartete Revision. Bei inzwischen geänderten Inhalten oder Metadaten wird mit 409 abgebrochen, ohne den aktuellen Stand zu überschreiben. Umbenennen, Verschieben und Papierkorbänderungen erhöhen ebenfalls die Revision. Der alte Inhalt wird bei einer Ersetzung nicht automatisch gelöscht.
+
+Historische Inhalte verlangen zusätzlich zu files.read/list das eigene Bereichsrecht files.versions.read. Es wird bestehenden Gruppen nicht automatisch hinzugefügt. Ausdrücklich ergänzen:
+
+```bash
+APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/storage-space-access.php ACTOR_ID SPACE_ID GROUP_ID history
+```
+
+Das Profil history ergänzt ausschließlich dieses zusätzliche Recht. Die Gruppe braucht weiterhin ihre passenden list/read- und bei Änderungen update-Rechte. Vorhandene reservierte manage/read/contribute-Rollen werden nicht umgedeutet. Über „Dateiversionen ansehen“ sind frühere Inhalte als geschützte Attachments downloadbar. „Als neuen Stand wiederherstellen“ benötigt zusätzlich files.update, sichert den bisherigen Stand und legt den ausgewählten alten Inhalt als neue aktuelle Revision fest. Die Historie wird neueste Revision zuerst auf höchstens 100 Zeilen pro Seite angezeigt. Kopieren einer Datei übernimmt ihren aktuellen Inhalt, nicht ihre gesamte Historie.
+
+Alle aktuellen, historischen und Papierkorbinhalte zählen zur logischen Bereichsquote. Wiederherstellen zählt den neuen aktuellen Inhalt erneut, auch wenn er sich unveränderlichen physischen Speicher mit einer alten Version teilt. Die Quotenprüfung erfolgt unter dem gemeinsamen Administrationslock. Eine Schutzgrenze von 1000 historischen Zuständen pro Datei stoppt weitere Ersetzungen, ohne alte Zustände automatisch zu entfernen. Das ist keine vereinbarte Aufbewahrungs-/Löschrichtlinie. Ein Mechanismus zur gezielten endgültigen Löschung folgt separat.
+
+Konsistenzprüfung und Garbage-Collection berücksichtigen auch historische Referenzen. Bei unklarem Commit werden neue veröffentlichte Objekte weiter erhalten; verwaiste Objekte bleiben über den Wartungsablauf prüfbar. Für Backup/Restore müssen SQL und alle physischen Objekte gemeinsam gesichert werden.
+
+### Uploadgrenze
+
+APP_MAX_UPLOAD_BYTES setzt die maximale Inhaltsgröße als ganze Bytezahl, Standard 16777216. Zulässig sind technische Werte von 1 Byte bis 1 TiB; dadurch wird keine entsprechende Kapazität des Hosts zugesichert. PHP upload_max_filesize, post_max_size und das Webserver-Requestlimit müssen dazu passen; für Multipart einen kleinen zusätzlichen Overhead erlauben. Samlas Browser-Requestgrenze folgt dem konfigurierten Maximum plus 1 MiB. Die eigentliche Inhaltsgrenze wird während des Streams unabhängig vom deklarierten Content-Length geprüft. Die Bereichsquote ist davon getrennt.
+
+### Vereinbarter Prüfbereich
+
+Geplanter Bestand: ungefähr 1000 Dateien, fünf aktive Benutzer; Zielplattformen iOS/Android/Windows/macOS. Die Integrationstests lesen einen 1000-Dateien-Katalog über zehn Seiten ohne Verluste/Dubletten und starten fünf PHP-Prozesse über eine gemeinsame Startbarriere. Bei Quote für drei der fünf Uploads werden genau drei gespeichert und zwei abgewiesen. Das belegt dieses begrenzte Parallelitätsverhalten; weitere Crash-/Leistungs-/native Clientprüfungen bleiben erforderlich.

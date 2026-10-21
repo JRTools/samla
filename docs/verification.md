@@ -1,19 +1,19 @@
-# Prüfung Iteration 15
+# Prüfung Iteration 16
 
-Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 312 Tests und 1202 Assertions (142 Unit-/Architekturtests, 170 Integrationstests). Syntax aller 148 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Keine PHPUnit-Warnungen/Deprecations.
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 324 Tests, 1277 Assertions (144 Unit-/Architekturtests, 180 Integrationstests). Syntax aller 152 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Keine PHPUnit-Warnungen/Deprecations.
 
-Neue Integrationstests prüfen zufällige Credential-Kennung/Geheimnis, echten PASSWORD_DEFAULT-Hash, Ausschluss von Geheimnissen aus Listen/Audit/Outbox, unabhängige Konten, unmittelbaren Widerruf und dessen Idempotenz, lokale Sperren/Gruppenfrische, Ablauf auch nach frischer Anmeldung, Fehlversuchbegrenzung und unbekannte Konten ohne Bucket, Plugin-Veto/Rollback sowie Methoden/CSRF/Escaping/einmalige Webanzeige.
+Neue Fälle prüfen konfigurierbare Uploadgrenzen und tatsächliches begrenztes Streaming, echte frühere Inhalte, Wiederherstellung als neuer Stand, veraltete Revision vor Lesen des Eingabestreams, quotenkorrekte Versionsspeicherung ohne stilles Entfernen, separate Historienrechte, fremde Versionskennungen, Papierkorbvorfahren, Schutz historischer Objekte vor GC, Plugin-Veto/Rollback und Versionsformulare. Nach der Änderung auf neueste Revision zuerst wurde die vollständige Matrix erneut ausgeführt.
 
-Erneuter echter HTTP-Durchstich unter PHP 8.4 und 8.5 sowie zusätzlicher HTTPS-Produktionskonfiguration unter PHP 8.4 erfolgreich. Er umfasst zusätzlich eigene App-Passwortanlage vor Rollenvergabe, einmalige Geheimnisanzeige, geheimefreie spätere Liste, Widerruf, Storage-Init-CLI und tatsächlichen Upload bei vorübergehend fehlender privater Speicherwurzel (verständliche 503-Antwort); anschließend normaler Upload und alle bestehenden Speicher-/OIDC-/RBAC-Prüfungen erfolgreich.
+Ein isolierter Katalog mit 1000 Dateien wird über zehn begrenzte Seiten ohne Dubletten/Verluste gelesen. Fünf PHP-Unterprozesse warten an einer Startbarriere und laden gleichzeitig als derselbe berechtigte Testakteur zehn Bytes hoch. Bei Quote von 30 Bytes entstehen genau drei Dateien und drei erfolgreiche Auditereignisse; zwei Uploads werden abgewiesen. Dieser tatsächliche Konkurrenztest ist Teil aller vier Matrixkombinationen. Er belegt Quotenserialisierung in diesem Szenario, keinen umfassenden Mehrbenutzer-/Crash-/Lastnachweis.
 
-Die tatsächlich installierte SabreDAV-4.7.1-Auflösung ergänzt sechs Pakete, ändert oder entfernt keine bestehenden Paketversionen. Keine bekannten Advisories bei der Auflösung. Composer check-platform-reqs --no-dev besteht unter PHP 8.4.5 und 8.5.4 mit den erforderlichen Erweiterungen einschließlich cURL und XML. Für PHP 8.5 wurde das passende cURL-Testmodul aus dem zum Runtime-Snapshot gehörigen Paket mit SHA-256-Prüfung ergänzt, ohne Systeminstallation. Der optionale DAV-Protokollprüfer besteht mit dem echten Anwendungs-Autoloader unter beiden PHP-Versionen. Composer validate bestätigt eine gültige Struktur und meldet bekannte Warnungen zur fehlenden Projektlizenz und bewusst exakten Pins; --strict ist deshalb kein warnungsfreier Erfolg.
+Der erneute echte HTTP-/HTTPS-Durchstich unter PHP 8.4/8.5 und zusätzlich PHP 8.4-HTTPS-Produktionskonfiguration prüft Multipart-Ersetzen, 409 für veraltete Revision, zunächst 403 ohne Historienrecht, explizite Offline-history-Freigabe, historische Attachments und Wiederherstellung. Alle bestehenden OIDC-, App-Passwort-, Gruppen-/Rollen-, Datei-/Papierkorb-, Storage-Init-/Konsistenz-/GC-Prüfungen bestehen. Reproduktion über tests/Tools und ausdrücklich isolierte media_platform_test_*-Datenbanken; die HTTP-Werkzeuge leeren Anwendungstabellen.
 
-Kein öffentlicher DAV-Endpunkt, keine dauerhaften gemeinsamen DAV-/Browserlocks oder native Clientkompatibilität sind in dieser Phase behauptet. Der Betreiber bestätigt die erfolgreiche Korrektur des fehlenden Speicherverzeichnisses; neue App-Passwortfunktionen wurden hier nicht auf seinem Host deployed. Vollständige Last-/Crash-/Restore-, visuelle und native Clientabnahme bleiben offen. Vorangegangene Prüfung: verification-iteration-14.md.
+Betriebsangabe des Betreibers: ungefähr 1000 Dateien, fünf aktive Benutzer, iOS/Android/Windows/macOS. Konkrete native Clients/OS-Versionen, große Datei-/Volumenziele und deren Leistungs-/Abbruchverhalten sind weiterhin nicht abgenommen. Die konfigurierbare technische Grenze bis 1 TiB ist keine Zusage solcher Hostkapazität. Keine neuen Funktionen auf dem Betreiberhost deployed. Gemeinsame DAV-/Browserlocks und öffentlicher DAV-Endpunkt folgen. Vollständiger Restore-/Crash-/Lastnachweis und visuelle/native Abnahme bleiben offen. Vorangegangene Prüfung: verification-iteration-15.md.
 
 ### locked-matrix-results.txt
 
 ```text
-PHP 8.4, lint 148 files
+PHP 8.4, lint 152 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -21,13 +21,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 142 ( 44%)
-............................................................... 126 / 142 ( 88%)
-................                                                142 / 142 (100%)
+...............................................................  63 / 144 ( 43%)
+............................................................... 126 / 144 ( 87%)
+..................                                              144 / 144 (100%)
 
-Time: 00:10.088, Memory: 24.00 MB
+Time: 00:04.801, Memory: 24.00 MB
 
-[30;42mOK (142 tests, 466 assertions)[0m
+[30;42mOK (144 tests, 476 assertions)[0m
 
 
 8.4 / phpunit.integration.xml
@@ -36,19 +36,19 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 170 ( 37%)
-............................................................... 126 / 170 ( 74%)
-............................................                    170 / 170 (100%)
+...............................................................  63 / 180 ( 35%)
+............................................................... 126 / 180 ( 70%)
+......................................................          180 / 180 (100%)
 
-Time: 00:21.476, Memory: 28.00 MB
+Time: 00:18.342, Memory: 28.00 MB
 
-[30;42mOK (170 tests, 736 assertions)[0m
+[30;42mOK (180 tests, 801 assertions)[0m
 
 
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 148 files
+PHP 8.5, lint 152 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -56,13 +56,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 142 ( 44%)
-............................................................... 126 / 142 ( 88%)
-................                                                142 / 142 (100%)
+...............................................................  63 / 144 ( 43%)
+............................................................... 126 / 144 ( 87%)
+..................                                              144 / 144 (100%)
 
-Time: 00:06.611, Memory: 24.00 MB
+Time: 00:04.473, Memory: 24.00 MB
 
-[30;42mOK (142 tests, 466 assertions)[0m
+[30;42mOK (144 tests, 476 assertions)[0m
 
 
 8.5 / phpunit.integration.xml
@@ -71,13 +71,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 170 ( 37%)
-............................................................... 126 / 170 ( 74%)
-............................................                    170 / 170 (100%)
+...............................................................  63 / 180 ( 35%)
+............................................................... 126 / 180 ( 70%)
+......................................................          180 / 180 (100%)
 
-Time: 00:22.749, Memory: 28.00 MB
+Time: 00:19.420, Memory: 28.00 MB
 
-[30;42mOK (170 tests, 736 assertions)[0m
+[30;42mOK (180 tests, 801 assertions)[0m
 
 
 8.5 / migrate CLI: Schema is current.
@@ -87,7 +87,7 @@ Time: 00:22.749, Memory: 28.00 MB
 ### mariadb-matrix-results.txt
 
 ```text
-PHP 8.4, lint 148 files
+PHP 8.4, lint 152 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -95,13 +95,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 142 ( 44%)
-............................................................... 126 / 142 ( 88%)
-................                                                142 / 142 (100%)
+...............................................................  63 / 144 ( 43%)
+............................................................... 126 / 144 ( 87%)
+..................                                              144 / 144 (100%)
 
-Time: 00:10.357, Memory: 24.00 MB
+Time: 00:05.170, Memory: 24.00 MB
 
-[30;42mOK (142 tests, 466 assertions)[0m
+[30;42mOK (144 tests, 476 assertions)[0m
 
 
 8.4 / phpunit.integration.xml
@@ -110,19 +110,19 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 170 ( 37%)
-............................................................... 126 / 170 ( 74%)
-............................................                    170 / 170 (100%)
+...............................................................  63 / 180 ( 35%)
+............................................................... 126 / 180 ( 70%)
+......................................................          180 / 180 (100%)
 
-Time: 00:15.952, Memory: 28.00 MB
+Time: 00:13.764, Memory: 28.00 MB
 
-[30;42mOK (170 tests, 736 assertions)[0m
+[30;42mOK (180 tests, 801 assertions)[0m
 
 
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 148 files
+PHP 8.5, lint 152 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -130,13 +130,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 142 ( 44%)
-............................................................... 126 / 142 ( 88%)
-................                                                142 / 142 (100%)
+...............................................................  63 / 144 ( 43%)
+............................................................... 126 / 144 ( 87%)
+..................                                              144 / 144 (100%)
 
-Time: 00:04.887, Memory: 24.00 MB
+Time: 00:05.290, Memory: 24.00 MB
 
-[30;42mOK (142 tests, 466 assertions)[0m
+[30;42mOK (144 tests, 476 assertions)[0m
 
 
 8.5 / phpunit.integration.xml
@@ -145,13 +145,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 170 ( 37%)
-............................................................... 126 / 170 ( 74%)
-............................................                    170 / 170 (100%)
+...............................................................  63 / 180 ( 35%)
+............................................................... 126 / 180 ( 70%)
+......................................................          180 / 180 (100%)
 
-Time: 00:15.745, Memory: 28.00 MB
+Time: 00:16.926, Memory: 28.00 MB
 
-[30;42mOK (170 tests, 736 assertions)[0m
+[30;42mOK (180 tests, 801 assertions)[0m
 
 
 8.5 / migrate CLI: Schema is current.
@@ -161,8 +161,8 @@ Time: 00:15.745, Memory: 28.00 MB
 ### oidc-web-results.txt
 
 ```text
-8.4 development HTTP: OIDC, sessions, bootstrap, RBAC, space CLI, folders, multipart upload, duplicate/CSRF rejection, streamed attachment, orphan check, logout and blocking: OK
-8.5 development HTTP: OIDC, sessions, bootstrap, RBAC, space CLI, folders, multipart upload, duplicate/CSRF rejection, streamed attachment, orphan check, logout and blocking: OK
-8.4 production HTTPS: OIDC, sessions, bootstrap, RBAC, space CLI, folders, multipart upload, duplicate/CSRF rejection, streamed attachment, orphan check, logout and blocking: OK
+8.4 development HTTP: OIDC, app passwords, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+8.5 development HTTP: OIDC, app passwords, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+8.4 production HTTPS: OIDC, app passwords, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK
 
 ```

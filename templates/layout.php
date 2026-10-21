@@ -4,6 +4,7 @@ $e = PageRenderer::escape(...);
 $titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen', 'error' => 'Zugriff', 'login' => 'Anmelden', 'account' => 'Mein Zugang', 'spaces' => 'Speicherbereiche', 'files' => 'Dateien'];
 $caps = $data['caps'];
 $titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb', 'app-passwords' => 'App-Passwörter'];
+$titles['versions'] = 'Dateiversionen';
 ?>
 <!doctype html>
 <html lang="de">

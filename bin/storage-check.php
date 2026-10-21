@@ -14,7 +14,7 @@ try {
     if (!is_dir($store->root)) { throw new \RuntimeException(); }
     $pdo = (new ConnectionFactory())->connect($config->database);
     $referenced = []; $errors = 0;
-    foreach ($pdo->query("SELECT blob_id, size_bytes, sha256 FROM storage_entries WHERE kind = 'file'") as $row) {
+    foreach ($pdo->query("SELECT blob_id, size_bytes, sha256 FROM storage_entries WHERE kind = 'file' UNION SELECT blob_id, size_bytes, sha256 FROM storage_versions") as $row) {
         $referenced[$row['blob_id']] = true;
         try {
             $stream = $store->open($row['blob_id'], (int) $row['size_bytes']);

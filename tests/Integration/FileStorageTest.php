@@ -34,7 +34,7 @@ final class FileStorageTest extends TestCase
         $this->identities->createGroup('editors', 'Editors'); $this->identities->addManualMembership('alice', 'editors');
         $this->roles = new PdoRoleRepository($this->pdo); $this->runtime = $this->boot();
         $this->pdo->exec("INSERT INTO storage_spaces (id, name, quota_bytes) VALUES ('a', 'Media', 100), ('b', 'Private', 100)");
-        $this->roles->save(new Role('editor', Scope::Space, ['files.list','files.read','files.create','files.update','files.delete','files.restore']), $this->runtime);
+        $this->roles->save(new Role('editor', Scope::Space, ['files.list','files.read','files.create','files.update','files.delete','files.restore','files.versions.read']), $this->runtime);
         $this->roles->assign(new RoleAssignment('editors', 'editor', Scope::Space, 'a'));
         $this->root = sys_get_temp_dir() . '/samla-files-' . bin2hex(random_bytes(8)); mkdir($this->root, 0700);
     }
@@ -247,5 +247,127 @@ final class FileStorageTest extends TestCase
         self::assertSame(303, $controller->handle(new Request('POST', '/files/change', post: $post), 'alice', $csrf, $data)->status);
         $page = $controller->handle(new Request('GET', '/files/trash', ['space' => 'a']), 'alice', $csrf, $data);
         self::assertSame(200, $page->status); self::assertStringContainsString('Wiederherstellen', $page->body);
+    }
+    private function replace(string $id, int $revision, string $content, ?FileService $service = null): void
+    {
+        $stream = fopen('php://temp', 'w+b'); fwrite($stream, $content); rewind($stream);
+        try { ($service ?? $this->service())->replace('alice', 'a', $id, $revision, $stream); } finally { fclose($stream); }
+    }
+    public function testVersionReplacementAndRestorePreserveEveryPreviousContent(): void
+    {
+        $id = $this->upload('document', 'first'); $this->replace($id, 1, 'second');
+        $service = $this->service(); $history = $service->versions('alice', 'a', $id);
+        self::assertSame(2, (int) $history['entry']['revision']); self::assertCount(1, $history['versions']);
+        $version = $history['versions'][0]['id']; $old = $service->downloadVersion('alice', 'a', $id, $version);
+        try { self::assertSame('first', stream_get_contents($old['stream'])); } finally { fclose($old['stream']); }
+        $service->restoreVersion('alice', 'a', $id, $version, 2);
+        $current = $service->download('alice', 'a', $id);
+        try { self::assertSame('first', stream_get_contents($current['stream'])); } finally { fclose($current['stream']); }
+        self::assertCount(2, $service->versions('alice', 'a', $id)['versions']);
+        self::assertSame(16, $service->listing('alice', 'a')['used']);
+        self::assertSame(3, (int) $service->details('alice', 'a', $id)['revision']);
+    }
+    public function testStaleContentReplacementDoesNotReadTheIncomingStream(): void
+    {
+        $id = $this->upload('document', 'first'); $this->replace($id, 1, 'second');
+        $stream = fopen('php://temp','w+b'); fwrite($stream, 'stale'); rewind($stream);
+        try { $this->service()->replace('alice', 'a', $id, 1, $stream); self::fail('Stale replacement accepted.'); }
+        catch (MutationConflict) { self::assertSame(0, ftell($stream)); } finally { fclose($stream); }
+        self::assertCount(1, $this->service()->versions('alice', 'a', $id)['versions']);
+    }
+    public function testVersionQuotaFailurePreservesCurrentAndDoesNotCreateHistory(): void
+    {
+        $id = $this->upload('full', str_repeat('x', 100));
+        try { $this->replace($id, 1, 'x'); self::fail('History ignored quota.'); } catch (\LengthException) { self::assertFalse($this->pdo->inTransaction()); }
+        self::assertSame([], $this->service()->versions('alice', 'a', $id)['versions']);
+        self::assertSame(1, (int) $this->service()->details('alice', 'a', $id)['revision']);
+    }
+    public function testHistoryRequiresSeparateReadPermissionAndMatchingFile(): void
+    {
+        $id = $this->upload('one', 'first'); $second = $this->upload('two', 'other'); $this->replace($id, 1, 'new');
+        $version = $this->service()->versions('alice','a',$id)['versions'][0]['id'];
+        try { $this->service()->downloadVersion('alice','a',$second,$version); self::fail('Foreign version accepted.'); } catch (\InvalidArgumentException) { self::assertTrue(true); }
+        $this->roles->save(new Role('editor', Scope::Space, ['files.list','files.read','files.create','files.update']), $this->runtime);
+        $current = $this->service()->download('alice','a',$id); fclose($current['stream']);
+        $this->expectException(AccessDenied::class); $this->service()->versions('alice','a',$id);
+    }
+    public function testCollectorCannotDeleteReferencedHistoricalObjects(): void
+    {
+        $id = $this->upload('one','old'); $this->replace($id,1,'new');
+        foreach (glob($this->root . '/*') as $path) { touch($path, time() - 172800); }
+        $collector = new OrphanCollector($this->pdo, new LocalContentStore($this->root), new PdoMutationRunner($this->pdo,$this->runtime));
+        self::assertSame([], $collector->collect(true)['candidates']); self::assertCount(2,glob($this->root . '/*'));
+    }
+    public function testTrashedAncestorProtectsHistoricalContentToo(): void
+    {
+        $folder = $this->service()->createFolder('alice','a','','Folder'); $id = $this->upload('one','old',$folder); $this->replace($id,1,'new');
+        $version = $this->service()->versions('alice','a',$id)['versions'][0]['id'];
+        $this->service()->change('alice','a',$folder,'trash','Folder','');
+        $this->expectException(\InvalidArgumentException::class); $this->service()->downloadVersion('alice','a',$id,$version);
+    }
+    public function testVersionMutationVetoRollsBackHistoryAndCurrent(): void
+    {
+        $id = $this->upload('one','old');
+        $runtime = $this->boot([new Extension('test.version.veto', static function (PluginRegistrar $r): void {
+            $r->validator(new class implements ChangeValidator {
+                public function priority(): int { return 0; }
+                public function validate(MutationContext $context): void { if ($context->operation === 'storage.file.replace') { throw new AccessDenied(); } }
+            });
+        })]);
+        try { $this->replace($id,1,'new',$this->service($runtime)); self::fail('Veto ignored.'); } catch (AccessDenied) { self::assertFalse($this->pdo->inTransaction()); }
+        self::assertSame(1,(int)$this->service()->details('alice','a',$id)['revision']);
+        self::assertSame([], $this->service()->versions('alice','a',$id)['versions']);
+    }
+    public function testVersionPageAndRestoreFormUseCurrentRevision(): void
+    {
+        $id = $this->upload('one','old'); $this->replace($id,1,'new'); $controller = new FileController($this->service()); $csrf = str_repeat('a',64);
+        $data = ['actor'=>'alice','csrf'=>$csrf,'caps'=>[],'flash'=>null];
+        $page = $controller->handle(new Request('GET','/files/versions',['space'=>'a','entry'=>$id]),'alice',$csrf,$data);
+        self::assertSame(200,$page->status); self::assertStringContainsString('name="revision" value="2"',$page->body);
+        self::assertSame(405,$controller->handle(new Request('GET','/files/version/restore'),'alice',$csrf,$data)->status);
+    }
+    public function testThousandFileCatalogIsTraversedWithoutMissingOrDuplicateEntries(): void
+    {
+        $id = $this->upload('original', 'x'); $row = $this->service()->details('alice','a',$id);
+        $this->pdo->exec("UPDATE storage_spaces SET quota_bytes = 1073741824 WHERE id = 'a'");
+        $this->pdo->beginTransaction();
+        $q = $this->pdo->prepare("INSERT INTO storage_entries (id, space_id, parent_id, name, kind, blob_id, size_bytes, sha256, created_at) VALUES (?, 'a', '', ?, 'file', ?, 1, ?, ?)");
+        for ($i = 0; $i < 999; ++$i) { $q->execute([str_pad(dechex($i),32,'0',STR_PAD_LEFT), 'file.' . $i, $row['blob_id'], $row['sha256'], time()]); }
+        $this->pdo->commit(); $seen = []; $after = null; $pages = 0;
+        do {
+            $listing = $this->service()->listing('alice','a','',$after); self::assertLessThanOrEqual(100,count($listing['rows']));
+            $seen = [...$seen,...array_column($listing['rows'],'id')]; $after = $listing['next']; ++$pages;
+        } while ($after !== null);
+        self::assertSame(10,$pages); self::assertCount(1000,$seen); self::assertCount(1000,array_unique($seen)); self::assertSame(1000,$listing['used']);
+    }
+    public function testFiveSimultaneousUploadersCannotOverrunQuota(): void
+    {
+        $this->pdo->exec("UPDATE storage_spaces SET quota_bytes = 30 WHERE id = 'a'");
+        $php = [PHP_BINARY,'-n','-d','extension_dir=' . ini_get('extension_dir')];
+        $loader = dirname(PHP_BINARY) . '/../lib/x86_64-linux-gnu/ld-linux-x86-64.so.2';
+        if (PHP_VERSION_ID >= 80500 && is_file($loader)) { $php = [$loader,'--library-path',dirname($loader),...$php]; }
+        foreach (['pdo','mysqlnd','pdo_mysql','ctype','mbstring','iconv'] as $extension) { $php = [...$php,'-d','extension=' . $extension]; }
+        $children = [];
+        try {
+            for ($i = 0; $i < 5; ++$i) {
+                $pipes = []; $process = proc_open([...$php,__DIR__ . '/../Tools/storage-concurrency-worker.php',$this->root,(string)$i], [1=>['pipe','w'],2=>['pipe','w']], $pipes);
+                self::assertIsResource($process); $children[] = [$process,$pipes];
+            }
+            $deadline = microtime(true) + 10;
+            while (count(glob($this->root . '/ready.*')) !== 5) { if (microtime(true) > $deadline) { self::fail('Worker startup timed out.'); } usleep(10000); }
+            file_put_contents($this->root . '/release','go'); $results = [];
+            foreach ($children as [$process,$pipes]) {
+                $results[] = trim(stream_get_contents($pipes[1])); $error = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]);
+                self::assertSame(0,proc_close($process),$error); self::assertSame('',$error);
+            }
+            $children = []; sort($results); self::assertSame(['created','created','created','quota','quota'],$results);
+            self::assertSame(30,$this->service()->listing('alice','a')['used']);
+            self::assertSame(3,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+        } finally {
+            foreach ($children as [$process,$pipes]) {
+                if (is_resource($process)) { proc_terminate($process); proc_close($process); }
+                foreach ($pipes as $pipe) { if (is_resource($pipe)) { fclose($pipe); } }
+            }
+        }
     }
 }

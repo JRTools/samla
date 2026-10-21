@@ -28,6 +28,14 @@ final class ConfigurationTest extends TestCase
         self::assertSame('test-secret', $config->database->password());
         self::assertStringContainsString('dbname=media_platform_test_unit', $config->database->dsn());
     }
+    public function testUploadLimitIsConfigurableAndInvalidLimitsFailClosed(): void
+    {
+        self::assertSame(16777216, AppConfig::fromEnvironment($this->env())->maxUploadBytes);
+        self::assertSame(1073741824, AppConfig::fromEnvironment(['APP_MAX_UPLOAD_BYTES'=>'1073741824'] + $this->env())->maxUploadBytes);
+        foreach (['', '0', '-1', '16M', '1099511627777'] as $value) {
+            try { AppConfig::fromEnvironment(['APP_MAX_UPLOAD_BYTES'=>$value] + $this->env()); self::fail('Invalid limit accepted.'); } catch (\InvalidArgumentException) { self::assertTrue(true); }
+        }
+    }
     public function testTestModeCannotFallBackToProduction(): void
     {
         $this->expectException(\InvalidArgumentException::class);

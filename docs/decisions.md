@@ -76,3 +76,12 @@ SabreDAV 4.7.1 und fünf neue transitive Pakete sind in der Anwendung installier
 Die aktuelle Implementierung bindet noch keinen DAV-Endpunkt an. Gemeinsame dauerhafte Schreibsperren und Versions-/Konfliktschutz müssen vor Schreibfreigabe auch für Browseränderungen wirksam sein. Ein späterer DAV-Autorisierungsadapter muss Credential-Widerruf neben Identität/Rollen bei konkreten Ressourcenzugriffen prüfen, auch bei geschützten Mutationen.
 
 Der Betreiber bestätigt das fehlende Speicherverzeichnis als Ursache des Uploadfehlers. Ein eigenes StorageUnavailable-Signal erzeugt eine verständliche Antwort; storage-init.php legt nur die angeforderte Wurzel mit 0700 und optional ausdrücklich genanntem Eigentümer an. Keine automatische rekursive Umstellung vorhandener Inhalte.
+
+
+## Iteration 16: Betriebsziel und Versionsschutz
+
+Der Betreiber nennt etwa 1000 Dateien und fünf aktive Benutzer; iOS, Android, Windows und macOS sind Zielplattformen. Konkrete Datei-/Gesamtgrößen und native Clientversionen sind nicht angegeben. Die Fortsetzung ist möglich, indem die Uploadgrenze konfigurierbar bleibt und getestete Protokoll-/Parallelitätsfälle von späterer nativer Clientabnahme getrennt ausgewiesen werden. Keine zusätzliche allgemeine Fortsetzungsfreigabe erforderlich.
+
+Jede Ersetzung archiviert den bisherigen Inhalt. Wiederherstellen macht einen alten Inhalt zum neuen Stand und erhält den vorherigen aktuellen Stand. Keine automatische Löschung oder erfundene Retentionsrichtlinie. Historienleserecht ist separat und wird bestehenden Rollen nicht automatisch hinzugefügt. Quoten zählen alle logischen Zustände einschließlich Papierkorb. GC und Konsistenzprüfer dürfen historische Objekte nicht als verwaist behandeln.
+
+Eine Versionsschutzgrenze von 1000 historischen Zuständen pro Datei verhindert unbeschränkte Metadatenanlage durch leere Ersetzungen, ohne historische Inhalte zu löschen. Das ist eine technische Schutzgrenze und kein bestätigtes Betriebsziel. Weitere gemeinsame Schreibsperren und WebDAV folgen in den nächsten Phasen.

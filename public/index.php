@@ -23,13 +23,13 @@ try {
         } else {
             $config = AppConfig::fromEnvironment($environment);
             if ($config->maintenance) { throw new \RuntimeException('Maintenance is active.'); }
-            if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > (($_SERVER['REQUEST_URI'] ?? '') === '/files/upload' ? 17825792 : 16384)) { $response = new Response(413); }
+            if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), ['/files/upload', '/files/replace'], true) ? $config->maxUploadBytes + 1048576 : 16384)) { $response = new Response(413); }
             else { $response = (require dirname(__DIR__) . '/bootstrap/oidc-web.php')($config, $oidc)->handle(Request::fromGlobals()); }
         }
     } else {
         $config = AppConfig::fromEnvironment($environment);
         if ($config->maintenance) { throw new \RuntimeException('Maintenance is active.'); }
-        if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > (($_SERVER['REQUEST_URI'] ?? '') === '/files/upload' ? 17825792 : 16384)) {
+        if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), ['/files/upload', '/files/replace'], true) ? $config->maxUploadBytes + 1048576 : 16384)) {
             $response = new Response(413, $renderer->render('error', $data + ['status' => 413, 'error' => 'Die Formulardaten sind zu groß.']));
         } else {
             ini_set('session.use_strict_mode', '1'); ini_set('session.use_only_cookies', '1');
