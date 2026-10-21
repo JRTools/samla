@@ -1,4 +1,4 @@
-# Fachliche Rollenzuweisung verwalten
+# Geschützte Verwaltung
 
 ## Gelieferter Anwendungsfall
 
@@ -45,6 +45,19 @@ Die Outbox-Zustellung, Wiederholungssteuerung, Empfängerregistrierung und idemp
 - Delegationsregeln und Speicherbereichskatalog werden vorerst im kontrollierten Einrichtungs-/Migrationskontext gepflegt. Es gibt keine Oberfläche und keinen öffentlichen Endpunkt dafür.
 - Die neue storage_spaces-Tabelle ist ein anfänglicher Ressourcenkatalog, noch kein fertiger Dateispeicher oder Quotenmodell.
 - Die gemeinsame Administrationssperre serialisiert diese geschützten Verwaltungsänderungen. Direkte Repository- oder SQL-Mutationen sind interne Einrichtungswerkzeuge und keine unterstützten parallelen Verwaltungszugänge.
-- Spätere öffentliche Dienste für Rollenbearbeitung, Gruppen, Benutzerstatus und OIDC-Synchronisierung müssen denselben kontrollierten Änderungsweg beziehungsweise eine dazu passende Sperrstrategie verwenden. Bestehende private Writer sind hierfür noch anzupassen.
+- Spätere öffentliche Dienste für Rollenbearbeitung, Gruppen und OIDC-Synchronisierung müssen denselben kontrollierten Änderungsweg beziehungsweise eine dazu passende Sperrstrategie verwenden. Bestehende private Writer sind hierfür noch anzupassen.
 - Externe Gruppenänderungen, die der Provider noch nicht übermittelt hat, sind Samla weiterhin unbekannt. Die Gruppenfrische-Richtlinie bleibt eine offene Produktentscheidung.
-- Globale Delegation, Rollenbearbeitung, Gruppenmapping-Verwaltung, letzter Administrationszugang und Notfallzugang sind weitere Arbeitspakete. Die gesamte Verwaltungsphase ist noch nicht abgeschlossen.
+- Globale Delegation, Rollenbearbeitung, Gruppenmapping-Verwaltung, umfassender Schutz des letzten Administrationszugangs und Notfallzugang sind weitere Arbeitspakete. Die gesamte Verwaltungsphase ist noch nicht abgeschlossen.
+
+
+## Benutzer sperren und entsperren (Iteration 5)
+
+`UserStatusService.setBlocked(actorId, userId, blocked)` ist ein geschützter Anwendungsdienst. Im vertrauenswürdigen Aufbau müssen IdentityPlugin, RBAC-Pflichtplugin, vollständiger AuthorizationService und gemeinsamer PdoMutationRunner dieselbe Identitätsquelle beziehungsweise Datenbank verwenden. Der Akteur muss aus einem authentifizierten Zugang stammen. Eine HTTP-Route oder Oberfläche existiert noch nicht.
+
+Das neue Recht `identity.users.status.manage` ist ausschließlich global und wird von IdentityPlugin registriert. Es erlaubt ausdrücklich auch das Entsperren privilegierter Konten und darf deshalb nur vertrauenswürdigen Statusadministratoren zugewiesen werden. Eine allgemeine Bereichsrolle genügt nicht. Der Dienst verändert weder Rollen noch Gruppenmitgliedschaften oder bestätigte Gruppendaten. Insbesondere macht Entsperren einen veralteten Gruppenstand nicht wieder gültig.
+
+Der Dienst verwendet dieselbe Administrationssperre, Plugin-Validierung und doppelte Vorprüfung wie Rollenzuweisungen. Der interne Statuswriter benötigt eine aktive Transaktion und erhöht die Autorisierungsversion ausschließlich bei einer tatsächlichen Änderung. Anschließend wird im resultierenden Zustand mindestens ein Benutzer verlangt, für den die vollständige Autorisierung das globale Statusverwaltungsrecht erlaubt. Aktive Identität, frischer Gruppenstand, RBAC und zusätzliche Plugin-Einschränkungen zählen gemeinsam. Fehlt ein solcher Benutzer, wird die gesamte Änderung zurückgerollt. Selbstsperren ist damit nur möglich, wenn ein anderer aktuell nutzbarer Statusadministrator verbleibt.
+
+Diese Invariante schützt diesen Dienst gegen das Entfernen des letzten aktuell berechtigten Statusadministrators. Sie garantiert keinen zukünftigen Login, keine dauerhafte Gruppenfrische und keinen vollständigen Zugang zur gesamten Rollen-/Gruppenverwaltung. Provider-Ausfall, späterer Gruppenablauf oder externe Rechteänderungen benötigen gesonderte Betriebs- und Notfallregeln. Spätere Gruppen-/Mapping-/Rollenschreibdienste und OIDC-Synchronisierung müssen ihre eigenen Nachbedingungen unter der gemeinsamen Sperrstrategie ergänzen. Direkte interne Einrichtungswriter umgehen die Anwendungsfallprüfung und sind keine öffentlichen Verwaltungszugänge.
+
+MutationContext verwendet Scope Global, keinen Speicherbereich und `targets = {"user": "<interne Kennung>"}`. Operationen sind `identity.user.block` und `identity.user.unblock`; zugehörige Outbox-Typen enden auf `.completed`. Der gewünschte Status ist durch die Operation bestimmt. Unveränderte Wiederholungen erhalten nur ein Audit mit `changed=0`. Audit, Status, Autorisierungsversion und Abschlussereignis committen gemeinsam oder werden gemeinsam zurückgerollt. Ein unbekannter Zielbenutzer wird vor einem erfolgreichen Audit abgelehnt. Sitzungen und App-Passwörter sind noch nicht implementiert; es wird daher kein Sitzungswiderruf behauptet.

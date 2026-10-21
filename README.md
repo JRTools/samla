@@ -6,7 +6,7 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 4
+## Entwicklungsstand: Iteration 5
 
 Vorhanden sind:
 
@@ -17,10 +17,11 @@ Vorhanden sind:
 - PDO-Anbindung, versionierte Migrationen mit Sperre, Prüfsummen und sichtbarem Fehlerzustand.
 - Persistente Benutzer, Gruppen, bestätigte Gruppenstände, Mitgliedschaften, Rollen und Zuweisungen.
 - Erster geschützter Verwaltungsdienst für fachliche Rollenzuweisungen innerhalb eines Speicherbereichs, mit ausdrücklichen Delegationsregeln und Berechtigungsobergrenzen.
+- Geschützter Benutzerstatusdienst zum Sperren und Entsperren, mit Schutz des letzten aktuell nutzbaren Zugangs zur Statusverwaltung.
 - Plugin-Validierung vor Änderungen, transaktionales Audit und persistierte Abschlussereignisse in einer Outbox.
 - Unit-, Architektur- und echte MySQL-/MariaDB-Integrationstests.
 
-Es gibt noch keine produktiv nutzbare Weboberfläche, keinen OIDC-Login, keinen WebDAV-Endpunkt und keine Dateioperationen. Repository-Schreibmethoden sind interne Adapter. Der erste autorisierte Dienst für fachliche Rollenzuweisungen ist vorhanden. Globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung sowie Benutzer- und Gruppenverwaltung sind noch kein öffentlicher Anwendungsfall. Die Outbox speichert Ereignisse; ein Zustellungsdienst ist noch nicht implementiert.
+Es gibt noch keine produktiv nutzbare Weboberfläche, keinen OIDC-Login, keinen WebDAV-Endpunkt und keine Dateioperationen. Repository-Schreibmethoden sind interne Adapter. Der erste autorisierte Dienst für fachliche Rollenzuweisungen ist vorhanden. Benutzerstatusänderungen sind als geschützter Anwendungsdienst verfügbar. Globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung und Gruppenverwaltung sind weiterhin offen. Der Schutz des letzten Zugangs gilt bislang für Statusänderungen und das ausdrückliche Recht zur Statusverwaltung; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse; ein Zustellungsdienst ist noch nicht implementiert.
 
 ## Voraussetzungen
 

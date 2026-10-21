@@ -45,11 +45,22 @@ final readonly class PdoIdentityRepository implements IdentityReader
     }
     public function setBlocked(string $id, bool $blocked): void
     {
-        Transaction::run($this->pdo, function () use ($id, $blocked): void {
-            $this->lockUser($id);
-            $query = $this->pdo->prepare('UPDATE identity_users SET status = ?, authorization_version = authorization_version + 1 WHERE id = ?');
-            $query->execute([$blocked ? 'blocked' : 'active', $id]);
-        });
+        Transaction::run($this->pdo, fn(): bool => $this->setBlockedInsideTransaction($id, $blocked));
+    }
+    /** Internal writer for an authorized mutation that already owns the administration lock. */
+    public function setBlockedInsideTransaction(string $id, bool $blocked): bool
+    {
+        if (!$this->pdo->inTransaction()) { throw new \LogicException('An active transaction is required.'); }
+        $this->lockUser($id);
+        $status = $blocked ? 'blocked' : 'active';
+        $query = $this->pdo->prepare('UPDATE identity_users SET status = ?, authorization_version = authorization_version + 1 WHERE id = ? AND status <> ?');
+        $query->execute([$status, $id, $status]);
+        return $query->rowCount() !== 0;
+    }
+    /** Internal candidate directory; effective authorization must still be checked for each user. */
+    public function userIds(): array
+    {
+        return $this->pdo->query('SELECT id FROM identity_users ORDER BY id')->fetchAll(\PDO::FETCH_COLUMN);
     }
     public function addManualMembership(string $userId, string $groupId): void
     {

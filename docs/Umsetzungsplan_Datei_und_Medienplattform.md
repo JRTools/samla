@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.5
+Version: 1.6
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 4, siehe Abschnitt 14. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 5, siehe Abschnitt 15. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -290,3 +290,25 @@ Die vollständige Verwaltungsphase ist noch nicht abgeschlossen: globale Delegat
 Weiterhin offen sind eine Oberfläche, die OIDC-Anmeldung, App-Passwörter, WebDAV und Dateioperationen, Ereigniszustellung sowie die Betriebsabnahme. Der anfängliche Speicherbereichskatalog ist noch kein fertiger Dateispeicher. Bekannte Discovery-Daten sind in oidc-provider.md dokumentiert; Clientregistrierung, Callback-URL, Gruppenclaim und Gruppenfrische bleiben erforderlich. README, API-Handbuch, Datenbankhinweise, Prüfprotokoll und Plan wurden mit dem Code fortgeschrieben.
 
 Version 1.5: Erste geschützte fachliche Rollenzuweisung mit Delegation, Plugin-Validierung und atomarem Audit/Outbox; erfolgreiche Vierfachmatrix dokumentiert.
+
+
+## 15. Iteration 5: Geschützter Benutzerstatus
+
+UserStatusService ergänzt Sperren und Entsperren mit dem ausdrücklichen globalen Recht `identity.users.status.manage`. IdentityPlugin registriert die Berechtigung; der Dienst nutzt die vollständige zentrale Autorisierung, bestehende Plugin-Validatoren und die gemeinsame Administrationssperre. Benutzerstatus, Autorisierungsversion, Audit und Abschlussereignis werden atomar gespeichert. Unveränderte Wiederholungen erhöhen die Version nicht und erzeugen kein zusätzliches Änderungsereignis. Gruppendaten und Mitgliedschaften bleiben erhalten; Entsperren erneuert keine veralteten Claims.
+
+Nach der Änderung muss mindestens ein aktuell aktiver Benutzer mit frischen Gruppendaten und wirksamem globalem Statusverwaltungsrecht verbleiben. Dabei gelten auch zusätzliche Plugin-Einschränkungen. Eine unzulässige Selbstsperre wird samt Version und Protokolleinträgen zurückgerollt. Der Kern greift weiterhin ausschließlich über öffentliche Autorisierungsverträge auf Berechtigungsentscheidungen zu und liest keine RBAC-Tabellen.
+
+### 15.1 Prüfung
+
+Die Vierfachmatrix aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 ist mit echten Datenbanken erfolgreich: jeweils 97 Tests mit 298 Assertions (49 Unit-/Architekturtests, 48 Integrationstests). Alle 63 eigenen PHP-Dateien und die Migrations-CLI sind ebenfalls geprüft. Die Ergebnisse stehen in verification.md. Neue Integrationsfälle prüfen Berechtigungsfehler, gesperrte und veraltete Akteure, letzten nutzbaren Statusadministrator, zulässige Selbstsperre mit verbleibendem Zugang, Plugin-Veto und erneute Rechteprüfung, Outbox-Rollback, idempotente Wiederholung, unbekanntes Ziel sowie unveränderte Gruppenfrische und Mitgliedschaften.
+
+### 15.2 Nächste Umsetzung
+
+1. Manuelle Gruppenmitgliedschaften mit explizitem Delegationsschutz für sämtliche wirksamen Rollen der Zielgruppe ergänzen. Änderungen dürfen kein indirektes Vergeben administrativer Rechte ermöglichen.
+2. Nachbedingungen für Gruppen-, Mapping- und spätere globale Rollenänderungen auf den verbleibenden Administrationszugang ausweiten. Ein getesteter Notfallzugang bleibt ein eigenes Arbeitspaket.
+3. OIDC-Registrierung, Callback, Beispielclaim und Gruppenfrische-Richtlinie klären; zusätzliche Integrationsbibliotheken konkret zur Entscheidung vorlegen.
+4. Geschützte HTTP-Zugänge, App-Passwörter und Dateidurchstich mit Browser/WebDAV sowie Outbox-Zustellung anschließen.
+
+Der Schutz in dieser Iteration gilt für Statusänderungen und das Recht zur Statusverwaltung. Er garantiert weder einen zukünftigen Provider-Login noch unbegrenzte Gruppenfrische oder die gesamte Administrationsfähigkeit. Es gibt weiterhin keine produktive Oberfläche, OIDC-Anmeldung oder Dateioperationen. README, Verwaltungs- und API-Vertrag, Prüfprotokoll und Plan werden zusammen mit dem Code veröffentlicht.
+
+Version 1.6: Geschützter Benutzerstatus, atomare Ereignisse und Schutz des letzten aktuell nutzbaren Statusverwaltungszugangs.
