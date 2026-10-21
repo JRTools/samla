@@ -1,0 +1,2 @@
+# Isolated HTTP/TLS test fixture only. Not a Samla production dependency.
+cryptography==50.0.2

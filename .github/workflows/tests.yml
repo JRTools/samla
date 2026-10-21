@@ -1,0 +1,101 @@
+name: PHP and database tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  matrix:
+    name: PHP ${{ matrix.php }} / ${{ matrix.database.engine }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+        database:
+          - engine: mysql
+            image: mysql:8.0
+          - engine: mariadb
+            image: mariadb:11.8
+    services:
+      database:
+        image: ${{ matrix.database.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: samla-ci-root-only
+          MARIADB_ROOT_PASSWORD: samla-ci-root-only
+          MYSQL_DATABASE: media_platform_test_ci
+          MARIADB_DATABASE: media_platform_test_ci
+          MYSQL_USER: samla_test
+          MARIADB_USER: samla_test
+          MYSQL_PASSWORD: samla-ci-only
+          MARIADB_PASSWORD: samla-ci-only
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="bash -c 'echo > /dev/tcp/127.0.0.1/3306'"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+    env:
+      APP_ENV: test
+      APP_MAINTENANCE: '1'
+      TEST_DB_ENGINE: ${{ matrix.database.engine }}
+      TEST_DB_HOST: 127.0.0.1
+      TEST_DB_PORT: ${{ job.services.database.ports[3306] }}
+      TEST_DB_NAME: media_platform_test_ci
+      TEST_DB_USER: samla_test
+      TEST_DB_PASSWORD: samla-ci-only
+      MATRIX_PHP_VERSION: ${{ matrix.php }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2, resolved 2026-10-22
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ctype, curl, dom, iconv, mbstring, openssl, pdo_mysql, simplexml, xml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+          ini-values: allow_url_fopen=On
+      - name: Install locked PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-plugins --no-scripts
+      - name: Verify platform and manifest
+        run: |
+          composer validate --no-check-publish
+          composer check-platform-reqs
+      - name: Check PHP syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          for path in Path('.').rglob('*.php'):
+              if 'vendor' not in path.parts:
+                  subprocess.run(['php', '-l', str(path)], check=True, stdout=subprocess.DEVNULL)
+          PY
+      - name: Unit and architecture tests
+        run: vendor/bin/phpunit --configuration phpunit.xml --do-not-record-test-run-history
+      - name: Database integration tests
+        run: vendor/bin/phpunit --configuration phpunit.integration.xml --do-not-record-test-run-history
+      - name: Verify migration CLI is current
+        run: php bin/migrate.php
+      - name: Install HTTP test dependency
+        run: |
+          python3 -m venv "$RUNNER_TEMP/samla-http-venv"
+          "$RUNNER_TEMP/samla-http-venv/bin/python" -m pip install -r tests/Tools/requirements.txt
+      - name: OIDC and DAV over HTTP and HTTPS
+        run: |
+          export SAMLA_TEST_PHP_COMMANDS
+          SAMLA_TEST_PHP_COMMANDS=$(python3 -c 'import json,os,shutil;print(json.dumps({os.environ["MATRIX_PHP_VERSION"]:[shutil.which("php")]}))')
+          "$RUNNER_TEMP/samla-http-venv/bin/python" tests/Tools/oidc-web-smoke.py

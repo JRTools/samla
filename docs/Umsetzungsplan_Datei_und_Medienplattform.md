@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.20
+Version: 1.21
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 19, siehe Abschnitt 29. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 20, siehe Abschnitt 30. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -779,3 +779,13 @@ Bestehende MOVE/COPY-Ziele werden ohne Löschung mit 409 beziehungsweise Overwri
 Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 376 Tests und 1484 Assertions (166 Unit-/Architekturtests, 210 Integrationstests), Syntax aller 173 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Echte HTTP-/HTTPS-Anfragen bestätigen MKCOL, PUT, Versionierung/If-Match, LOCK/UNLOCK, COPY/MOVE und DELETE/Neuanlage neben sämtlichen bisherigen Abläufen. Ein Validator widerruft absichtlich das verwendete Credential innerhalb der Transaktion; der letzte Guard muss Dateireferenz, Audit und Widerruf gemeinsam zurückrollen. Die Clientplattformen bleiben iOS, Android, Windows und macOS; konkrete native Abnahme ist weiterhin gesondert nötig. Neue Funktionen werden nicht automatisch auf dem Betreiberhost ausgerollt.
 
 Version 1.20: DAV-Schreibzugriff über gemeinsame Fach-/Sperrdienste, begrenzte Streams, sichere Protokollpfade und wieder verwendbare Papierkorbnamen.
+
+## 30. Iteration 20: Automatische GitHub-Prüfungen
+
+Der neue GitHub-Workflow übernimmt die vier Zielkombinationen PHP 8.4/8.5 mit MySQL 8.0/MariaDB 11.8. Ein Job installiert Composer-Lockfile und Plattformvertrag, prüft eigene Syntax, Unit-/Architektur-/Integrationstests, Migrations-CLI und anschließend den bestehenden synthetischen HTTP-/HTTPS-Prüfer. Dieser deckt OIDC, App-Passwörter, DAV-Lese-/Schreib-/Sperroperationen und bisherige Browser-/Speicherabläufe ab. Die isolierte Python-Testabhängigkeit wird separat fixiert; die Produktionsanwendung erhält keine neue Laufzeitkomponente.
+
+Die Service-Datenbank und Credentials sind ausschließlich für kurzlebige isolierte Tests bestimmt. Kein echtes IdP-Konto und keine Produktionsdaten werden verwendet. Checkout und PHP-Setup sind anhand offizieller Quellrepos auf volle Commitkennungen fixiert. Repository-Token nur contents:read, Checkout ohne persistierte Credentials, normale Pull-Request-Ausführung ohne privilegierten Fremdcodekontext, keine Deployment-/Nachrichtenaktion.
+
+YAML-Struktur, vier Kombinationen, vollständige Actionpins und eingeschränkte Berechtigungen wurden lokal geprüft. Der Anwendungsstand bleibt die erfolgreich geprüfte Iteration 19 mit jeweils 376 Tests und 1484 Assertions. Eine erneute unveränderte Laufzeitmatrix ist für diese Workflow-/Dokumentationsänderung nicht als neuer Nachweis erfunden. Der tatsächliche erste GitHub-Lauf wird nach Veröffentlichung kontrolliert; native Client-/Crash-/Last-/Restore-Nachweise bleiben offen. Danach werden die übrigen Dateioperationen und Konzeptpunkte ohne allgemeine Go-Rückfrage weiter umgesetzt.
+
+Version 1.21: Isolierte vierfache GitHub-Prüfung mit echten HTTP-/HTTPS-Testabläufen und nachvollziehbarer Trennung von lokaler Prüfung und GitHub-Laufstatus.
