@@ -1,4 +1,4 @@
-# Experimentelle Plugin-API 0.2
+# Experimentelle Plugin-API 0.3
 
 Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog.
 
@@ -12,6 +12,7 @@ Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog
 | IdentityReader | Nur bestätigte interne Gruppen und aktuellen Zugangsstatus bereitstellen. Implementierung muss lokale Sperren und vereinbarte Gruppenfrische berücksichtigen. |
 | AuthorizationChecker / ResourceDirectory | Vollständige Autorisierung und Ressourcenprüfung für Plugin-Anwendungsdienste. |
 | MutationContext / ChangeValidator / MutationRunner | Unveränderlicher Änderungskontext, vorab ablehnende Plugin-Regeln und gemeinsame Transaktionsgrenze. Details in administration.md. |
+| GroupMembershipPolicy | Verpflichtende zusätzliche Delegationsprüfung manueller Mitgliedschaften. RBAC prüft sämtliche Rollenzuweisungen der Zielgruppe. |
 | SchemaMigration | Unveränderlicher Migrationsbeitrag mit Eigentümer, Kennung, Prüfsumme und einzelnen SQL-Anweisungen. Explizite Zusammenstellung durch den CLI-Einstiegspunkt. |
 | AuthorizationRequest | Unveränderlicher Akteur, Aktion, Geltungsbereich und optionale Ressourcenkennung. |
 
@@ -27,3 +28,8 @@ Plugins laufen als vertrauenswürdiger PHP-Code im selben Prozess. Dies ist kein
 
 
 Der Benutzerstatusdienst verwendet dieselben unveränderten Verträge. Validatoren können `identity.user.block` beziehungsweise `identity.user.unblock` anhand der internen Benutzerkennung ablehnen. Die Nachbedingung für den verbleibenden Statusadministrator verwendet AuthorizationChecker einschließlich AccessRestriction, ohne RBAC-Interna im Kern. Ereignisformate und Umfangsgrenzen stehen in administration.md.
+
+
+GroupMembershipPolicy.allows(actorId, userId, groupId, grant) ergänzt die vollständige Kern-Autorisierung für `identity.groups.memberships.manage`. Der vertrauenswürdige Aufbau übergibt RbacGroupMembershipPolicy, dieselbe Identitätsquelle, denselben vollständigen AuthorizationChecker sowie dieselbe Registry und Ressourcensicht. Die Policy ist ein verpflichtendes Konstruktorargument des GroupMembershipService. Es gibt keinen erlaubenden Standard oder Rückgriff auf eine fehlende Policy. False oder jede Ausnahme bricht den Vorgang ab. Der Kern kennt die Policy ausschließlich über diesen öffentlichen Vertrag; das RBAC-Plugin importiert keine Kernklassen.
+
+Validatoren erhalten `identity.membership.grant` beziehungsweise `identity.membership.revoke`, Scope Global und die Zielkennungen `user` und `group`. Eine Änderung betrifft alle Rollen der Gruppe und ist deshalb keinem einzelnen Speicherbereich zugeordnet. Die Policy prüft die betroffenen Bereiche jeweils gesondert. Die Abschlussereignisse verwenden dieselben Operationen mit `.completed`. Externe Mitgliedschaften werden durch diese Anwendungsfälle nicht verändert. Beide vollständigen Prüfungen, die Nachbedingungen und der Writer laufen unter derselben Administrationssperre. API-Major bleibt experimentell 0; es werden keine neuen Laufzeitabhängigkeiten eingeführt.

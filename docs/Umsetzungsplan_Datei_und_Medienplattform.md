@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.6
+Version: 1.7
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 5, siehe Abschnitt 15. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 6, siehe Abschnitt 16. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -312,3 +312,29 @@ Die Vierfachmatrix aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 ist mit e
 Der Schutz in dieser Iteration gilt für Statusänderungen und das Recht zur Statusverwaltung. Er garantiert weder einen zukünftigen Provider-Login noch unbegrenzte Gruppenfrische oder die gesamte Administrationsfähigkeit. Es gibt weiterhin keine produktive Oberfläche, OIDC-Anmeldung oder Dateioperationen. README, Verwaltungs- und API-Vertrag, Prüfprotokoll und Plan werden zusammen mit dem Code veröffentlicht.
 
 Version 1.6: Geschützter Benutzerstatus, atomare Ereignisse und Schutz des letzten aktuell nutzbaren Statusverwaltungszugangs.
+
+
+## 16. Iteration 6: Geschützte manuelle Gruppenmitgliedschaften
+
+GroupMembershipService implementiert Hinzufügen und Entfernen manueller Mitgliedschaften. Jeder Aufruf benötigt das ausdrückliche globale Mitgliedschaftsverwaltungsrecht und eine positive zusätzliche GroupMembershipPolicy. Das RBAC-Plugin prüft dabei jede Rolle der Zielgruppe in jedem zugewiesenen Speicherbereich, das vollständige bereichsbezogene Verwaltungsrecht sowie die ausdrückliche Delegation. Vergaben müssen die bestehenden Berechtigungsobergrenzen einhalten; Rollenwachstum erweitert die Delegation nicht. Globale Rollengruppen und Gruppen mit administrativen RBAC-Rollen sind in diesem ersten Vertrag vollständig von Änderungen ausgeschlossen.
+
+Die experimentelle Plugin-API 0.3 ergänzt den verpflichtenden öffentlichen Policy-Vertrag. Der Kern liest weiterhin keine RBAC-Tabellen und importiert keine RBAC-Interna. Vorbedingungen werden nach Plugin-Validierung erneut geprüft, sodass zwischenzeitlich zusätzliche Rollen der Zielgruppe die Änderung verhindern können.
+
+Manuelle und externe Quellen bleiben getrennt. Der Entzug einer manuellen Quelle löscht keine extern bestätigte Mitgliedschaft; bestehende Providerquellen können den effektiven Zugang daher erhalten. Die Änderung bestätigt keine veralteten Claims und entsperrt keinen Benutzer. Version, Mitgliedschaft, Audit und persistiertes Abschlussereignis werden atomar geändert. Unveränderte Wiederholungen erhalten ein Audit ohne Versionsanstieg oder weiteres Änderungsereignis.
+
+Die gemeinsame Nachbedingung verlangt nach Mitgliedschaftsänderungen jeweils mindestens einen aktuell nutzbaren Zugang zur Statusverwaltung und zur Mitgliedschaftsverwaltung. Sie zählt nur vollständige zentrale Permits einschließlich Plugin-Einschränkungen. Der Benutzerstatusdienst erhält ebenfalls den Schutz des letzten zuvor nutzbaren Mitgliedschaftsadministrators. Ohne bereits eingerichtete Mitgliedschaftsverwaltung bleibt der frühere Statusdienst verwendbar. Ein vollständiger Notfallzugang und die zukünftige Provider-Verfügbarkeit sind damit noch nicht umgesetzt.
+
+### 16.1 Prüfung
+
+Auf allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 sind jeweils 123 Tests mit 436 Assertions erfolgreich (49 Unit-/Architekturtests, 74 Integrationstests). Die Syntax aller 68 eigenen PHP-Dateien sowie die Migrations-CLI sind ebenfalls geprüft. 26 zusätzliche Integrationstests belegen Delegationsgrenzen über mehrere Bereiche und Rollen, administrative Gruppen, Quellenprovenienz, Versionsverhalten, Plugin-Veto und Nachprüfung, Schutz beider Administrationsfähigkeiten sowie vollständiges Rollback bei Audit-/Outbox-Fehlern. Bereits veröffentlichte Migrationen und Laufzeitabhängigkeiten bleiben unverändert.
+
+### 16.2 Nächste Umsetzung und Grenzen
+
+1. Geschützte Gruppenstammdaten und anschließend Mappingänderungen ergänzen, mit vollständiger Betrachtung ihrer Auswirkung auf Mitgliedschaften und verbleibende Administrationsfähigkeit.
+2. Administrative Rollenbearbeitung und globale Delegation mit ausdrücklich definiertem Notfallzugang vervollständigen.
+3. OIDC-Clientregistrierung, Samla-Callback, tatsächlichen Gruppenclaim und Gruppenfrische festlegen; Auswahl zusätzlicher Integrationsbibliotheken zur Entscheidung vorlegen.
+4. Geschützte HTTP-Zugänge, App-Passwörter, ersten Dateidurchstich und WebDAV anschließen; Outbox-Zustellung ergänzen.
+
+Die Funktionen liegen als getestete Anwendungsdienste vor. Gruppenstammdaten, Mappings, OIDC-Synchronisierung, Oberfläche und produktive Dateioperationen sind weiterhin offen. Private Repository- und SQL-Writes dürfen nicht als parallele öffentliche Verwaltungswege verwendet werden. Alle späteren Dienste müssen dieselbe Sperrstrategie und ihre eigenen Nachbedingungen einhalten. README, Verwaltungs- und API-Dokumentation, Prüfprotokoll und dieser Plan werden mit der Implementierung veröffentlicht.
+
+Version 1.7: Manuelle Gruppenmitgliedschaften mit vollständiger fachlicher Delegationsprüfung und Schutz der aktuell nutzbaren Status- und Mitgliedschaftsverwaltung; erfolgreiche Vierfachmatrix.

@@ -64,16 +64,23 @@ final readonly class PdoIdentityRepository implements IdentityReader
     }
     public function addManualMembership(string $userId, string $groupId): void
     {
-        Transaction::run($this->pdo, function () use ($userId, $groupId): void {
-            $this->lockUser($userId);
-            $query = $this->pdo->prepare("SELECT 1 FROM identity_memberships WHERE user_id = ? AND group_id = ? AND origin = 'manual'");
-            $query->execute([$userId, $groupId]);
-            if ($query->fetchColumn() === false) {
-                $insert = $this->pdo->prepare("INSERT INTO identity_memberships (user_id, group_id, origin, source_group) VALUES (?, ?, 'manual', '')");
-                $insert->execute([$userId, $groupId]);
-                $this->bump($userId);
-            }
-        });
+        Transaction::run($this->pdo, fn(): bool => $this->setManualMembershipInsideTransaction($userId, $groupId, true));
+    }
+    /** Internal writer. Never deletes external membership provenance or refreshes verified claims. */
+    public function setManualMembershipInsideTransaction(string $userId, string $groupId, bool $grant): bool
+    {
+        if (!$this->pdo->inTransaction()) { throw new \LogicException('An active transaction is required.'); }
+        $this->lockUser($userId);
+        $query = $this->pdo->prepare("SELECT 1 FROM identity_memberships WHERE user_id = ? AND group_id = ? AND origin = 'manual'");
+        $query->execute([$userId, $groupId]);
+        $exists = $query->fetchColumn() !== false;
+        if ($exists === $grant) { return false; }
+        $query = $this->pdo->prepare($grant
+            ? "INSERT INTO identity_memberships (user_id, group_id, origin, source_group) VALUES (?, ?, 'manual', '')"
+            : "DELETE FROM identity_memberships WHERE user_id = ? AND group_id = ? AND origin = 'manual'");
+        $query->execute([$userId, $groupId]);
+        $this->bump($userId);
+        return true;
     }
     /** Only supply a claim already verified for this stored issuer/subject by the future OIDC adapter. */
     public function replaceVerifiedGroups(string $userId, mixed $claim): void

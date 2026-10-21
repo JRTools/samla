@@ -121,6 +121,18 @@ final class UserStatusTest extends TestCase
         self::assertFalse($this->identity->isAccessAllowed('alice'));
         self::assertTrue($this->service()->setBlocked('bob', 'alice', false));
     }
+    public function testLastConfiguredMembershipAdministratorCannotBeBlocked(): void
+    {
+        $this->identity->createGroup('membership-operators', 'Membership operators');
+        $this->identity->addManualMembership('bob', 'membership-operators');
+        $this->roles->save(new Role('membership-operator', Scope::Global, ['identity.groups.memberships.manage']), $this->runtime);
+        $this->roles->assign(new RoleAssignment('membership-operators', 'membership-operator', Scope::Global));
+        $before = $this->version('bob');
+        $this->denied(fn() => $this->service()->setBlocked('alice', 'bob', true));
+        self::assertSame($before, $this->version('bob'));
+        $this->identity->addManualMembership('carol', 'membership-operators');
+        self::assertTrue($this->service()->setBlocked('alice', 'bob', true));
+    }
     public function testStaleSecondAdministratorDoesNotSatisfyRecoveryInvariant(): void
     {
         $this->identity->addManualMembership('bob', 'operators');

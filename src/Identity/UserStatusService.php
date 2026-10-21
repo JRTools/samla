@@ -19,12 +19,12 @@ final readonly class UserStatusService
             if (!$this->canManageStatus($actorId)) { throw new AccessDenied(); }
         };
         return $this->mutations->run($context, $guard, function () use ($userId, $blocked): bool {
+            $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
+            $hadMembershipAdministrator = $continuity->hasAvailable('identity.groups.memberships.manage');
             $changed = $this->identities->setBlockedInsideTransaction($userId, $blocked);
-            // Evaluate the resulting state through the public checker, including plugin restrictions.
-            foreach ($this->identities->userIds() as $candidate) {
-                if ($this->canManageStatus($candidate)) { return $changed; }
-            }
-            throw new AccessDenied();
+            $continuity->assertAvailable('identity.users.status.manage');
+            if ($hadMembershipAdministrator) { $continuity->assertAvailable('identity.groups.memberships.manage'); }
+            return $changed;
         });
     }
     private function canManageStatus(string $userId): bool
