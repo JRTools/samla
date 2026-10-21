@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.14.1
-Stand: 21. Oktober 2026
+Version: 1.15
+Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 13, siehe Abschnitt 23. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 14, siehe Abschnitt 24. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -571,3 +571,55 @@ Version 1.14: Erste lokale Dateiablage mit expliziten Bereichsrechten, Quoten, s
 Der Betreiber bestätigt die zunächst fehlende Speichermigration als Ursache der PDOException und führt sie nachträglich aus. Die Pfadprüfung wird an Plesk open_basedir angepasst: Die serverseitig erlaubte Wurzel bildet die Vertrauensgrenze; Eltern außerhalb dieser Freigabe werden nicht mit is_link untersucht. Innerhalb der Freigabe bleiben Symlinks gesperrt, vollständig außerhalb liegende Speicherpfade werden vor Dateisystemzugriff abgelehnt. open_basedir muss nicht erweitert oder deaktiviert werden.
 
 Ein isolierter PHP-Unterprozess mit echtem open_basedir und als Exceptions behandelten Warnungen prüft zulässige Pfade ohne verbotene Elternzugriffe, Symlinkabweisung und Abweisung fremder Speicherwurzeln. Die gezielte Speichertestsuite besteht unter PHP 8.4.5 und 8.5.4 mit je 15 Tests und 22 Assertions. Diese Korrektur wird separat vor der noch laufenden Lebenszyklusphase veröffentlicht.
+
+
+## 24. Iteration 14: Datei-Lebenszyklus, kontrollierte Bereinigung und WebDAV-Vorbereitung
+
+### 24.1 Weitere Dateioperationen
+
+Die Oberfläche bietet pro Eintrag Umbenennen, Verschieben innerhalb eines Bereichs, Kopieren einzelner Dateien und Papierkorb. Wiederherstellen ist über einen bereichsbezogenen Papierkorb möglich. Zielordner werden anhand verständlicher Pfadbezeichnungen ausgewählt; die Liste ist auf 100 Ordner begrenzt. Jede Aktion verlangt POST/CSRF und die eigenen atomaren Bereichsrechte. Verschieben benötigt update/create/delete, Kopieren read/create, Papierkorb delete und Wiederherstellen restore/create. Ein bestehender Beitragender wird nicht automatisch zum Dateiverwalter. Ein ausdrücklicher Offline-Installer vergibt read/contribute/manage an eine vorhandene Gruppe in einem vorhandenen Bereich, mit frischem Administrator und Wartung. Wiederholung einer identischen Zuweisung ist idempotent; vorhandene Rollen werden nicht verändert.
+
+Name und Elternkennung werden als optimistische Erwartungen geprüft. Konflikte überschreiben keinen aktuellen Eintrag. Zyklische Verschiebungen werden abgewiesen; Ordnertiefe ist auf 128 begrenzt, der beim Verschieben geprüfte Teilbaum auf 1000 Ordner. Gelöschte Ordner sperren auch direkte Links auf Nachfahren. Eine Wiederherstellung setzt einen erreichbaren Elternordner voraus. Papierkorbinhalte zählen weiter zur Quote und reservieren bisherige Namen. Physische Inhalte von Dateikopien werden unveränderlich gemeinsam referenziert, logisch jedoch erneut gezählt.
+
+### 24.2 Erweiterungsvertrag und Wartung
+
+API 0.6 ergänzt StorageChange als unveränderlichen Änderungsvorschlag mit logischem Namen/Elternkennung und optional gepaarten Inhaltsgrößen/SHA-256. MutationContext verlangt diesen Vorschlag für die definierten Speicheroperationen und verbietet ihn für fremde Operationen. Plugins können Vorschläge prüfen und ablehnen, bevor Metadaten freigegeben werden. Es gibt weiterhin keinen Rohinhalt-/Virenscanner-Vertrag. Audit und Outbox enthalten nur Kennungen.
+
+Die kontrollierte Bereinigung zeigt standardmäßig nur Kandidaten. Erst --apply entfernt maximal 1000 mindestens 24 Stunden alte nicht referenzierte Objekte/Stagingdateien unter dem Administrationslock mit erneuter Referenzprüfung vor und nach Validatoren. Unbekannte Namen, Symlinks, Hardlinks, junge und referenzierte Objekte bleiben erhalten. Schreiber müssen für diesen Offline-Wartungsschritt gestoppt sein. Eine physische Löschung kann nach SQL-Fehler nicht zurückgerollt werden; sie betrifft daher ausschließlich nicht referenzierte Objekte. Anleitung, Grenzen und neuer Migrationsschritt stehen in storage.md.
+
+### 24.3 Prüfung
+
+Vierfachmatrix: PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6 jeweils 304 Tests, 1153 Assertions (142 Unit-/Architekturtests, 162 Integrationstests). 140 eigene PHP-Dateien im Matrixlauf syntaktisch geprüft; der danach ergänzte optionale WebDAV-Prüfer ist zusätzlich unter beiden PHP-Versionen ausgeführt. Migrations-CLI überall erfolgreich.
+
+Neue Fälle prüfen verschachtelte Dateien, Umbenennen/Verschieben/Kopieren, Quoten von Kopien, versteckte Papierkorb-Nachfahren, Wiederherstellung, Zyklus-/Elternabweisung, Konflikte und veraltete Formulare, fehlende Verwaltungsrechte, typisierte Plugin-Vetos, sichere Bereinigung und Lebenszyklusformulare. Der echte HTTP-/HTTPS-Durchstich bestätigt zusätzlich explizite Profilfreigabe, Detailformulare, Umbenennen, veralteten Request mit 409, Dateikopie, Papierkorb und Wiederherstellung sowie reinen GC-Probelauf. Die Plesk-Korrektur wurde vom Betreiber als passend bestätigt. Neue Datei-Lebenszyklusfunktionen wurden hier nicht auf seinem Host deployed.
+
+### 24.4 Konkrete nächste Komponentenentscheidung
+
+SabreDAV 4.7.1 ist als konkrete WebDAV-Bibliothek außerhalb der Anwendung isoliert geprüft. Die Auflösung umfasst das direkte Paket, fünf neue transitive Pakete und das bereits vorhandene psr/log. Keine Anwendungspakete oder Routen wurden verändert. Der optionale reproduzierbare Prüfer bestätigt unter PHP 8.4.5/8.5.4 PROPFIND/GET/OPTIONS, eigenen Basic-Adapter, Abweisung falscher Daten, exklusives LOCK, verweigertes PUT ohne Token, erfolgreiches PUT mit Token und UNLOCK. Warnungen/Deprecations werden als Exceptions behandelt.
+
+Die konkrete Entscheidung einschließlich XML-Erweiterungen, Paketversionen, Plattformgrenzen, PDO-Lock-/App-Passwortintegration und Quellen steht in webdav-library-decision.md. Gemäß der bestehenden AGENTS-Regel zu zusätzlichen Laufzeitkomponenten ist vor der Aufnahme die ausdrückliche Freigabe dieser Bibliothek erforderlich. Die frühere Freigabe bezog sich auf OIDC. Das ist eine echte Komponentenentscheidung und kein erneutes Go für die allgemeine Fortsetzung.
+
+### 24.5 Nachverfolgung des vollständigen Konzepts
+
+| Konzeptbereich | Stand und verbleibende Arbeit |
+|---|---|
+| Dateien und Speicherbereiche | Erste Bereiche, Quoten, Ordner, neue Uploads/Downloads, Umbenennen/Verschieben, Einzeldateikopien und Papierkorb vorhanden. Versionen, endgültige Löschung, Massenoperationen, rekursive/bereichsübergreifende Operationen, persönliche Bereiche und vollständige Bereichsverwaltung offen. |
+| Medienbibliothek | Suche, Filter, Tags, Thumbnail-/Previewerzeugung, Original-/Ableitungsverwaltung und Index-Neuaufbau offen. |
+| Viewer und Editor | Berechtigter Attachment-Download vorhanden; Bild-/PDF-/Textviewer und Texteditor samt Konfliktprüfung offen. |
+| Metadaten und KI-Herkunft | EXIF/IPTC/XMP, Herkunft und Prioritäten, sensible GPS-/Gerätedaten, KI-Status/Nachweisqualität und Extraktorgrenzen offen. |
+| Erweiterbare Felder und Medienrechte | Typisierte Felddefinitionen, Wertevalidierung und gezielte Leserechte noch offen. |
+| Sammlungen und Referenzen | Berechtigte Sammlungen, Verweise und deren Pflege offen. |
+| Portabilität und Export | Originaldateien downloadbar. Struktur-/Metadatenexport und vollständiger Wiederimport offen. |
+| Plugin-Architektur | Öffentliche API, RBAC-Pflichtplugin, Restrictions, Validatoren und MutationRunner vorhanden. Weitere fachliche Provider-/UI-Beiträge, Zustellung der Outbox, Plugin-Lebenszyklus und umfassende Entwicklerbeispiele offen. |
+| Identität und OIDC | Echte Anmeldung und initiale Administration bestätigt; globale Rollenerholung/Notfallzugang, allgemeine Sessionwiderrufe und IdP-Logout offen. |
+| WebDAV und App-Passwörter | Konkrete Bibliothek isoliert geprüft, Freigabe ausstehend. App-Passwörter, Routing, dauerhafte gemeinsame Locks, Protokolladapter und native Referenzclienttests offen. |
+| Gruppen und RBAC | Kernpolicies und erste Benutzer-/Gruppenoberfläche vorhanden. Rollen-/Mappingformulare, globale kontrollierte Rollenzuweisung, Gruppenlöschung und umfassende Delegationspflege offen. |
+| Betrieb und Sicherheit | Migrationen, private Pfade, CSRF/Sitzungen, erste Konsistenz-/GC-Werkzeuge vorhanden. Vollständiger Recovery-Nachweis, Überlastschutz/Rate-Limits, Aufbewahrung, Monitoring, Update-/Releaseprozesse und Referenzclientabnahme offen. |
+| Tests und Abnahme | Vierfachmatrix und echte lokale HTTP-/HTTPS-Durchstiche vorhanden. Native WebDAV-Clients, breitere visuelle/Barrierefreiheitstests, Last-/Crash-/Parallelitätsabnahmen sowie CI-Automatisierung und vollständige Konzept-Abnahme noch offen. |
+
+Version 1.15: Datei-Lebenszyklus mit expliziten Rechten, typisierter Speicherproposal, kontrollierte Offline-Bereinigung und reviewbare konkrete WebDAV-Bibliotheksentscheidung. Der gesamte Konzeptumfang ist weiterhin nicht fertiggestellt.
+
+
+### 24.6 Freigabe für Iteration 15
+
+Am 22. Oktober 2026 gibt der Betreiber die konkret geprüfte SabreDAV-Abhängigkeit ausdrücklich frei. Eine zusätzliche isolierte gemeinsame Auflösung mit Samlas vorhandenen Paketen ergänzt sechs Pakete ohne bestehende Updates/Entfernungen und ohne gemeldete Advisories. Die Freigabe ist erteilt; ein Anhalten zur Bibliotheksentscheidung entfällt. Nach Veröffentlichung der abgeschlossenen Iteration 14 folgt die Integration einschließlich App-Passwörtern und gemeinsamem Lock-Vertrag.

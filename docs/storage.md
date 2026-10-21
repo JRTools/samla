@@ -50,6 +50,38 @@ Der rein lesende Prüfer vergleicht Referenzen, Größe und SHA-256, meldet fehl
 
 Backup: Webschreibzugriffe stoppen, Datenbank und privaten Speicher im selben Wartungsfenster sichern. Restore: zusammengehöriges Datenbank-/Dateisystembackup einspielen, Besitzrechte herstellen, Migrationstand prüfen, `storage-check.php` ausführen und erst danach Webzugriff öffnen. Diese Anleitung ersetzt noch keinen getesteten vollständigen Disaster-Recovery-Nachweis.
 
+## Weitere Dateioperationen ab Iteration 14
+
+Über „Eintrag verwalten“ sind Umbenennen, Verschieben innerhalb desselben Bereichs, Einzeldateikopien und Papierkorb verfügbar. Zielordner werden aus einer begrenzten Liste mit Pfadbezeichnungen gewählt. Verschieben benötigt update/create/delete, Kopieren read/create, Papierkorb delete und Wiederherstellen restore/create. Die zentrale Autorisierung gilt bei jedem Zugriff erneut. Ein Beitragender erhält diese Verwaltungsrechte nicht automatisch.
+
+Explizite Offline-Freigabe mit frischem Administrator und Wartung:
+
+```bash
+APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/storage-space-access.php ACTOR_ID SPACE_ID GROUP_ID manage
+```
+
+Alternativ read oder contribute verwenden. Der Befehl ergänzt eine passende Bereichszuweisung und verändert keine vorhandene Rolle. Existierende reservierte Profilrollen müssen exakt passen. Wiederholung derselben Zuweisung ist idempotent; Profile addieren sich und sind keine Herabstufung bereits vorhandener Rechte. Allgemeine Zuweisungsentzüge bleiben Aufgabe der Rollenverwaltung. Der initiale Administratorbootstrap ist weiterhin ausschließlich für die Ersteinrichtung bestimmt.
+
+Gleichnamige Einträge werden nicht überschrieben. Name und bisheriger Elternordner sind optimistische Erwartungen jeder Änderung; ein abweichender Stand erzeugt 409. Ordnerzyklen werden abgewiesen. Bäume haben höchstens 128 Ordnerebenen; Verschiebungen von Ordnerbäumen werden auf höchstens 1000 Ordner begrenzt. Rekursive Ordnerkopien und bereichsübergreifende Operationen sind noch nicht enthalten.
+
+Der Papierkorb markiert den ausgewählten Eintrag. Nachfahren eines gelöschten Ordners bleiben logisch erhalten, sind aber auch über direkte Datei-/Ordnerlinks gesperrt. Wiederherstellen verlangt einen noch erreichbaren ursprünglichen Elternordner; gegebenenfalls zuerst den übergeordneten Ordner wiederherstellen. Inhalte im Papierkorb zählen weiterhin zur Quote. Namen bleiben bis zur späteren endgültigen Löschung reserviert. Eine Dateikopie teilt sich unveränderlichen physischen Inhalt, zählt logisch jedoch erneut zur Quote.
+
+### Kontrollierte Bereinigung
+
+Alle Web- und CLI-Schreiber stoppen und Wartung aktivieren. Zuerst nur Kandidaten anzeigen:
+
+```bash
+APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/storage-gc.php
+```
+
+Nach Prüfung anwenden:
+
+```bash
+APP_MAINTENANCE=1 /opt/plesk/php/8.4/bin/php bin/storage-gc.php --apply
+```
+
+Pro Lauf werden höchstens 1000 nicht referenzierte reguläre Objekte beziehungsweise Stagingdateien mit internen Kennungen und mindestens 24 Stunden Alter berücksichtigt. Referenzprüfung erfolgt vor und nach Validatoren unter dem gemeinsamen Administrationslock. Referenzierte Kopien und Papierkorbinhalte werden nicht entfernt. Symlinks, Hardlinks, fremde Namen und junge Objekte bleiben unangetastet. Jeder angewandte Löschvorgang verwendet einen MutationContext und erzeugt Audit/Outbox. Die physische Entfernung selbst kann bei nachfolgendem SQL-Fehler nicht zurückgerollt werden; nur nicht referenzierte Objekte werden angefasst. Die Betriebsvoraussetzung gestoppter Schreiber ist insbesondere für lange laufende, noch nicht publizierte Uploads zwingend.
+
 ## Noch offene Produktfunktionen
 
-Umbenennen, Kopieren, Verschieben, Papierkorb, Versionen, endgültige Löschung, Massenoperationen, persönliche Speicherbereiche, Medienmetadaten und WebDAV werden schrittweise ergänzt. Die Dateiansicht ist keine Freigabe des gesamten Konzeptumfangs.
+Versionen, endgültige Löschung, rekursive Ordnerkopien, bereichsübergreifende und Massenoperationen, persönliche Speicherbereiche, Medienmetadaten und WebDAV werden schrittweise ergänzt. Die Dateiansicht ist keine Freigabe des gesamten Konzeptumfangs.

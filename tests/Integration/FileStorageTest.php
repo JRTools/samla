@@ -9,7 +9,7 @@ use Samla\Core\Configuration\AppConfig;
 use Samla\Core\Database\{ConnectionFactory, MigrationRunner};
 use Samla\Core\Identity\{IdentityPlugin, PdoIdentityRepository};
 use Samla\Core\Plugins\PluginRuntime;
-use Samla\Core\Storage\{FileService, LocalContentStore, StoragePlugin};
+use Samla\Core\Storage\{FileService, LocalContentStore, OrphanCollector, StoragePlugin};
 use Samla\Core\Web\{FileController, Request};
 use Samla\PluginApi\{AccessDenied, ChangeValidator, MutationConflict, MutationContext, PluginRegistrar, Scope};
 use Samla\Plugins\Rbac\{PdoRoleRepository, RbacPlugin, Role, RoleAssignment};
@@ -34,7 +34,7 @@ final class FileStorageTest extends TestCase
         $this->identities->createGroup('editors', 'Editors'); $this->identities->addManualMembership('alice', 'editors');
         $this->roles = new PdoRoleRepository($this->pdo); $this->runtime = $this->boot();
         $this->pdo->exec("INSERT INTO storage_spaces (id, name, quota_bytes) VALUES ('a', 'Media', 100), ('b', 'Private', 100)");
-        $this->roles->save(new Role('editor', Scope::Space, ['files.list','files.read','files.create']), $this->runtime);
+        $this->roles->save(new Role('editor', Scope::Space, ['files.list','files.read','files.create','files.update','files.delete','files.restore']), $this->runtime);
         $this->roles->assign(new RoleAssignment('editors', 'editor', Scope::Space, 'a'));
         $this->root = sys_get_temp_dir() . '/samla-files-' . bin2hex(random_bytes(8)); mkdir($this->root, 0700);
     }
@@ -158,5 +158,94 @@ final class FileStorageTest extends TestCase
     {
         $id = $this->upload('file', 'data'); foreach (glob($this->root . '/*') as $path) { unlink($path); }
         $this->expectException(\RuntimeException::class); $this->service()->download('alice', 'a', $id);
+    }
+    public function testRenameMoveAndCopyPreserveContentAndQuotaCountsCopies(): void
+    {
+        $service = $this->service(); $folder = $service->createFolder('alice', 'a', '', 'Folder'); $id = $this->upload('original', 'content');
+        $service->change('alice', 'a', $id, 'rename', 'original', '', 'renamed');
+        $service->change('alice', 'a', $id, 'move', 'renamed', '', parent: $folder);
+        $copy = $service->change('alice', 'a', $id, 'copy', 'renamed', $folder, 'copy');
+        self::assertNotSame($id, $copy); self::assertSame(14, $service->listing('alice', 'a')['used']);
+        self::assertSame('renamed', $service->listing('alice', 'a', $folder)['rows'][0]['name']);
+        self::assertCount(1, glob($this->root . '/*'));
+        $download = $service->download('alice', 'a', $copy);
+        try { self::assertSame('content', stream_get_contents($download['stream'])); } finally { fclose($download['stream']); }
+    }
+    public function testTrashFolderHidesItsWholeSubtreeAndRestoreRetainsQuota(): void
+    {
+        $service = $this->service(); $folder = $service->createFolder('alice', 'a', '', 'Folder'); $id = $this->upload('child', 'data', $folder);
+        $service->change('alice', 'a', $folder, 'trash', 'Folder', '');
+        self::assertSame([], $service->listing('alice', 'a')['rows']); self::assertSame(4, $service->listing('alice', 'a')['used']);
+        self::assertSame($folder, $service->trashListing('alice', 'a')['rows'][0]['id']);
+        try { $service->download('alice', 'a', $id); self::fail('Trashed ancestor was ignored.'); } catch (\InvalidArgumentException) { self::assertTrue(true); }
+        self::assertSame(['' => 'Bereichswurzel'], $service->folderChoices('alice', 'a'));
+        $service->change('alice', 'a', $folder, 'restore', 'Folder', '');
+        self::assertSame($id, $service->listing('alice', 'a', $folder)['rows'][0]['id']);
+        self::assertSame([], $service->trashListing('alice', 'a')['rows']);
+    }
+    public function testMoveCannotCreateFolderCycleOrUseForeignParent(): void
+    {
+        $service = $this->service(); $folder = $service->createFolder('alice', 'a', '', 'Folder'); $child = $service->createFolder('alice', 'a', $folder, 'Child');
+        foreach ([$folder, $child, str_repeat('f', 32)] as $parent) {
+            try { $service->change('alice', 'a', $folder, 'move', 'Folder', '', parent: $parent); self::fail('Invalid parent accepted.'); }
+            catch (\InvalidArgumentException) { self::assertFalse($this->pdo->inTransaction()); }
+        }
+        self::assertSame('', $service->details('alice', 'a', $folder)['parent_id']);
+    }
+    public function testStaleMutationAndCollisionDoNotOverwrite(): void
+    {
+        $service = $this->service(); $id = $this->upload('one', 'first'); $this->upload('two', 'second');
+        try { $service->change('alice', 'a', $id, 'rename', 'one', '', 'two'); self::fail('Collision accepted.'); } catch (MutationConflict) { self::assertTrue(true); }
+        $service->change('alice', 'a', $id, 'rename', 'one', '', 'three');
+        try { $service->change('alice', 'a', $id, 'trash', 'one', ''); self::fail('Stale request accepted.'); } catch (MutationConflict) { self::assertTrue(true); }
+        self::assertSame('three', $service->details('alice', 'a', $id)['name']);
+    }
+    public function testContributeRoleDoesNotImplicitlyPermitLifecycleChanges(): void
+    {
+        $service = $this->service(); $id = $this->upload('one', 'first');
+        $this->roles->save(new Role('editor', Scope::Space, ['files.list','files.read','files.create']), $this->runtime);
+        foreach (['rename','move','trash','restore'] as $operation) {
+            try { $service->change('alice', 'a', $id, $operation, 'one', '', 'changed'); self::fail('Missing rights ignored.'); } catch (AccessDenied) { self::assertFalse($this->pdo->inTransaction()); }
+        }
+    }
+    public function testTypedUploadProposalCanBeRejectedByNameAndHashWithoutLeakingAudit(): void
+    {
+        $seen = [];
+        $runtime = $this->boot([new Extension('test.proposal', static function (PluginRegistrar $r) use (&$seen): void {
+            $r->validator(new class($seen) implements ChangeValidator {
+                public function __construct(private array &$seen) {}
+                public function priority(): int { return 0; }
+                public function validate(MutationContext $context): void {
+                    $this->seen[] = $context->storageChange;
+                    if ($context->storageChange?->name === 'reject') { throw new AccessDenied(); }
+                }
+            });
+        })]);
+        try { $this->upload('reject', 'data', '', $this->service($runtime)); self::fail('Proposal veto ignored.'); } catch (AccessDenied) { self::assertTrue(true); }
+        self::assertSame(4, $seen[0]->size); self::assertSame(hash('sha256', 'data'), $seen[0]->sha256);
+        self::assertSame(0, (int) $this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+    }
+    public function testCollectorOnlyRemovesOldUnreferencedGeneratedObjects(): void
+    {
+        $this->upload('valid', 'data'); $valid = glob($this->root . '/*')[0]; touch($valid, time() - 172800);
+        $old = str_repeat('a', 64); $recent = str_repeat('b', 64); $stage = '.stage.' . str_repeat('c', 64);
+        foreach ([$old, $recent, $stage, 'unknown'] as $name) { file_put_contents($this->root . '/' . $name, 'orphan'); }
+        touch($this->root . '/' . $old, time() - 172800); touch($this->root . '/' . $stage, time() - 172800);
+        $collector = new OrphanCollector($this->pdo, new LocalContentStore($this->root), new PdoMutationRunner($this->pdo, $this->runtime));
+        $dry = $collector->collect(); self::assertEqualsCanonicalizing([$old, $stage], $dry['candidates']); self::assertSame([], $dry['removed']);
+        $applied = $collector->collect(true); self::assertEqualsCanonicalizing([$old, $stage], $applied['removed']);
+        self::assertFileExists($valid); self::assertFileExists($this->root . '/' . $recent); self::assertFileExists($this->root . '/unknown');
+        self::assertSame([], $collector->collect(true)['removed']);
+    }
+    public function testLifecycleFormsRenderAndProtectMutations(): void
+    {
+        $id = $this->upload('one', 'data'); $controller = new FileController($this->service()); $csrf = str_repeat('a', 64);
+        $data = ['actor' => 'alice', 'csrf' => $csrf, 'caps' => [], 'flash' => null];
+        $page = $controller->handle(new Request('GET', '/files/detail', ['space' => 'a', 'entry' => $id]), 'alice', $csrf, $data);
+        self::assertSame(200, $page->status); self::assertStringContainsString('Zielordner', $page->body);
+        $post = ['space' => 'a', 'entry' => $id, 'parent' => '', 'operation' => 'trash', 'expected_name' => 'one', 'expected_parent' => '', 'csrf' => $csrf];
+        self::assertSame(303, $controller->handle(new Request('POST', '/files/change', post: $post), 'alice', $csrf, $data)->status);
+        $page = $controller->handle(new Request('GET', '/files/trash', ['space' => 'a']), 'alice', $csrf, $data);
+        self::assertSame(200, $page->status); self::assertStringContainsString('Wiederherstellen', $page->body);
     }
 }

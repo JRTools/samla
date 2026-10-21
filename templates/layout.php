@@ -3,6 +3,7 @@ use Samla\Core\Web\PageRenderer;
 $e = PageRenderer::escape(...);
 $titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen', 'error' => 'Zugriff', 'login' => 'Anmelden', 'account' => 'Mein Zugang', 'spaces' => 'Speicherbereiche', 'files' => 'Dateien'];
 $caps = $data['caps'];
+$titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb'];
 ?>
 <!doctype html>
 <html lang="de">

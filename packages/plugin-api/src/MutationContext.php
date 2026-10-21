@@ -16,6 +16,7 @@ final readonly class MutationContext
         public array $targets,
         public ?GroupDetailsChange $groupDetails = null,
         public ?GroupMappingChange $groupMapping = null,
+        public ?StorageChange $storageChange = null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -30,6 +31,11 @@ final readonly class MutationContext
             }
         }
         $groupOperation = in_array($operation, ['identity.group.create', 'identity.group.rename'], true);
+        $storageOperation = in_array($operation, ['storage.folder.create', 'storage.file.upload', 'storage.entry.rename', 'storage.entry.move',
+            'storage.file.copy', 'storage.entry.trash', 'storage.entry.restore'], true);
+        if ($storageOperation !== ($storageChange !== null) || ($storageOperation && ($scope !== Scope::Space || !isset($targets['entry'])))) {
+            throw new \InvalidArgumentException('Storage proposal must match its operation.');
+        }
         if ($groupOperation !== ($groupDetails !== null)
             || ($groupOperation && ($scope !== Scope::Global || array_keys($targets) !== ['group']
                 || ($operation === 'identity.group.create') !== ($groupDetails->expectedName === null)))) {

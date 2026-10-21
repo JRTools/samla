@@ -1,4 +1,4 @@
-# Experimentelle Plugin-API 0.5
+# Experimentelle Plugin-API 0.6
 
 Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog.
 
@@ -68,3 +68,12 @@ Dateilisten und Downloads verwenden den zentralen AuthorizationChecker mit files
 Neue Ordner und Uploads verwenden MutationRunner/ChangeValidator mit storage.folder.create beziehungsweise storage.file.upload, Scope Space und Ziel entry sowie optional parent. Der Kontext und Audit/Outbox enthalten interne Kennungen, keine Inhalte, freien Namen oder Hostpfade. Validatoren können die Veröffentlichung der Metadaten verhindern. Autorisierung und Zielordner werden nach Validatoren erneut geprüft. Der bestehende API-Vertrag 0.5 bleibt unverändert; eine inhaltliche Uploadprüfung über einen typisierten Vorschlag wird separat ergänzt.
 
 Der vertrauenswürdige Offline-Installer verwendet storage.space.create, Space-Scope sowie Ziele group und role. Er benötigt Wartung und einen aktiven frischen Administrator, vergibt ausschließlich die ausdrücklich angeforderte Gruppenrolle im neu angelegten Bereich und ist kein allgemeiner Rollen-HTTP-Endpunkt.
+
+
+## StorageChange ab API 0.6
+
+MutationContext erhält das optionale readonly storageChange. Für storage.folder.create, storage.file.upload, storage.entry.rename, storage.entry.move, storage.file.copy, storage.entry.trash und storage.entry.restore ist es im Space-Scope mit Ziel entry zwingend. Andere Operationen dürfen keinen StorageChange einschleusen. StorageChange enthält optional den vorgeschlagenen logischen name, den internen parent und bei neuen Inhalten gepaarte size/sha256. UTF-8-/Namensregeln, Elternkennung und Hashform werden im öffentlichen Vertrag geprüft. Plugins können beispielsweise einen Namen oder eine Inhaltssignatur ablehnen. Es ist noch kein Raw-Content-/Virenscanner-Vertrag. Der Vorschlag wird nicht in Audit/Outbox serialisiert.
+
+Kopieren/Ändern verwendet zusätzlich Ziel result; Metadatenoperationen prüfen nach Validatoren noch einmal Identität, sämtliche benötigten Rechte, aktuelle Name-/Elternerwartung, Papierkorbstatus, Elternkette und gegebenenfalls Zyklen. Eine Dateikopie referenziert unveränderlichen vorhandenen Inhalt, aber benötigt erneut logische Quote.
+
+Der Offline-Installer storage.access.grant verwendet Space-Scope mit group/role. Die Offline-Bereinigung storage.orphan.purge verwendet Global-Scope, Systemakteur system.storage und Ziel object. Der Löschguard prüft alte nicht referenzierte reguläre Objekte unter dem Administrationslock erneut; Validatoren können jeden Schritt verhindern. Physische Löschungen haben keine gemeinsame Transaktion mit SQL und werden ausschließlich für nicht referenzierte Objekte eingesetzt.

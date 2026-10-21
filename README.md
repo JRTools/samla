@@ -6,11 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 13.1 (Dateiablage und Plesk-Pfadprüfung)
+## Entwicklungsstand: Iteration 14 (Dateioperationen und Papierkorb)
 
 Vorhanden sind:
 
-- Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads bis 16 MiB und geschützten Attachment-Downloads. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
+- Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads bis 16 MiB, geschützten Attachment-Downloads, Umbenennen, Verschieben, Einzeldateikopien und Papierkorb/Wiederherstellung. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
 
 - Gemeinsame `.env`-Konfiguration für Web und CLI mit Prozessvorrang und sicherer Vorlage `example.env`.
 - OIDC-Weblogin mit Authorization Code/PKCE S256, Basic, RS256-Tokenprüfung, kurzlebiger einmaliger Callbacktransaktion, sicheren HTTPS-Sitzungen und lokaler Abmeldung. Neues Konto ohne automatische Rollen; kontrollierte initiale Administratoreinrichtung per CLI.
@@ -106,7 +106,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 264 Tests mit 1032 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 304 Tests mit 1153 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 
@@ -151,3 +151,5 @@ Eine explizite Gruppenfrischerichtlinie ist für Verwaltungszugriffe erforderlic
 Nach jeder Implementierungsphase werden README, Umsetzungsplan und Prüfergebnisse aktualisiert und gemeinsam mit dem Code committed. Offene Prüfungen werden ausdrücklich als offen geführt.
 
 Plesk-Korrektur 13.1: Die private Pfadprüfung berücksichtigt open_basedir und untersucht keine verbotenen übergeordneten Verzeichnisse. Interne Symlinks und nicht erlaubte Speicherwurzeln bleiben gesperrt. Nach einem Codeupdate Speichermigrationen ausdrücklich ausführen.
+
+Iteration 14 ergänzt typisierte StorageChange-Vorschläge für Plugin-Validatoren, explizite Offline-Bereichsprofile read/contribute/manage und eine kontrollierte Objektbereinigung mit Probelauf. Gelöschte Ordner sperren auch direkte Links auf ihren Inhalt. Einrichtung und Grenzen: [Dateiablage](docs/storage.md). WebDAV ist als nächste Integration konkret vorbereitet. SabreDAV ist vom Betreiber freigegeben, die Aufnahme folgt in der nächsten Phase: [Entscheidungsvorlage](docs/webdav-library-decision.md).

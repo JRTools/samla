@@ -153,8 +153,24 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,content,headers=req('/files/download?space='+space+'&entry='+entry)
                     assert status==200 and content=='<?php echo 123;'
                     assert headers['Content-Type']=='application/octet-stream' and headers['Content-Disposition'].startswith('attachment;')
+                    for _ in range(2):
+                        granted=subprocess.run(php+['bin/storage-space-access.php',user,space,'samla.administrators','manage'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                        assert granted.returncode==0,granted.stdout+granted.stderr
+                    assert req('/files/detail?space='+space+'&entry='+entry)[0]==200
+                    def change(identifier,operation,name,expected_parent,target='',new_name=''):
+                        return req('/files/change',{'csrf':token,'space':space,'entry':identifier,'operation':operation,'expected_name':name,'expected_parent':expected_parent,'parent':target,'name':new_name})[0]
+                    assert change(entry,'rename','test.php',parent,new_name='renamed.php')==303
+                    assert change(entry,'rename','test.php',parent,new_name='stale.php')==409
+                    assert change(entry,'copy','renamed.php',parent,new_name='copy.php')==303
+                    assert change(parent,'trash','Documents','')==303
+                    assert req('/files/download?space='+space+'&entry='+entry)[0]==400
+                    assert req('/files/trash?space='+space)[0]==200
+                    assert change(parent,'restore','Documents','')==303
+                    assert req('/files/download?space='+space+'&entry='+entry)[0]==200
                     checked=subprocess.run(php+['bin/storage-check.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
                     assert checked.returncode==2 and 'Unreferenced object:' in checked.stdout,checked.stdout+checked.stderr
+                    gc=subprocess.run(php+['bin/storage-gc.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                    assert gc.returncode==0 and 'removed: 0' in gc.stdout,gc.stdout+gc.stderr
                     assert req('/auth/logout')[0]==405
                     assert req('/auth/logout',{'csrf':'bad'})[0]==403
                     assert req('/auth/logout',{'csrf':csrf(body)})[0]==303

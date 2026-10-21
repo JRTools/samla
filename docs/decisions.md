@@ -56,3 +56,14 @@ Die Betreiberanweisung zur vollständigen Umsetzung gibt die vorgeschlagene Bibl
 OIDC-Weblogin, eigenes Konto, transaktionale Provisionierung mit Plugin-Veto, feste Sitzungslaufzeit und lokale Abmeldung sind angeschlossen. Die erstmalige Verwaltungsrolle erfordert einen Offline-CLI-Schritt bei Wartung, frischem aktivem OIDC-Konto und expliziter Gruppenfrischerichtlinie. Kein erster-Login-wird-Admin. Ohne konfigurierten Gruppenclaim werden nur manuelle Gruppen bestätigt, und vorhandene externe Mappings/Quellen verhindern diesen Modus. Ein konfigurierter signierter Claim muss eine begrenzte Liste liefern. Keine automatische Rollenobjekt-Übersetzung.
 
 Offen bleiben tatsächliche Host-/ZITADEL-Abnahme, zentrale IdP-Abmeldung/Backchannel-Logout, allgemeine Notfalladministration sowie die übrigen Datei-/Medien-/WebDAV-Pakete. Ein erfolgreicher Login ist keine Freigabe der gesamten Plattform.
+
+
+## Iteration 14: weitere Dateioperationen und WebDAV-Vorbereitung
+
+Dateirechte bleiben vollständig bereichsbezogen. Löschen in den Papierkorb und Wiederherstellen erhalten getrennte atomare Berechtigungen. Keine automatische Erweiterung bestehender Rollen. Ein kontrollierter Offline-Installer vergibt ausdrücklich gewählte Profile; globale Verwaltungsrechte allein bleiben ohne Dateizugriff. Kopien nutzen unveränderliche Objekte gemeinsam, während die logische Quote je Datei zählt. Namen im Papierkorb bleiben bis zur späteren endgültigen Löschung reserviert.
+
+API 0.6 ergänzt einen typisierten StorageChange, ohne Rohinhalt oder Betriebssystempfad in Plugin-Kontext/Audit einzuschleusen. Metadatenänderungen laufen unter dem bestehenden MutationRunner. Physische Garbage-Collection bleibt ein ausdrücklich anzuwendender Offline-Schritt nach Probelauf, mit Altersgrenze und erneuter Referenzprüfung.
+
+SabreDAV 4.7.1 wurde außerhalb der Anwendung isoliert aufgelöst und unter PHP 8.4/8.5 protokollseitig erprobt. Die konkrete zusätzliche Anwendungsabhängigkeit benötigt gemäß AGENTS.md noch Freigabe. Entscheidungsvorlage: webdav-library-decision.md. Kein zusätzlicher Netzwerkdienst wird vorgeschlagen. Versionen, weitere Speicherfunktionen, Medienfunktionen und andere Konzeptpunkte sind damit nicht als abgeschlossen erklärt.
+
+Die anschließende Betreiberanweisung vom 22. Oktober 2026 gibt SabreDAV konkret frei. Iteration 15 darf die zusätzliche Bibliothek samt benötigter transitiver Abhängigkeiten aufnehmen.

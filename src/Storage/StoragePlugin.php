@@ -12,7 +12,7 @@ final class StoragePlugin implements Plugin
     public function register(PluginRegistrar $registrar): void
     {
         // Every file operation requires an explicit assignment in its own space.
-        foreach (['list', 'read', 'create', 'update'] as $action) {
+        foreach (['list', 'read', 'create', 'update', 'delete', 'restore'] as $action) {
             $registrar->permission(new Permission('files.' . $action, $this->id(), [Scope::Space]));
         }
     }

@@ -11,11 +11,17 @@ final readonly class FileController
     public function handle(Request $request, string $actor, string $csrf, array $data): Response
     {
         try {
-            if (in_array($request->path, ['/files/folder', '/files/upload'], true)) {
+            if (in_array($request->path, ['/files/folder', '/files/upload', '/files/change'], true)) {
                 if ($request->method !== 'POST') { return new Response(405, headers: ['Allow' => 'POST']); }
                 if (!preg_match('/^[a-f0-9]{64}$/D', $csrf) || !hash_equals($csrf, $request->field('csrf', 64))) { throw new AccessDenied(); }
                 $space = $request->field('space', 64); $parent = $request->field('parent', 32);
-                if ($request->path === '/files/folder') { $this->files->createFolder($actor, $space, $parent, $request->field('name', 1020)); }
+                if ($request->path === '/files/change') {
+                    $this->files->change($actor, $space, $request->field('entry', 32), $request->field('operation', 12),
+                        $request->field('expected_name', 1020), $request->field('expected_parent', 32),
+                        ($request->post['name'] ?? '') === '' ? null : $request->field('name', 1020), $parent);
+                    $parent = $request->field('expected_parent', 32);
+                }
+                elseif ($request->path === '/files/folder') { $this->files->createFolder($actor, $space, $parent, $request->field('name', 1020)); }
                 else {
                     $file = $request->files['file'] ?? null;
                     if (!is_array($file) || !is_int($file['error'] ?? null) || $file['error'] !== UPLOAD_ERR_OK
@@ -27,9 +33,19 @@ final readonly class FileController
                 }
                 return new Response(303, headers: ['Location' => '/files?' . http_build_query(['space' => $space, 'parent' => $parent])], flash: 'Die Dateiablage wurde aktualisiert.');
             }
-            if (!in_array($request->path, ['/files', '/files/download'], true)) { return new Response(404); }
+            if (!in_array($request->path, ['/files', '/files/download', '/files/detail', '/files/trash'], true)) { return new Response(404); }
             if ($request->method !== 'GET') { return new Response(405, headers: ['Allow' => 'GET']); }
             $space = $this->query($request, 'space', 64);
+            if ($request->path === '/files/trash') {
+                $data += $this->files->trashListing($actor, $space, $request->after());
+                return new Response(200, $this->renderer->render('trash', $data));
+            }
+            if ($request->path === '/files/detail') {
+                $data['entry'] = $this->files->details($actor, $space, $this->query($request, 'entry', 32)); $data['space_id'] = $space;
+                $data['destinations'] = $this->files->folderChoices($actor, $space);
+                foreach (['update','delete','restore','read','create'] as $action) { $data['file_caps'][$action] = $this->files->allowed($actor, 'files.' . $action, $space); }
+                return new Response(200, $this->renderer->render('file-detail', $data));
+            }
             if ($request->path === '/files/download') {
                 $download = $this->files->download($actor, $space, $this->query($request, 'entry', 32));
                 $stream = $download['stream']; $row = $download['row'];
