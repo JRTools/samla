@@ -10,7 +10,7 @@ Repository: https://github.com/JRTools/samla
 
 Vorhanden sind:
 
-- GitHub-Workflow für die vier PHP-/Datenbankkombinationen mit Plattform-/Syntaxprüfung, Unit-/Architektur-/Integrationstests und synthetischem OIDC-/DAV-Durchlauf über HTTP/HTTPS. Fixierte Actions, isolierte Testdatenbank und ausschließlich lesender Repository-Token. [Ablauf und Nachweisgrenzen](docs/continuous-integration.md).
+- GitHub-Workflow für die vier PHP-/Datenbankkombinationen mit Plattform-/Syntaxprüfung, Unit-/Architektur-/Integrationstests und synthetischem OIDC-/DAV-Durchlauf über HTTP/HTTPS. Fixierte Actions, isolierte Testdatenbank und ausschließlich lesender Repository-Token. Der erste Kontextfehler ist korrigiert; die tatsächliche Laufabnahme wird im [Prüfprotokoll](docs/verification.md) festgehalten. [Ablauf und Nachweisgrenzen](docs/continuous-integration.md).
 
 - WebDAV unter `/dav/` mit App-Passwörtern, Bereichsrechten, GET/HEAD/PROPFIND, ETags und gestreamten Teil-Downloads. PUT archiviert bisherige Inhalte; MKCOL, MOVE, Einzeldatei-COPY und DELETE verwenden die gemeinsamen Kerndienste. LOCK/UNLOCK schützt auch Browseränderungen. Widerruf, Kontosperre und Gruppenfrische werden erneut geprüft. Grenzen wie derzeit abgewiesenes MOVE/COPY-Überschreiben sind ausdrücklich dokumentiert. [Einrichtung und Grenzen](docs/webdav.md).
 

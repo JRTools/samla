@@ -51,7 +51,6 @@ jobs:
       APP_MAINTENANCE: '1'
       TEST_DB_ENGINE: ${{ matrix.database.engine }}
       TEST_DB_HOST: 127.0.0.1
-      TEST_DB_PORT: ${{ job.services.database.ports[3306] }}
       TEST_DB_NAME: media_platform_test_ci
       TEST_DB_USER: samla_test
       TEST_DB_PASSWORD: samla-ci-only
@@ -71,6 +70,10 @@ jobs:
           ini-values: allow_url_fopen=On
       - name: Install locked PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-plugins --no-scripts
+      - name: Bind isolated database port
+        env:
+          DATABASE_SERVICE_PORT: ${{ job.services.database.ports[3306] }}
+        run: echo "TEST_DB_PORT=$DATABASE_SERVICE_PORT" >> "$GITHUB_ENV"
       - name: Verify platform and manifest
         run: |
           composer validate --no-check-publish
