@@ -5,6 +5,7 @@ $checks = [
     'php_8_4_or_8_5' => PHP_VERSION_ID >= 80400 && PHP_VERSION_ID < 80600,
     'pdo' => extension_loaded('pdo'),
     'pdo_mysql' => extension_loaded('pdo_mysql'),
+    'session' => extension_loaded('session'),
     'gd' => extension_loaded('gd'),
     'fileinfo' => extension_loaded('fileinfo'),
 ];

@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.9
+Version: 1.10
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 8, siehe Abschnitt 18. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 9, siehe Abschnitt 19. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -391,3 +391,39 @@ Weitere offene Pakete bleiben Gruppenlöschung mit modulübergreifenden Referenz
 README, API- und Verwaltungsdokumentation, Prüfprotokoll und dieser Plan werden mit der Implementierung veröffentlicht. Die nächste Priorisierung der Oberfläche ist eine Empfehlung; sie stellt keine Freigabe neuer Laufzeitkomponenten oder einen bereits implementierten Login dar.
 
 Version 1.9: Geschützte Mappingkanten mit sofortigem Abgleich gespeicherter externer Quellen und Schutz aller vier beschriebenen Verwaltungsfähigkeiten; erfolgreiche Vierfachmatrix und empfohlener nächster UI-Durchstich.
+
+
+## 19. Iteration 9: Erste responsive Verwaltungsoberfläche
+
+Samla hat jetzt eine erste serverseitig gerenderte Weboberfläche mit Übersicht, Navigation sowie Benutzer- und Gruppenverzeichnis. Vorhandene Anwendungsdienste sind über echte Formulare bedienbar: Benutzer sperren/entsperren, Gruppen anlegen/umbenennen und manuelle Mitgliedschaften hinzufügen/entfernen. Gruppenpflege behält Konfliktprüfung, Delegationsregeln, Quellenprovenienz und Administrationsschutz bei. Mapping- und Rollenformulare sowie Dateioperationen fehlen noch.
+
+Die Umsetzung verwendet vorhandenes PHP, feste PHP-Templates und CSS ohne zusätzliche Laufzeitbibliotheken, JavaScript-Build oder separaten Frontendserver. Ein vertrauenswürdiger Einstiegspunkt komponiert Kern und RBAC über die vorhandenen Verträge. Neue ausdrückliche globale Rechte `identity.users.read` und `identity.groups.read` schützen Verzeichnisse; Verwaltungsrechte implizieren sie nicht. Jede Verzeichnisabfrage verwendet vollständige Autorisierung einschließlich Plugin-Einschränkungen und liefert höchstens 50 Einträge je Cursorseite. Issuer, Subject und externe Claims werden nicht ausgegeben.
+
+### 19.1 Lokaler Entwicklungszugang
+
+Der produktive OIDC-Login ist weiterhin offen. Für die erste Erprobung gibt es ausschließlich einen ausdrücklich aktivierten lokalen Adapter: APP_ENV=development, Opt-in, serverseitig festgelegter Akteur, Datenbankpräfix samla_dev_*, PHPs eingebauter Server mit Loopback-Bindung, direkter Loopback-Client und zulässiger lokaler Host. Produktion, Testmodus, FPM, fremde Hosts und Remoteclients erlauben diesen Zugang nicht. Forwarded-Header aktivieren ihn nicht. Der Adapter ist weder für einen öffentlichen Tunnel noch einen Reverseproxy oder einen gemeinsam genutzten Rechner gedacht.
+
+Ein begrenztes CLI-Einrichtungswerkzeug erzeugt synthetische Demoidentitäten und explizite Demorechte in der separaten Entwicklungsdatenbank. Die Gruppenfrische wird dort anhand eines ausdrücklich gewählten lokalen Beispiels eingestellt. Das ist keine produktive Gruppenrichtlinie und keine OIDC-Verifikation. Wiederholte Einrichtung entsperrt bestehende Identitäten nicht automatisch. Die vollständige Startanleitung und Grenzen stehen in web.md und README.
+
+### 19.2 HTTP- und Formularschutz
+
+PHP-Sitzungen verwenden Strict Mode, ausschließlich Cookies, HttpOnly und SameSite=Strict. Wechsel des konfigurierten Akteurs erneuert Session-ID und CSRF-Token. Schreibformulare prüfen den sitzungsgebundenen zufälligen Token vor dem Dienstaufruf. Akteure stammen nie aus Formular-, URL- oder Actor-Headerfeldern. In lokaler HTTP-Entwicklung ist das Cookie nicht Secure; produktive HTTPS-Sitzungen benötigen einen eigenen OIDC-Vertrag.
+
+Dynamische HTML-Werte werden escaped. Sicherheitsheader beschränken Inhalte und Formulare auf den vorgesehenen Origin, verhindern Einbettung und setzen no-store/nosniff/no-referrer. Templates und Routen sind fest ausgewählt. Erfolgreiche POSTs leiten mit 303 auf einen internen Pfad weiter und erhalten eine einmalige Sessionmeldung. Ungültige Daten, fehlende Berechtigung, Konflikte und falsche Methoden werden sichtbar behandelt. Laufzeitfehler zeigen keine SQL-Daten oder Stacktraces. Ohne eingerichteten Zugang wird keine Verwaltungsinformation freigegeben.
+
+### 19.3 Prüfung
+
+Die Vierfachmatrix aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 ist erfolgreich: jeweils 226 Tests mit 804 Assertions (90 Unit-/Architekturtests und 136 Integrationstests). Die Syntax aller 96 eigenen PHP-Dateien und die Migrations-CLI sind geprüft. 6 zusätzliche Unitfälle und 14 zusätzliche Integrationstests prüfen Adaptergrenzen, explizite Leserechte, HTML-Escaping, CSRF, Formulare, Rechteentzug, Plugin-Einschränkungen, Namenskonflikt, Cursorseiten und Quellenzählung.
+
+Zusätzliche echte HTTP-Prüfungen unter beiden PHP-Versionen mit MySQL bestätigen Cookie-/Sessionverhalten, CSRF, Post/Redirect/Get, Formularänderungen, geschützte administrative Gruppen, Hostprüfung, erlaubte Assets und 503 in Produktionskonfiguration. Chrome-Prüfungen mit Desktop- und Smartphone-Viewport bestätigen Navigation sowie Gruppenanlage, Umbenennung und Mitgliedschaftsformulare ohne Seitenüberlauf. Die optionalen reproduzierbaren HTTP-/Browserprüfer sind Teil des Repositorys; Browser und Testlaufzeiten sind keine Anwendungsabhängigkeiten. Weitere Details stehen im Prüfprotokoll.
+
+### 19.4 Nächste Schritte
+
+1. Erste Oberfläche lokal anhand der Startanleitung erproben und gewünschte Bedienung abstimmen. Eine produktive Veröffentlichung oder ein echter Login wird durch diese Iteration nicht behauptet.
+2. OIDC-Integrationsbibliothek konkret auswählen und vor Einsatz abstimmen. Clientregistrierung, Samla-URL/Callback, Client-ID, benötigte Claims und Gruppenfrische klären. Secrets ausschließlich in die Laufzeitkonfiguration übernehmen.
+3. Authentifizierten OIDC-/Sessionablauf einschließlich sicherer Cookies, Logout und verifizierter Gruppensynchronisierung anschließen und als vollständigen Browserdurchstich testen.
+4. Danach Mapping-/Rollenoberfläche und Dateidurchstich ergänzen. Gruppenlöschung, globale Delegation, Notfallzugang, Outbox-Zustellung, App-Passwörter und WebDAV bleiben weitere offene Pakete.
+
+Es gibt weiterhin keine öffentliche UI-Beitrags-API für Pluginseiten oder Navigation; geschützte Fachabläufe und Leseberechtigungen nutzen bereits die bestehenden Erweiterungsverträge. Browserprüfungen ersetzen keine vollständige Barrierefreiheits-, Last-, Restore- oder produktive OIDC-Sicherheitsabnahme. README, HTTP-Handbuch, API-Hinweise, Entscheidungen, Prüfprotokoll und Plan werden mit dem Code veröffentlicht.
+
+Version 1.10: Erste responsive PHP-Verwaltungsoberfläche mit geschützten Lese-/Schreibabläufen, ausdrücklich lokalem Entwicklungszugang, HTTP-/Browsernachweisen und fortgeschriebener OIDC-Roadmap.

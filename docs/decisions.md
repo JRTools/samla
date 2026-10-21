@@ -3,7 +3,8 @@
 ## Umgesetzt
 
 - Modularer Monolith mit separater öffentlicher Plugin-API und eigenem RBAC-Namensraum.
-- Zunächst keine zusätzlichen Laufzeitbibliotheken.
+- Weiterhin keine zusätzlichen Laufzeitbibliotheken. Die erste Verwaltungsoberfläche verwendet einen kleinen expliziten PHP-HTTP-Adapter, feste PHP-Templates und statisches CSS. Eine Framework-/Templatebibliothek ist nicht eingeführt.
+- Lokaler Entwicklungszugang ausschließlich über explizite Flags, Loopback und PHPs eingebauten Server mit separatem Datenbankpräfix. Dies ist kein produktives Authentifizierungsverfahren.
 - Produktname Samla, Paket jrtools/samla und öffentliche Namensräume Samla.
 - Composer-PSR-4, PHPUnit-Konfiguration und Lockdatei; installierte Testabhängigkeit PHPUnit 13.4.3.
 - Zielmatrix PHP 8.4.5 und 8.5.4 gegen MySQL 8.0.46 erfolgreich geprüft.
@@ -24,10 +25,10 @@ Am 21. Oktober 2026 bestätigt: MariaDB 11.8 oder MySQL 8.0 stehen zur Verfügun
 - OIDC: Testregistrierung, Callback-URL, Algorithmusauswahl, anonymisierter groups-Claim und Integrationserprobung von Logout. Discovery ist unter https://id.jrtools.org/.well-known/openid-configuration bekannt; siehe oidc-provider.md.
 - Maximal zulässiges Alter zentral bestätigter Gruppen und Verhalten bei Ablauf.
 - WebDAV-Referenzclient und Grenzen für Datei- und Datenmengen.
-- Freigabe konkreter OIDC- und WebDAV-Bibliotheken sowie Routing und Templates.
+- Freigabe konkreter OIDC- und WebDAV-Bibliotheken. Routing und Templates der ersten lokalen Oberfläche funktionieren mit vorhandenem PHP ohne neue Bibliothek; eine spätere Frameworkentscheidung bleibt gesondert abzustimmen.
 - PHP-CLI/Cron oder abgestimmte Alternative für Aufgaben, Outbox und Bereinigung.
 - Startrollen, Delegation, persönliche Speicherbereiche, administrativer Notfallzugang.
-- Projektlizenz, CI, Browserwerkzeug und Coverage-Treiber.
+- Projektlizenz, CI, vollständige Browser-/Accessibilitymatrix und Coverage-Treiber. Erste Chrome-Browserprüfungen sind durchgeführt; siehe verification.md.
 
 ## Quellen zur Testabhängigkeit
 

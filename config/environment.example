@@ -21,3 +21,8 @@ TEST_DB_PORT=3306
 TEST_DB_NAME=media_platform_test_local
 TEST_DB_USER=media_platform_test
 TEST_DB_PASSWORD=
+
+# Local UI only: PHP's built-in server bound to loopback and a samla_dev_* database.
+# Production and FPM reject this adapter even when the flag is enabled.
+APP_WEB_DEV_ACCESS=0
+APP_DEV_ACTOR_ID=

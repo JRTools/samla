@@ -1,0 +1,1 @@
+<section class="error-panel"><span class="error-code"><?= $e($data['status']) ?></span><p class="eyebrow">SAMLA</p><h1>Hier geht es gerade nicht weiter.</h1><p class="lead" role="alert"><?= $e($data['error']) ?></p><?php if ($data['actor'] !== null): ?><a class="button" href="/">Zur Übersicht</a><?php endif ?></section>

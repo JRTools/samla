@@ -11,6 +11,8 @@ final class IdentityPlugin implements Plugin
     public function apiMajor(): int { return 0; }
     public function register(PluginRegistrar $registrar): void
     {
+        $registrar->permission(new Permission('identity.users.read', $this->id(), [Scope::Global]));
+        $registrar->permission(new Permission('identity.groups.read', $this->id(), [Scope::Global]));
         $registrar->permission(new Permission('identity.users.status.manage', $this->id(), [Scope::Global]));
         $registrar->permission(new Permission('identity.groups.memberships.manage', $this->id(), [Scope::Global]));
         $registrar->permission(new Permission('identity.groups.details.manage', $this->id(), [Scope::Global]));

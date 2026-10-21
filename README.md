@@ -1,15 +1,17 @@
 # Samla
 
-Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Geplant sind eine responsive Weboberfläche, WebDAV, OIDC-Anmeldung, gruppenbasierte Rollen, Versionierung und eine Medienbibliothek mit Metadaten und nachvollziehbaren KI-Kennzeichnungen.
+Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Eine erste responsive Verwaltungsoberfläche ist lokal nutzbar. Geplant sind WebDAV, produktive OIDC-Anmeldung, Dateiversionierung und eine Medienbibliothek mit Metadaten und nachvollziehbaren KI-Kennzeichnungen. Gruppenbasierte Rechte und die geschützten Verwaltungsdienste bilden bereits das Backend.
 
 Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgelieferte RBAC-Pflichtplugin verwendet dieselbe Plugin-API wie zusätzliche Erweiterungen. Zuverlässige Dateioperationen, nachvollziehbare Rechte und automatisierte Tests haben Vorrang.
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 8
+## Entwicklungsstand: Iteration 9
 
 Vorhanden sind:
 
+- Erste responsive PHP-Weboberfläche mit Übersicht, Benutzer-/Gruppenverzeichnissen, Statusänderungen, Gruppenanlage/Umbenennung und manuellen Mitgliedschaften.
+- Eigene Leseberechtigungen, begrenzte Verzeichnisseiten, CSRF-Schutz, HTML-Escaping, Sicherheitsheader und ausschließlich lokaler Entwicklungszugang.
 - Experimentelle Plugin-API, atomare Registrierung und zentrale Autorisierung.
 - RBAC mit expliziten Berechtigungen und globalen beziehungsweise bereichsbezogenen Rollenzuweisungen.
 - Gruppenmapping mit mehreren Quellen und getrennten manuellen Mitgliedschaften.
@@ -24,13 +26,16 @@ Vorhanden sind:
 - Plugin-Validierung vor Änderungen, transaktionales Audit und persistierte Abschlussereignisse in einer Outbox.
 - Unit-, Architektur- und echte MySQL-/MariaDB-Integrationstests.
 
-Es gibt noch keine produktiv nutzbare Weboberfläche, keinen OIDC-Login, keinen WebDAV-Endpunkt und keine Dateioperationen. Repository-Schreibmethoden sind interne Adapter. Der erste autorisierte Dienst für fachliche Rollenzuweisungen ist vorhanden. Benutzerstatusänderungen sind als geschützter Anwendungsdienst verfügbar. Manuelle Mitgliedschaften in fachlichen Gruppen können geschützt hinzugefügt und entfernt werden. Gruppen mit globalen oder administrativen RBAC-Rollen sind davon ausgeschlossen. Globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung und Gruppenlöschung bleiben offen. Mappingkanten können geschützt hinzugefügt und entfernt werden; atomare Mehrfachänderungen sind noch nicht implementiert. Der Schutz verbleibender Zugänge umfasst Status-, Mitgliedschafts- und Gruppenstammdatenänderungen und erhält bereits nutzbare Zugänge zu den vier Verwaltungsfähigkeiten (Status, Mitgliedschaften, Gruppenstammdaten und Mappings); ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse; ein Zustellungsdienst ist noch nicht implementiert.
+Die erste Weboberfläche ist ausschließlich mit ausdrücklich aktiviertem lokalem Entwicklungszugang nutzbar. Ein produktiver OIDC-Login, WebDAV-Endpunkt und Dateioperationen fehlen weiterhin. In Produktion erlaubt der Entwicklungsadapter keinen Zugriff.
+
+Globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen bleiben offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse, stellt sie aber noch nicht zu.
 
 ## Voraussetzungen
 
 - PHP 8.4 oder 8.5, Composer, PDO und pdo_mysql sowie ctype.
 - MySQL 8.0 oder MariaDB 11.8. Die konkrete Prüfabdeckung steht im Prüfprotokoll.
 - PHPUnit 13 als Entwicklungsabhängigkeit und dessen erforderliche PHP-Erweiterungen.
+- PHP-Sessionfunktion und ein beschreibbares, nicht öffentliches Sessionverzeichnis für die lokale Oberfläche.
 - GD für die späteren Medienfunktionen.
 
 Ein zusätzlicher Framework-, Node.js-, Redis- oder Suchdienst ist derzeit nicht eingebaut. Projektlizenz und zusätzliche Integrationsbibliotheken sind noch offen.
@@ -50,6 +55,26 @@ composer diagnose
 ```
 
 Die Diagnose prüft lokale Fähigkeiten und ersetzt keine vollständige Betriebsabnahme.
+
+
+## Oberfläche lokal ausprobieren
+
+Eine separate Datenbank `samla_dev_local` bereitstellen und die DB-Verbindungsvariablen als Prozessumgebung setzen. Dann:
+
+```sh
+export APP_ENV=development
+export APP_MAINTENANCE=0
+export DB_NAME=samla_dev_local
+export APP_GROUP_MAX_AGE_SECONDS=3600
+export APP_WEB_DEV_ACCESS=1
+export APP_DEV_ACTOR_ID=dev.admin
+php bin/dev-seed.php
+php -S 127.0.0.1:8080 -t public public/router.php
+```
+
+Anschließend im Browser http://127.0.0.1:8080/ öffnen. DB_ENGINE, DB_HOST, DB_PORT, DB_USER und DB_PASSWORD müssen zur eigenen Entwicklungsdatenbank passen. Die 3600 Sekunden sind nur ein lokales Beispiel. Der Seed legt explizite Demorechte an und erneuert synthetische Entwicklungsgruppendaten; er ist keine OIDC-Verifikation.
+
+Der Zugang funktioniert nur mit PHPs lokal gebundenem Entwicklungsserver, Loopback-Client, lokalem Hostheader und einer Datenbank `samla_dev_*`. Kein FPM-/Produktionsbetrieb, Reverseproxy oder öffentlicher Tunnel. Es gibt noch keinen produktiven Login. Vollständige Einrichtung, Funktionsumfang und Sicherheitsgrenzen: [docs/web.md](docs/web.md).
 
 ## Migrationen
 
