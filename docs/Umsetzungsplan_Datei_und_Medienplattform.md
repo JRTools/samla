@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.12
+Version: 1.13
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 11, siehe Abschnitt 21. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 12, siehe Abschnitt 22. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -494,3 +494,42 @@ Nach Abstimmung der konkreten OIDC-Bibliothek folgen Adapter, abgesicherter Bibl
 README, Konfigurationshandbuch, Entscheidungsvorlage, OIDC-/Betriebshinweise, Prüfprotokoll und dieser Plan werden gemeinsam veröffentlicht.
 
 Version 1.12: Gemeinsame .env-Konfiguration mit example.env, nachgewiesene Datei-/Prozessgrenzen und isoliert geprüfte konkrete OIDC-Bibliotheksvorlage; vollständige Anmeldung bleibt offen.
+
+
+## 22. Iteration 12: Vollständiger OIDC-Weblogin und Erstadministration
+
+Die Betreiberanweisung zur vollständigen Umsetzung gibt die zuvor vorgeschlagene OIDC-Bibliothek einschließlich ihrer transitiven Abhängigkeiten frei. facile-it/php-openid-client 1.0.0 und 23 transitive Pakete sind in den Anwendungsabhängigkeiten aufgenommen und im Lockfile festgeschrieben. Composer-Plugins bleiben deaktiviert. Der vorhandene .env-Vertrag bleibt bestehen; example.env dokumentiert jetzt die produktive HTTPS-Konfiguration und den optionalen Gruppenclaim.
+
+### 22.1 Webablauf und Tokenprüfung
+
+Loginseite, POST-Anmeldebeginn, GET-Callback, eigene Kontoseite und POST-Abmeldung sind an den Webeinstieg angeschlossen. Ohne OIDC-Konfiguration oder zulässigen Entwicklungsadapter bleibt die bestehende 503-Sperre aktiv; korrekt eingerichtetes OIDC erlaubt jetzt den HTTPS-/PHP-FPM-Zugang. Apache-Frontcontroller-Rewrite und eine ausführliche Plesk-Anleitung sind beigefügt.
+
+Die Anmeldung verwendet Code, S256, Basic und ausdrücklich RS256. Discovery und Endpunkte werden gegen den konfigurierten Issuer/Origin geprüft. Der HTTP-Adapter erlaubt nur fest validierte Endpunkte und Methoden, prüft TLS, folgt keinen Redirects und begrenzt Laufzeit und Antwortgröße einschließlich des gestreamten Inhalts. Signatur- und Tokenprüfungen werden durch die Bibliothek ausgeführt. Samla verlangt ergänzend ein ID-Token, exakten Nonce, passende Client-Audience/azp, begrenzte Identitätsdaten und gültige Zeittypen; ein vorhandenes at_hash wird mit dem Access-Token durch die JOSE-Prüfung gebunden.
+
+Der Callback verbraucht die unter Sessionlock gespeicherte Transaktion vor Netzwerk-I/O. Ein zusätzlicher Austauschnachweis verhindert das Wiederherstellen einer zwischenzeitlich abgemeldeten oder neu begonnenen Sitzung durch eine verspätete Antwort. Wiederholte/falsche Callbacks erzeugen keine Identität und melden einen bereits angemeldeten Benutzer nicht automatisch ab. HTTPS-Sitzungen verwenden ein hostgebundenes __Host-samla-Cookie mit Secure/HttpOnly/Path=/ und SameSite=Lax, keine Domainvererbung sowie strikten Cookiebetrieb. Session-ID und CSRF werden erneuert. Die Sitzung gilt höchstens eine Stunde und nie über den ID-Token-Ablauf hinaus. Keine Tokens werden in der Anwendungssitzung gespeichert.
+
+### 22.2 Identität, Gruppen und Rechte
+
+Verifizierte Identitäten werden über Issuer/Subject zugeordnet. Neue Benutzer erhalten keine Rollen. Vorhandene lokale Sperren bleiben wirksam. Die eigene Kontoseite ist ohne Verwaltungsrolle möglich und zeigt die interne Kennung für die ausdrückliche Erstadministration. Fremde Verzeichnisse und Änderungen bleiben vollständig durch den vorhandenen Autorisierungsdienst geschützt; Rechte werden nicht in der Sitzung eingefroren.
+
+Bei leerem OIDC_GROUPS_CLAIM gelten ausschließlich lokale/manuelle Gruppen. Dieser Modus verweigert die Anmeldung bei vorhandenen externen Mappings oder Mitgliedschaftsquellen. Ein konfigurierter signierter Claim muss eine begrenzte Gruppenliste liefern; fehlende oder falsch strukturierte Claims werden abgelehnt. Der Abgleich erhält manuelle Quellen und lokale Sperren. Rollenobjekte werden nicht automatisch umgedeutet. Die Gruppenfrischerichtlinie bleibt eine explizite Einstellung; ohne sie gibt es keine Verwaltungsfreigabe.
+
+Provisionierung, Name, Gruppenstand, Audit und Outbox werden unter dem gemeinsamen Administrationslock atomar verarbeitet. Der öffentliche MutationRunner-/ChangeValidator-Vertrag erhält identity.login mit interner Benutzerkennung und kann die Übernahme verhindern. Rohclaims, Tokens und Secrets werden nicht protokolliert. Für die transaktionale Zusammensetzung sind interne Writer für bestätigte Gruppen und initiale Rollen ergänzt; sie sind keine ungeschützten öffentlichen Fachendpunkte.
+
+Die initiale Verwaltungsrolle wird nur per CLI bei Wartung, vorhandener frischer aktiver OIDC-Identität und ausdrücklicher Frischerichtlinie eingerichtet. Abweichende reservierte Rollen, fremde Belegung der Bootstrapgruppe und zusätzliche unerwartete Gruppenzuweisungen werden abgelehnt. Wiederholung für denselben Benutzer ist möglich. Kein erster-Login-wird-Admin und keine allgemeine laufende Administrationsvergabe über diesen Befehl.
+
+### 22.3 Prüfung
+
+Vierfachmatrix erfolgreich: PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6 jeweils 264 Tests, 1032 Assertions (122 Unit-/Architekturtests und 142 Integrationstests). 121 eigene PHP-Dateien sind syntaktisch geprüft; die Migrations-CLI meldet überall aktuelles Schema. Zusätzliche Fälle prüfen echte RSA-Token im Adapter, fehlenden Nonce, azp/mehrere Audiences, falsches at_hash, Transportgrenzen, Origin/HTTPS, manuelle/externe Gruppenmodi, stabile Provisionierung, fehlende automatische Rollen, lokale Sperren, Plugin-Veto und Rollback.
+
+Ein reproduzierbarer optionaler HTTP-Prüfer startet einen kontrollierten TLS-Provider mit echten signierten ID-Tokens und JWKS. Unter beiden PHP-Versionen mit MySQL sind vollständiger Code-/Basic-/PKCE-Austausch, Sitzungserneuerung/-ablauf, Replay-Abweisung, initiale Administration, echte geschützte Formulare, lokaler Logout, falscher Nonce, falsche Signatur und unmittelbare lokale Sperre geprüft. Zusätzlich besteht unter PHP 8.4.5 die HTTPS-Produktionskonfiguration mit TLS-Gateway, hostgebundenem Secure-Cookie und vertrauenswürdig gesetztem HTTPS-Serverstatus. Das ist kein tatsächlich ausgeführter PHP-FPM-/Plesk-Prozess. Protokolle und Reproduktion stehen im Prüfprotokoll und unter tests/Tools.
+
+### 22.4 Installation und verbleibende Grenzen
+
+Der Login ist im Code vollständig angeschlossen. Auf dem Betreiberhost sind weiterhin Codeupdate, Composer-Installation, private .env, Schema, HTTPS-Routing und IdP-Registrierung erforderlich. Diese Installation und der echte ZITADEL-Login wurden hier nicht auf dem entfernten Server ausgeführt. installation.md enthält die konkreten Schritte einschließlich Plesk-PHP/Composer-PHAR und Erstadministration.
+
+Lokaler Logout beendet nur die Samla-Sitzung. Zentraler IdP-/Backchannel-Logout, automatische Refresh-Sitzungen, allgemeiner Sitzungswiderruf und Notfalladministration bleiben offen. Datei-/Medienoperationen, WebDAV und die weiteren Produktpakete sind weiterhin nicht implementiert; der abgeschlossene Login ist keine pauschale Produktivfreigabe der ganzen Plattform. Eine neue vollständige visuelle Browser-/Barrierefreiheitsabnahme gehört nicht zu den durchgeführten HTTP-Prüfungen.
+
+README, Installations-/Konfigurations-/OIDC-Handbuch, Erweiterungshinweise, Entscheidungen, Prüfprotokoll und dieser Plan werden mit der Phase veröffentlicht.
+
+Version 1.13: Freigegebener OIDC-Client, angeschlossener verifizierter HTTPS-Weblogin, sichere lokale Sitzungen und Abmeldung, transaktionale Identitätsübernahme, ausdrückliche Erstadministration und reproduzierbarer HTTP-Durchstich.

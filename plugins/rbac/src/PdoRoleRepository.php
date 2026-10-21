@@ -32,27 +32,31 @@ final readonly class PdoRoleRepository implements RoleRepository
     }
     public function save(Role $role, PermissionRegistry $registry): void
     {
+        $this->transaction(fn() => $this->saveInsideTransaction($role, $registry));
+    }
+    /** Trusted setup writer, not an authorized public role-management endpoint. */
+    public function saveInsideTransaction(Role $role, PermissionRegistry $registry): void
+    {
+        if (!$this->pdo->inTransaction()) { throw new \LogicException('An active transaction is required.'); }
         self::id($role->id);
         foreach ($role->permissions as $action) {
             $permission = $registry->find($action);
             if ($permission === null || !in_array($role->scope, $permission->scopes, true)) { throw new \InvalidArgumentException('Unknown permission or invalid role scope.'); }
         }
-        $this->transaction(function () use ($role): void {
-            $query = $this->pdo->prepare('SELECT scope FROM rbac_roles WHERE id = ? FOR UPDATE'); $query->execute([$role->id]);
-            $existing = $query->fetchColumn();
-            if ($existing === false) {
-                $query = $this->pdo->prepare('INSERT INTO rbac_roles (id, scope) VALUES (?, ?)'); $query->execute([$role->id, $role->scope->value]);
-            } else {
-                if ($existing !== $role->scope->value) {
-                    $query = $this->pdo->prepare('SELECT 1 FROM rbac_assignments WHERE role_id = ? LIMIT 1'); $query->execute([$role->id]);
-                    if ($query->fetchColumn() !== false) { throw new \LogicException('Cannot change scope of an assigned role.'); }
-                }
-                $query = $this->pdo->prepare('UPDATE rbac_roles SET scope = ? WHERE id = ?'); $query->execute([$role->scope->value, $role->id]);
+        $query = $this->pdo->prepare('SELECT scope FROM rbac_roles WHERE id = ? FOR UPDATE'); $query->execute([$role->id]);
+        $existing = $query->fetchColumn();
+        if ($existing === false) {
+            $query = $this->pdo->prepare('INSERT INTO rbac_roles (id, scope) VALUES (?, ?)'); $query->execute([$role->id, $role->scope->value]);
+        } else {
+            if ($existing !== $role->scope->value) {
+                $query = $this->pdo->prepare('SELECT 1 FROM rbac_assignments WHERE role_id = ? LIMIT 1'); $query->execute([$role->id]);
+                if ($query->fetchColumn() !== false) { throw new \LogicException('Cannot change scope of an assigned role.'); }
             }
-            $query = $this->pdo->prepare('DELETE FROM rbac_role_permissions WHERE role_id = ?'); $query->execute([$role->id]);
-            $query = $this->pdo->prepare('INSERT INTO rbac_role_permissions (role_id, permission_id) VALUES (?, ?)');
-            foreach (array_unique($role->permissions) as $action) { $query->execute([$role->id, $action]); }
-        });
+            $query = $this->pdo->prepare('UPDATE rbac_roles SET scope = ? WHERE id = ?'); $query->execute([$role->scope->value, $role->id]);
+        }
+        $query = $this->pdo->prepare('DELETE FROM rbac_role_permissions WHERE role_id = ?'); $query->execute([$role->id]);
+        $query = $this->pdo->prepare('INSERT INTO rbac_role_permissions (role_id, permission_id) VALUES (?, ?)');
+        foreach (array_unique($role->permissions) as $action) { $query->execute([$role->id, $action]); }
     }
     public function assign(RoleAssignment $assignment): void
     {

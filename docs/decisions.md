@@ -47,3 +47,12 @@ Iteration 11 ergänzt die isolierte Bibliothekserprobung und empfiehlt `facile-i
 ## .env auf ausdrücklichen Betreiberwunsch
 
 Iteration 11 ergänzt den nativen, begrenzten EnvironmentLoader und ersetzt die bisherige Vorlage durch example.env im Projektverzeichnis. Die private .env wird automatisch gelesen; Prozesswerte behalten Vorrang. Automatisierte Tests mit prozessseitigem APP_ENV=test ignorieren diese Datei. Die früher dokumentierte ausschließliche Prozesskonfiguration gilt damit als abgelöst. Es wird keine zusätzliche Konfigurationsbibliothek eingeführt. Die Syntax und Zugangsgrenzen stehen in configuration.md.
+
+
+## OIDC-Freigabe und Webintegration (Iteration 12)
+
+Die Betreiberanweisung zur vollständigen Umsetzung gibt die vorgeschlagene Bibliothek facile-it/php-openid-client 1.0.0 einschließlich ihrer 23 transitiven Pakete frei. Die tatsächliche Auflösung ist im Anwendungs-Lockfile festgeschrieben; Composer-Plugins bleiben deaktiviert. Der Code verwendet ausdrücklich NativeHttpClient, HTTPS-Vertrauen, feste Endpunkte und RS256. Die ergänzenden ID-Token-/Nonce-/azp-/at_hash-Prüfungen sind implementiert. Ältere offene Freigabe-/Integrationspunkte in den historischen Abschnitten sind damit für diesen Umfang erledigt.
+
+OIDC-Weblogin, eigenes Konto, transaktionale Provisionierung mit Plugin-Veto, feste Sitzungslaufzeit und lokale Abmeldung sind angeschlossen. Die erstmalige Verwaltungsrolle erfordert einen Offline-CLI-Schritt bei Wartung, frischem aktivem OIDC-Konto und expliziter Gruppenfrischerichtlinie. Kein erster-Login-wird-Admin. Ohne konfigurierten Gruppenclaim werden nur manuelle Gruppen bestätigt, und vorhandene externe Mappings/Quellen verhindern diesen Modus. Ein konfigurierter signierter Claim muss eine begrenzte Liste liefern. Keine automatische Rollenobjekt-Übersetzung.
+
+Offen bleiben tatsächliche Host-/ZITADEL-Abnahme, zentrale IdP-Abmeldung/Backchannel-Logout, allgemeine Notfalladministration sowie die übrigen Datei-/Medien-/WebDAV-Pakete. Ein erfolgreicher Login ist keine Freigabe der gesamten Plattform.

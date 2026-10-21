@@ -137,29 +137,33 @@ final readonly class PdoIdentityRepository implements IdentityReader
         }
         return $changed;
     }
-    /** Only supply a claim already verified for this stored issuer/subject by the future OIDC adapter. */
+    /** Only supply a claim already verified for this stored issuer/subject. */
     public function replaceVerifiedGroups(string $userId, mixed $claim): void
     {
-        Transaction::run($this->pdo, function () use ($userId, $claim): void {
-            $lock = $this->pdo->query('SELECT id FROM administration_lock WHERE id = 1 FOR UPDATE');
-            if ($lock->fetchColumn() === false) { throw new \RuntimeException('Administration lock is missing.'); }
-            $user = $this->lockUser($userId);
-            $query = $this->pdo->prepare('SELECT external_id, internal_id FROM identity_group_mappings WHERE issuer = ?');
-            $query->execute([$user['issuer']]);
-            $mappings = [];
-            foreach ($query as $row) { $mappings[] = new GroupMapping($row['external_id'], $row['internal_id']); }
-            $derived = (new GroupMapper())->mapVerifiedClaim($claim, $mappings);
-            $delete = $this->pdo->prepare("DELETE FROM identity_memberships WHERE user_id = ? AND origin = 'external'"); $delete->execute([$userId]);
-            $delete = $this->pdo->prepare('DELETE FROM identity_external_groups WHERE user_id = ?'); $delete->execute([$userId]);
-            $insert = $this->pdo->prepare('INSERT INTO identity_external_groups (user_id, external_id) VALUES (?, ?)');
-            foreach (array_unique($claim, SORT_STRING) as $external) { $insert->execute([$userId, $external]); }
-            $insert = $this->pdo->prepare("INSERT INTO identity_memberships (user_id, group_id, origin, source_group) VALUES (?, ?, 'external', ?)");
-            foreach ($derived as $membership) {
-                foreach ($membership->externalSources as $source) { $insert->execute([$userId, $membership->internalId, $source]); }
-            }
-            $update = $this->pdo->prepare('UPDATE identity_users SET groups_confirmed_at = ?, authorization_version = authorization_version + 1 WHERE id = ?');
-            $update->execute([$this->now(), $userId]);
-        });
+        Transaction::run($this->pdo, fn() => $this->replaceVerifiedGroupsInsideTransaction($userId, $claim));
+    }
+    /** Internal trusted login writer; caller must own its transaction. */
+    public function replaceVerifiedGroupsInsideTransaction(string $userId, mixed $claim): void
+    {
+        if (!$this->pdo->inTransaction()) { throw new \LogicException('An active transaction is required.'); }
+        $lock = $this->pdo->query('SELECT id FROM administration_lock WHERE id = 1 FOR UPDATE');
+        if ($lock->fetchColumn() === false) { throw new \RuntimeException('Administration lock is missing.'); }
+        $user = $this->lockUser($userId);
+        $query = $this->pdo->prepare('SELECT external_id, internal_id FROM identity_group_mappings WHERE issuer = ?');
+        $query->execute([$user['issuer']]);
+        $mappings = [];
+        foreach ($query as $row) { $mappings[] = new GroupMapping($row['external_id'], $row['internal_id']); }
+        $derived = (new GroupMapper())->mapVerifiedClaim($claim, $mappings);
+        $delete = $this->pdo->prepare("DELETE FROM identity_memberships WHERE user_id = ? AND origin = 'external'"); $delete->execute([$userId]);
+        $delete = $this->pdo->prepare('DELETE FROM identity_external_groups WHERE user_id = ?'); $delete->execute([$userId]);
+        $insert = $this->pdo->prepare('INSERT INTO identity_external_groups (user_id, external_id) VALUES (?, ?)');
+        foreach (array_unique($claim, SORT_STRING) as $external) { $insert->execute([$userId, $external]); }
+        $insert = $this->pdo->prepare("INSERT INTO identity_memberships (user_id, group_id, origin, source_group) VALUES (?, ?, 'external', ?)");
+        foreach ($derived as $membership) {
+            foreach ($membership->externalSources as $source) { $insert->execute([$userId, $membership->internalId, $source]); }
+        }
+        $update = $this->pdo->prepare('UPDATE identity_users SET groups_confirmed_at = ?, authorization_version = authorization_version + 1 WHERE id = ?');
+        $update->execute([$this->now(), $userId]);
     }
     private function lockUser(string $id): array
     {

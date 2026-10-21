@@ -41,4 +41,4 @@ Variablenersetzung, `${NAME}`, Shellausführung, PHP-Ausführung, mehrzeilige Li
 
 Die sichere Vorlage verwendet `APP_ENV=production`, deaktivierten Entwicklungszugang und deaktiviertes OIDC. Für die lokale UI-Erprobung die in [web.md](web.md) genannten Entwicklungswerte in `.env` setzen oder explizit als Prozessvariablen übersteuern. Alle vorhandenen Loopback-/SAPI-/Host-/Datenbankgrenzen bleiben wirksam.
 
-Die `.env` aktiviert keine bislang fehlenden Funktionen. Der produktive OIDC-Login ist weiterhin nicht angeschlossen. `OIDC_ENABLED=1` erlaubt gegenwärtig nur die OIDC-Konfiguration und Vorabprüfung. Für PHP-FPM unter Plesk ist daher trotz Dateikonfiguration weiterhin kein produktiver Webzugang verfügbar.
+`OIDC_ENABLED=1` aktiviert den angeschlossenen Weblogin, sobald Clientkonfiguration, Datenbank und HTTPS-Routing eingerichtet sind. Die Erstadministration erfordert einen ausdrücklichen CLI-Schritt. Siehe [installation.md](installation.md). Die sichere Vorlage aktiviert den Login nicht automatisch; der lokale Entwicklungsadapter bleibt unabhängig begrenzt.

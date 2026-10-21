@@ -63,6 +63,9 @@ h4{font-size:14px;margin-bottom:16px}
 .page-heading .lead{margin:0}
 .page-badge{border:1px solid #d9e3d2;border-radius:25px;padding:8px 14px;font-size:11px;white-space:nowrap;background:#e9efdf;color:#557449}
 .panel{border:1px solid var(--line);background:white;border-radius:13px;margin-bottom:24px;overflow:hidden}
+.auth-panel{padding:28px;max-width:760px}
+.auth-panel code{overflow-wrap:anywhere}
+.sidebar .logout{margin-top:18px}
 .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:23px 26px;border-bottom:1px solid var(--line)}
 .panel-heading h2{font-size:16px;margin:0}
 .table-scroll{overflow:auto}

@@ -1,6 +1,6 @@
 # Entscheidungsvorlage: OIDC-Client
 
-Stand: 21. Oktober 2026. Status: isoliert erprobt, Aufnahme als Anwendungsabhängigkeit noch nicht freigegeben.
+Stand: 21. Oktober 2026. Status: nach isolierter Erprobung in Iteration 12 vom Betreiber freigegeben und als Anwendungsabhängigkeit aufgenommen. Die folgenden Evaluationsdetails beschreiben die Entscheidungsgrundlage.
 
 ## Vorschlag
 
@@ -90,8 +90,8 @@ composer --working-dir=/tmp/samla-oidc-evaluation check-platform-reqs --lock --n
 
 Spätere Composer-Auflösungen können andere transitive Versionen wählen. Für den tatsächlichen Einbau ist nach Freigabe ein Anwendungs-Lockfile zu erzeugen und dessen konkrete Auflösung nochmals zu prüfen.
 
-## Noch erforderliche Entscheidung
+## Entscheidung und Umsetzung ab Iteration 12
 
-AGENTS.md verlangt: „Keine zusätzlichen Laufzeitkomponenten ohne Abstimmung einführen.“ Die konkrete Aufnahme von `facile-it/php-openid-client 1.0.0` einschließlich der transitiven Abhängigkeiten ist deshalb vor der Änderung der Anwendungsabhängigkeiten abzustimmen. Die isolierte Erprobung ist abgeschlossen und reviewbar; diese Vorlage behauptet keine bereits erfolgte Freigabe.
+Die konkrete Aufnahme wurde mit der Betreiberanweisung zur vollständigen Umsetzung des Logins freigegeben. facile-it/php-openid-client 1.0.0 und die 23 dokumentierten transitiven Pakete sind in composer.json/composer.lock aufgenommen. Composer-Plugins bleiben gesperrt. Die zusätzlichen Samla-Pflichten für ID-Token, Nonce, azp und at_hash sind im Adapter umgesetzt und mit Negativtests geprüft. Vorherige Aussagen über die ausschließlich isolierte Installation gelten für den Evaluationszeitpunkt.
 
-Nach Zustimmung folgen Bibliotheksadapter, abgesicherter HTTP-Transport, vollständige Token-/Claimprüfung, Webrouten, Sitzungswechsel und Logout sowie Identitätsübernahme mit vorhandenen Sperr-/Rechteprüfungen. Gruppenclaim-Vertrag, Gruppenfrische und Erstadministration sind weiterhin getrennte offene Betriebseinstellungen. Der vollständige Login muss anschließend mit echtem Provider und unter den Zielplattformen geprüft werden.
+Webrouten, Sitzungen, lokale Abmeldung, transaktionale Identitätsübernahme und CLI-Erstadministration sind angeschlossen. Der tatsächliche ZITADEL-/Plesk-Betrieb muss nach privater Einrichtung geprüft werden. Der Gruppenclaim-Vertrag ist konfigurierbar; ohne Gruppenclaim wird ausdrücklich nur die lokale Gruppenverwaltung verwendet. Siehe installation.md und oidc-provider.md.

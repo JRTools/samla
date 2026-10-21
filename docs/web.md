@@ -4,9 +4,9 @@
 
 Samla hat eine erste responsive, serverseitig gerenderte Oberfläche ohne zusätzliche Laufzeitbibliotheken. Sie zeigt eine Übersicht und berechtigungsgeschützte Benutzer- und Gruppenverzeichnisse. Benutzer können gesperrt/entsperrt, Gruppen angelegt/umbenannt und manuelle Mitgliedschaften hinzugefügt/entfernt werden. Für Änderungen werden die vorhandenen Anwendungsdienste verwendet. Rollen- und Mappingpflege haben noch keine Formulare; Dateioperationen und Medienbibliothek sind nicht Teil dieser Oberfläche.
 
-Der produktive OIDC-Login ist noch nicht implementiert. Ohne ausdrücklich erlaubten lokalen Entwicklungszugang liefert der Einstiegspunkt 503 und keine Verzeichnisdaten. Die Anwendung ist damit noch nicht produktiv einsetzbar. Die Oberfläche wird als Teil des bestehenden PHP-Repositorys betrieben, ohne separaten Frontendserver oder JavaScript-Build.
+## OIDC-Zugang ab Iteration 12
 
-Iteration 10 ergänzt die interne OIDC-Protokollbasis und die CLI-Vorabprüfung, schließt aber noch keine OIDC-Webrouten an. `OIDC_ENABLED=1` aktiviert keinen Login und verändert diese Zugangsgrenzen nicht. Siehe [OIDC-Integration](oidc-provider.md).
+Der echte OIDC-Weblogin ist angeschlossen und kann unter HTTPS/PHP-FPM eingerichtet werden. Login, eigener Zugang, lokale Abmeldung und kontrollierte Erstadministration sind in [installation.md](installation.md) und [oidc-provider.md](oidc-provider.md) dokumentiert. Der folgende lokale Adapter ist eine separate Alternative für Entwicklung; er wird nicht als Produktionszugang freigeschaltet. Ohne OIDC-Konfiguration oder zulässigen Entwicklungsadapter bleibt der Einstieg bei 503.
 
 ## Lokal starten
 
@@ -52,7 +52,7 @@ DevelopmentAccess akzeptiert ausschließlich die gleichzeitige Kombination aus:
 
 Produktions-/Testumgebung, FPM, fremder Host, Remoteclient, breite Bindung und fehlendes Opt-in erlauben keinen Zugriff über diesen Adapter. Forwarded-Header schalten ihn nicht frei. Der Zugang ist nur für einen vertrauenswürdigen lokalen Entwicklungsrechner gedacht und darf nicht über einen Reverseproxy, Tunnel oder gemeinsam genutzten Host angeboten werden. Die Prüfung ist kein Ersatz für eine produktive Authentifizierung.
 
-Der Benutzer wird aus der vertrauenswürdigen Datei-/Prozesskonfiguration übernommen, niemals aus Formularen, URL-Parametern oder Actor-Headern. Es gibt kein Loginformular, keinen Benutzerwechsler und keinen scheinbaren OIDC-Logout. Ändern des Entwicklungsakteurs erfolgt durch Anhalten und Neukonfigurieren des lokalen Servers. Bei einer anderen serverseitigen Identität werden Session-ID und CSRF-Token erneuert.
+Der Benutzer wird aus der vertrauenswürdigen Datei-/Prozesskonfiguration übernommen, niemals aus Formularen, URL-Parametern oder Actor-Headern. Dieser Entwicklungsadapter besitzt kein Loginformular, keinen Benutzerwechsler und keinen OIDC-Logout. Ändern des Entwicklungsakteurs erfolgt durch Anhalten und Neukonfigurieren des lokalen Servers. Bei einer anderen serverseitigen Identität werden Session-ID und CSRF-Token erneuert.
 
 Sessions verwenden Strict Mode, ausschließlich Cookies, HttpOnly und SameSite=Strict. Das Cookie ist für diese direkte lokale HTTP-Entwicklung nicht Secure. Für produktive HTTPS-Sitzungen wird ein eigener OIDC-/Sessionvertrag einschließlich Secure-Cookie, Laufzeiten und Logout benötigt. CSRF-Token werden mit random_bytes erzeugt, an die Sitzung gebunden und vor allen Schreibzugriffen mit hash_equals geprüft. Fehlerhafte oder fehlende Formulardaten werden abgelehnt.
 
@@ -80,7 +80,7 @@ Alle dynamischen HTML-Werte werden mit ENT_QUOTES/ENT_SUBSTITUTE escaped. Die Co
 
 Schreibabläufe nutzen dieselben Plugin-Validatoren, Delegationspolicies, Nachbedingungen, Audit- und Outboxtransaktionen wie das Backend. Lesefunktionen verwenden neue registrierte Berechtigungen und die bestehenden Autorisierungs-/Einschränkungsverträge. Die vertrauenswürdige Zusammensetzung steht in bootstrap/web.php; der Kern importiert keine RBAC-Interna. Eigene Navigation, Pluginseiten und Zeilenfilter sind noch keine öffentliche UI-Erweiterungs-API.
 
-Kein produktiver Login, keine öffentlichen Deployments, kein WebDAV, keine Dateiablage, keine Mapping-/Rollenoberfläche oder Benutzeranlage. Die CSS-Ansichten sind responsiv und benötigen kein JavaScript. CSRF-/Sessionprüfungen des Entwicklungszugangs ersetzen keine spätere OIDC-Sicherheitsabnahme. Ergebnisse der PHP-/Datenbankmatrix und der tatsächlichen HTTP-/Browserprüfungen stehen in verification.md.
+OIDC-Anmeldung und Identitätsübernahme sind ergänzt. WebDAV, Dateiablage sowie Mapping-/Rollenoberfläche fehlen weiterhin; die vollständige Plattform ist noch nicht produktiv abgenommen. Die CSS-Ansichten sind responsiv und benötigen kein JavaScript. CSRF-/Sessionprüfungen des Entwicklungszugangs ersetzen keine spätere OIDC-Sicherheitsabnahme. Ergebnisse der PHP-/Datenbankmatrix und der tatsächlichen HTTP-/Browserprüfungen stehen in verification.md.
 
 
 ## Zusätzliche HTTP- und Browserprüfungen

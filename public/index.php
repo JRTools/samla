@@ -5,9 +5,9 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use Samla\Core\Configuration\{AppConfig, EnvironmentLoader};
+use Samla\Core\Configuration\{AppConfig, EnvironmentLoader, OidcConfig};
 use Samla\Core\Database\ConnectionFactory;
-use Samla\Core\Web\{DevelopmentAccess, PageRenderer, Request, Response};
+use Samla\Core\Web\{DevelopmentAccess, OidcOrigin, PageRenderer, Request, Response};
 
 $renderer = new PageRenderer();
 $data = ['actor' => null, 'csrf' => '', 'caps' => [], 'flash' => null];
@@ -15,7 +15,17 @@ try {
     $environment = EnvironmentLoader::fromGlobals();
     $actor = DevelopmentAccess::actor($environment, $_SERVER, PHP_SAPI);
     if ($actor === null) {
-        $response = new Response(503, $renderer->render('error', $data + ['status' => 503, 'error' => 'Die Anmeldung für diese Installation ist noch nicht eingerichtet.']));
+        $oidc = OidcConfig::fromEnvironment($environment);
+        if ($oidc === null) {
+            $response = new Response(503, $renderer->render('error', $data + ['status' => 503, 'error' => 'Die Anmeldung für diese Installation ist noch nicht eingerichtet.']));
+        } elseif (!OidcOrigin::accepts($oidc, $_SERVER, PHP_SAPI)) {
+            $response = new Response(400, $renderer->render('error', $data + ['status' => 400, 'error' => 'Bitte verwende die konfigurierte Samla-Adresse über die vorgesehene Verbindung.']));
+        } else {
+            $config = AppConfig::fromEnvironment($environment);
+            if ($config->maintenance) { throw new \RuntimeException('Maintenance is active.'); }
+            if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 16384) { $response = new Response(413); }
+            else { $response = (require dirname(__DIR__) . '/bootstrap/oidc-web.php')($config, $oidc)->handle(Request::fromGlobals()); }
+        }
     } else {
         $config = AppConfig::fromEnvironment($environment);
         if ($config->maintenance) { throw new \RuntimeException('Maintenance is active.'); }

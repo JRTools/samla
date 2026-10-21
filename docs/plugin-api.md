@@ -52,3 +52,10 @@ Bei positiver Änderung werden vorhandene Quellenprojektionen für diesen Issuer
 
 
 Die erste Weboberfläche registriert zusätzlich die globalen Berechtigungen `identity.users.read` und `identity.groups.read`. Die zentralen Prüfungen einschließlich AccessRestriction gelten vor jeder Verzeichnisabfrage. Verwaltungsrechte implizieren diese Leserechte nicht. Schreibformulare verwenden die vorhandenen Anwendungsdienste und damit deren Validatoren, Delegationspolicies, Audit-/Outboxtransaktionen und Nachbedingungen. Die bestehenden öffentlichen API-Verträge bleiben unverändert. Navigationseinträge, eigene Pluginseiten und Zeilenfilter sind noch keine öffentliche UI-Beitrags-API. HTTP- und Sitzungsgrenzen stehen in web.md.
+
+
+## OIDC-Anmeldung ab Iteration 12
+
+Der Login verwendet nach vollständiger Tokenverifikation den bestehenden MutationRunner-/ChangeValidator-Vertrag. Operation identity.login, globaler Scope und Ziel user enthalten ausschließlich die interne Benutzerkennung. Validator-Veto und lokale Sperren verhindern Provisionierung, Namens-/Gruppenänderung, Audit und Outbox gemeinsam. Authentifizierung ersetzt keine Rollenvergabe. Verwaltungszugriffe verwenden weiterhin die vollständige zentrale Autorisierung.
+
+Der Offline-Installer verwendet identity.bootstrap für die begrenzte Erstadministration. Er ist kein öffentlicher Webendpunkt und verlangt vertrauenswürdigen CLI-/Wartungszugang. Die neuen transaktionalen Gruppen-/Rollenwriter sind interne Persistenzzusammensetzung, keine frei autorisierten Rollen-/Gruppenfunktionen. Der API-Vertrag bleibt experimentell 0.5.

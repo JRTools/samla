@@ -11,6 +11,7 @@ final readonly class OidcConfig
         #[\SensitiveParameter] private string $clientSecret,
         public string $redirectUri,
         public ?string $zitadelProjectId,
+        public ?string $groupsClaim,
     ) {}
 
     public static function fromGlobals(): ?self { return self::fromEnvironment(EnvironmentLoader::fromGlobals()); }
@@ -48,7 +49,11 @@ final readonly class OidcConfig
         if (!is_string($project) || ($project !== '' && !preg_match('/^[0-9]{1,64}$/D', $project))) {
             throw new \InvalidArgumentException('Invalid ZITADEL project ID.');
         }
-        return new self($issuer, $client, $required('OIDC_CLIENT_SECRET'), $redirect, $project === '' ? null : $project);
+        $groups = $env['OIDC_GROUPS_CLAIM'] ?? '';
+        if (!is_string($groups) || ($groups !== '' && !preg_match('/^[A-Za-z_][A-Za-z0-9_:.-]{0,127}$/D', $groups))) {
+            throw new \InvalidArgumentException('Invalid OIDC groups claim.');
+        }
+        return new self($issuer, $client, $required('OIDC_CLIENT_SECRET'), $redirect, $project === '' ? null : $project, $groups === '' ? null : $groups);
     }
 
     /** A local HTTP exception applies only to the development/test callback. */
@@ -73,7 +78,7 @@ final readonly class OidcConfig
     public function clientSecret(): string { return $this->clientSecret; }
     public function binding(): string
     {
-        return hash('sha256', json_encode([$this->issuer, $this->clientId, $this->redirectUri, $this->scope()], JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode([$this->issuer, $this->clientId, $this->redirectUri, $this->scope(), $this->groupsClaim], JSON_THROW_ON_ERROR));
     }
     public function __debugInfo(): array { return ['issuer' => $this->issuer, 'credentials' => '[redacted]']; }
 }

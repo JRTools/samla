@@ -13,13 +13,18 @@ final readonly class AdminController
         private PageRenderer $renderer = new PageRenderer()) {}
 
     /** actorId and session token come only from the trusted entry point, never request fields. */
-    public function handle(Request $request, string $actorId, string $csrf, ?string $flash = null): Response
+    public function capabilities(string $actorId): array
     {
         $caps = [];
         foreach (['identity.users.read','identity.groups.read','identity.users.status.manage','identity.groups.details.manage','identity.groups.memberships.manage'] as $action) {
             $caps[$action] = $this->authorization->decide(new AuthorizationRequest($actorId, $action, Scope::Global))->decision === Decision::Permit;
         }
-        $data = ['actor' => $actorId, 'csrf' => $csrf, 'caps' => $caps, 'flash' => $flash];
+        return $caps;
+    }
+    public function handle(Request $request, string $actorId, string $csrf, ?string $flash = null, bool $oidc = false): Response
+    {
+        $caps = $this->capabilities($actorId);
+        $data = ['actor' => $actorId, 'csrf' => $csrf, 'caps' => $caps, 'flash' => $flash, 'oidc' => $oidc];
         try {
             $posts = ['/users/status','/groups/create','/groups/rename','/memberships/change'];
             if (in_array($request->path, $posts, true)) {
