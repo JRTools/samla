@@ -1,0 +1,13 @@
+{
+  "id": "platform.rbac",
+  "version": "0.1.0",
+  "apiMajor": 0,
+  "php": ">=8.4 <8.6",
+  "mandatory": true,
+  "entrypoint": "Samla\\Plugins\\Rbac\\RbacPlugin",
+  "status": "experimental",
+  "contributions": [
+    "authorization",
+    "permissions"
+  ]
+}

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/bootstrap.php" colors="true" cacheDirectory=".phpunit.cache" failOnWarning="true" failOnRisky="true" failOnDeprecation="true" failOnPhpunitDeprecation="true">
+  <testsuites><testsuite name="unit"><directory>tests/Unit</directory></testsuite><testsuite name="architecture"><directory>tests/Architecture</directory></testsuite></testsuites>
+  <source><include><directory>src</directory><directory>packages/plugin-api/src</directory><directory>plugins/rbac/src</directory></include></source>
+</phpunit>

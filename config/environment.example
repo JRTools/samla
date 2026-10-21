@@ -1,0 +1,23 @@
+# Set these as real process/webserver environment variables.
+# This example is documentation; no dotenv parser is installed.
+APP_ENV=development
+APP_MAINTENANCE=0
+DB_ENGINE=mariadb
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=media_platform
+DB_USER=media_platform
+DB_PASSWORD=
+# Optional absolute Unix socket path:
+# DB_SOCKET=/run/mysqld/mysqld.sock
+
+# Must be decided explicitly. Empty means identity access remains denied.
+APP_GROUP_MAX_AGE_SECONDS=
+
+# Used only with APP_ENV=test, never inferred from DB_*:
+TEST_DB_ENGINE=mysql
+TEST_DB_HOST=127.0.0.1
+TEST_DB_PORT=3306
+TEST_DB_NAME=media_platform_test_local
+TEST_DB_USER=media_platform_test
+TEST_DB_PASSWORD=
