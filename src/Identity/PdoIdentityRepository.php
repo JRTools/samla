@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Samla\Core\Identity;
 
 use Samla\Core\Database\Transaction;
-use Samla\PluginApi\{GroupDetailsChange, IdentityReader, MutationConflict};
+use Samla\PluginApi\{GroupDetailsChange, GroupMappingChange, IdentityReader, MutationConflict};
 
 /** Internal persistence adapter. Mutations are not authorized administration endpoints. */
 final readonly class PdoIdentityRepository implements IdentityReader
@@ -102,10 +102,47 @@ final readonly class PdoIdentityRepository implements IdentityReader
         $this->bump($userId);
         return true;
     }
+    /** Internal mapping writer; updates only this external source, retaining snapshot age and local status. */
+    public function changeGroupMappingInsideTransaction(GroupMappingChange $change): bool
+    {
+        if (!$this->pdo->inTransaction()) { throw new \LogicException('An active transaction is required.'); }
+        $params = [$change->issuer, $change->externalId, $change->groupId];
+        $query = $this->pdo->prepare('SELECT 1 FROM identity_group_mappings WHERE issuer = ? AND external_id = ? AND internal_id = ? FOR UPDATE');
+        $query->execute($params); $exists = $query->fetchColumn() !== false;
+        $changed = $exists !== $change->grant;
+        if ($changed) {
+            $query = $this->pdo->prepare($change->grant
+                ? 'INSERT INTO identity_group_mappings (issuer, external_id, internal_id) VALUES (?, ?, ?)'
+                : 'DELETE FROM identity_group_mappings WHERE issuer = ? AND external_id = ? AND internal_id = ?');
+            $query->execute($params);
+        }
+        // Include source rows without a corresponding current snapshot to repair drift as well.
+        $query = $this->pdo->prepare("SELECT u.id FROM identity_users u WHERE u.issuer = ? AND (
+            EXISTS (SELECT 1 FROM identity_external_groups e WHERE e.user_id = u.id AND e.external_id = ?)
+            OR EXISTS (SELECT 1 FROM identity_memberships m WHERE m.user_id = u.id AND m.group_id = ? AND m.origin = 'external' AND m.source_group = ?))
+            ORDER BY u.id FOR UPDATE");
+        $query->execute([$change->issuer, $change->externalId, $change->groupId, $change->externalId]);
+        $users = $query->fetchAll(\PDO::FETCH_COLUMN);
+        $snapshot = $this->pdo->prepare('SELECT 1 FROM identity_external_groups WHERE user_id = ? AND external_id = ?');
+        $membership = $this->pdo->prepare("SELECT 1 FROM identity_memberships WHERE user_id = ? AND group_id = ? AND origin = 'external' AND source_group = ?");
+        $insert = $this->pdo->prepare("INSERT INTO identity_memberships (user_id, group_id, origin, source_group) VALUES (?, ?, 'external', ?)");
+        $delete = $this->pdo->prepare("DELETE FROM identity_memberships WHERE user_id = ? AND group_id = ? AND origin = 'external' AND source_group = ?");
+        foreach ($users as $userId) {
+            $snapshot->execute([$userId, $change->externalId]);
+            $wanted = $change->grant && $snapshot->fetchColumn() !== false;
+            $membership->execute([$userId, $change->groupId, $change->externalId]);
+            if (($membership->fetchColumn() !== false) === $wanted) { continue; }
+            ($wanted ? $insert : $delete)->execute([$userId, $change->groupId, $change->externalId]);
+            $this->bump($userId); $changed = true;
+        }
+        return $changed;
+    }
     /** Only supply a claim already verified for this stored issuer/subject by the future OIDC adapter. */
     public function replaceVerifiedGroups(string $userId, mixed $claim): void
     {
         Transaction::run($this->pdo, function () use ($userId, $claim): void {
+            $lock = $this->pdo->query('SELECT id FROM administration_lock WHERE id = 1 FOR UPDATE');
+            if ($lock->fetchColumn() === false) { throw new \RuntimeException('Administration lock is missing.'); }
             $user = $this->lockUser($userId);
             $query = $this->pdo->prepare('SELECT external_id, internal_id FROM identity_group_mappings WHERE issuer = ?');
             $query->execute([$user['issuer']]);

@@ -15,6 +15,7 @@ final readonly class MutationContext
         public ?string $spaceId,
         public array $targets,
         public ?GroupDetailsChange $groupDetails = null,
+        public ?GroupMappingChange $groupMapping = null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -33,6 +34,13 @@ final readonly class MutationContext
             || ($groupOperation && ($scope !== Scope::Global || array_keys($targets) !== ['group']
                 || ($operation === 'identity.group.create') !== ($groupDetails->expectedName === null)))) {
             throw new \InvalidArgumentException('Group details must match the group operation and target.');
+        }
+        $mappingOperation = in_array($operation, ['identity.mapping.grant', 'identity.mapping.revoke'], true);
+        if ($mappingOperation !== ($groupMapping !== null)
+            || ($mappingOperation && ($scope !== Scope::Global || array_keys($targets) !== ['group', 'mapping']
+                || $targets['group'] !== $groupMapping->groupId || $targets['mapping'] !== $groupMapping->mappingId()
+                || ($operation === 'identity.mapping.grant') !== $groupMapping->grant))) {
+            throw new \InvalidArgumentException('Mapping proposal must match the operation and targets.');
         }
     }
 }

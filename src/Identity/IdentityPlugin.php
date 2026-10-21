@@ -14,5 +14,6 @@ final class IdentityPlugin implements Plugin
         $registrar->permission(new Permission('identity.users.status.manage', $this->id(), [Scope::Global]));
         $registrar->permission(new Permission('identity.groups.memberships.manage', $this->id(), [Scope::Global]));
         $registrar->permission(new Permission('identity.groups.details.manage', $this->id(), [Scope::Global]));
+        $registrar->permission(new Permission('identity.groups.mappings.manage', $this->id(), [Scope::Global]));
     }
 }

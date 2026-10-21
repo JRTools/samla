@@ -6,7 +6,7 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 7
+## Entwicklungsstand: Iteration 8
 
 Vorhanden sind:
 
@@ -20,10 +20,11 @@ Vorhanden sind:
 - Geschützter Benutzerstatusdienst zum Sperren und Entsperren, mit Schutz aktuell nutzbarer Zugänge zur Statusverwaltung und zur bereits eingerichteten Mitgliedschaftsverwaltung.
 - Geschützte manuelle Gruppenmitgliedschaften, mit Delegationsprüfung für jede Rolle in jedem betroffenen Speicherbereich und getrennt erhaltenen externen Quellen.
 - Geschütztes Anlegen und Umbenennen interner Gruppen mit festen Kennungen, geprüftem Namen und Konfliktschutz.
+- Geschützte Mappingvergabe und -entzug mit Delegationsprüfung auch für zukünftige Mitglieder und sofortiger Aktualisierung bereits gespeicherter Gruppenstände.
 - Plugin-Validierung vor Änderungen, transaktionales Audit und persistierte Abschlussereignisse in einer Outbox.
 - Unit-, Architektur- und echte MySQL-/MariaDB-Integrationstests.
 
-Es gibt noch keine produktiv nutzbare Weboberfläche, keinen OIDC-Login, keinen WebDAV-Endpunkt und keine Dateioperationen. Repository-Schreibmethoden sind interne Adapter. Der erste autorisierte Dienst für fachliche Rollenzuweisungen ist vorhanden. Benutzerstatusänderungen sind als geschützter Anwendungsdienst verfügbar. Manuelle Mitgliedschaften in fachlichen Gruppen können geschützt hinzugefügt und entfernt werden. Gruppen mit globalen oder administrativen RBAC-Rollen sind davon ausgeschlossen. Globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und Mappingverwaltung bleiben offen. Der Schutz verbleibender Zugänge umfasst Status-, Mitgliedschafts- und Gruppenstammdatenänderungen und erhält bereits nutzbare Zugänge zu den drei Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse; ein Zustellungsdienst ist noch nicht implementiert.
+Es gibt noch keine produktiv nutzbare Weboberfläche, keinen OIDC-Login, keinen WebDAV-Endpunkt und keine Dateioperationen. Repository-Schreibmethoden sind interne Adapter. Der erste autorisierte Dienst für fachliche Rollenzuweisungen ist vorhanden. Benutzerstatusänderungen sind als geschützter Anwendungsdienst verfügbar. Manuelle Mitgliedschaften in fachlichen Gruppen können geschützt hinzugefügt und entfernt werden. Gruppen mit globalen oder administrativen RBAC-Rollen sind davon ausgeschlossen. Globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung und Gruppenlöschung bleiben offen. Mappingkanten können geschützt hinzugefügt und entfernt werden; atomare Mehrfachänderungen sind noch nicht implementiert. Der Schutz verbleibender Zugänge umfasst Status-, Mitgliedschafts- und Gruppenstammdatenänderungen und erhält bereits nutzbare Zugänge zu den vier Verwaltungsfähigkeiten (Status, Mitgliedschaften, Gruppenstammdaten und Mappings); ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse; ein Zustellungsdienst ist noch nicht implementiert.
 
 ## Voraussetzungen
 

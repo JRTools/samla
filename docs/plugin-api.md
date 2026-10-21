@@ -1,4 +1,4 @@
-# Experimentelle Plugin-API 0.4
+# Experimentelle Plugin-API 0.5
 
 Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog.
 
@@ -12,6 +12,7 @@ Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog
 | IdentityReader | Nur bestätigte interne Gruppen und aktuellen Zugangsstatus bereitstellen. Implementierung muss lokale Sperren und vereinbarte Gruppenfrische berücksichtigen. |
 | AuthorizationChecker / ResourceDirectory | Vollständige Autorisierung und Ressourcenprüfung für Plugin-Anwendungsdienste. |
 | MutationContext / ChangeValidator / MutationRunner | Unveränderlicher Änderungskontext, vorab ablehnende Plugin-Regeln und gemeinsame Transaktionsgrenze. Details in administration.md. |
+| GroupMappingChange / GroupMappingPolicy | Exakter Mappingvorschlag und verpflichtende Delegationsprüfung für bestehende und zukünftige Gruppenmitglieder. |
 | GroupDetailsChange / MutationConflict | Typisierter, unveränderlicher Namensvorschlag und sichtbarer Konflikt bei abweichendem Erwartungszustand. |
 | GroupMembershipPolicy | Verpflichtende zusätzliche Delegationsprüfung manueller Mitgliedschaften. RBAC prüft sämtliche Rollenzuweisungen der Zielgruppe. |
 | SchemaMigration | Unveränderlicher Migrationsbeitrag mit Eigentümer, Kennung, Prüfsumme und einzelnen SQL-Anweisungen. Explizite Zusammenstellung durch den CLI-Einstiegspunkt. |
@@ -39,3 +40,12 @@ Validatoren erhalten `identity.membership.grant` beziehungsweise `identity.membe
 Seit API 0.4 hat MutationContext das optionale Feld `groupDetails: ?GroupDetailsChange`. Es ist für `identity.group.create` und `identity.group.rename` erforderlich und für andere Operationen unzulässig. Scope ist Global und das einzige Ziel ist `group`. GroupDetailsChange enthält den gewünschten Namen und optional `expectedName`: null bedeutet Anlage, ein Name bedeutet Umbenennung. Der Kontext prüft diese Zuordnung. Validatoren können Namen vor dem Write prüfen und ablehnen. Die Felder sind readonly. Audit und Outbox serialisieren ausschließlich Kennungen und übernehmen den Namensvorschlag nicht.
 
 Namen sind gültiges UTF-8 mit 1 bis 255 Unicode-Codepoints, ohne Steuerzeichen oder umgebenden Leerraum. Sie werden nicht automatisch getrimmt oder normalisiert. Derselbe Name darf mehrere unterschiedliche Gruppen bezeichnen. Sie sind reine Anzeigetexte; künftige HTML-Adapter müssen sie korrekt escapen. MutationConflict signalisiert eine abweichende gespeicherte Erwartung oder eine bereits belegte Kennung. Ein späterer Adapter muss den Konflikt sichtbar machen und vor erneutem Schreiben den aktuellen Zustand laden. Der Konflikt erzeugt kein erfolgreiches Audit oder Abschlussereignis.
+
+
+API 0.5 ergänzt `GroupMappingChange(issuer, externalId, groupId, grant)` und das verpflichtende `GroupMappingPolicy.allows(actorId, change)`. RbacGroupMappingPolicy nutzt dieselbe vollständige fachliche Gruppendelegation wie RbacGroupMembershipPolicy. Es werden alle Rollenzuweisungen der Zielgruppe geprüft, auch wenn noch keine passenden Benutzer existieren. Der Kern verwendet nur den öffentlichen Policy-Vertrag; es gibt keinen erlaubenden Standard bei fehlender Policy.
+
+MutationContext hat zusätzlich das optionale Feld `groupMapping`. Es ist für `identity.mapping.grant` und `identity.mapping.revoke` verpflichtend und für andere Operationen verboten. Scope ist Global. Die exakten Ziele sind `group` und `mapping`; `mapping` ist ein stabiler SHA-256-Fingerabdruck des längengerahmten Tupels aus Issuer, externer Gruppenkennung und interner Gruppenkennung. Grant und Revoke derselben Kante haben denselben Fingerabdruck. Kontext, Zielkennungen und Operation müssen zum Proposal passen. Die Zuordnung ist unabhängig vom GroupDetailsChange-Vertrag.
+
+Issuer und externe Gruppenkennung werden als unveränderte, nicht leere Bytefolgen mit höchstens 1024 beziehungsweise 256 Bytes behandelt. Die interne Kennung folgt dem bestehenden ASCII-Vertrag. Das sind Strukturgrenzen und keine Prüfung eines OIDC-Issuers oder Tokens. Eine zukünftige OIDC-Integration muss weiterhin ihren konfigurierten Issuer und alle Tokenbedingungen prüfen. Validatoren erhalten das vollständige unveränderliche Mapping, Audit und Outbox übernehmen nur interne Gruppe und Fingerabdruck. Opaque Bytefolgen müssen dadurch nicht als JSON-Freitext serialisiert werden.
+
+Bei positiver Änderung werden vorhandene Quellenprojektionen für diesen Issuer und diese externe Kennung aus den gespeicherten bestätigten Gruppenständen abgeglichen. Abschlussereignisse sind `identity.mapping.grant.completed` und `identity.mapping.revoke.completed`. Quellenkorrekturen bei unveränderter Mappingkante zählen ebenfalls als Änderung. Details zu Atomizität und Versionsverhalten stehen in administration.md.

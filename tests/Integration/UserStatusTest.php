@@ -149,6 +149,16 @@ final class UserStatusTest extends TestCase
         $this->identity->addManualMembership('carol', 'details-operators');
         self::assertTrue($this->service()->setBlocked('alice', 'bob', true));
     }
+    public function testLastConfiguredMappingAdministratorCannotBeBlocked(): void
+    {
+        $this->identity->createGroup('mapping-operators', 'Mapping operators');
+        $this->identity->addManualMembership('bob', 'mapping-operators');
+        $this->roles->save(new Role('mapping-operator', Scope::Global, ['identity.groups.mappings.manage']), $this->runtime);
+        $this->roles->assign(new RoleAssignment('mapping-operators', 'mapping-operator', Scope::Global));
+        $this->denied(fn() => $this->service()->setBlocked('alice', 'bob', true));
+        $this->identity->addManualMembership('carol', 'mapping-operators');
+        self::assertTrue($this->service()->setBlocked('alice', 'bob', true));
+    }
     public function testBlockedSecondAdministratorDoesNotSatisfyRecoveryInvariant(): void
     {
         $this->identity->addManualMembership('bob', 'operators'); $this->identity->setBlocked('bob', true);

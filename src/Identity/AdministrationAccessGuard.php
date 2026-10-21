@@ -8,7 +8,7 @@ use Samla\PluginApi\{AccessDenied, AuthorizationChecker, AuthorizationRequest, D
 /** Internal postcondition. Evaluate resulting state inside the shared administration transaction. */
 final readonly class AdministrationAccessGuard
 {
-    private const ACTIONS = ['identity.users.status.manage', 'identity.groups.memberships.manage', 'identity.groups.details.manage'];
+    private const ACTIONS = ['identity.users.status.manage', 'identity.groups.memberships.manage', 'identity.groups.details.manage', 'identity.groups.mappings.manage'];
 
     /** Snapshot before validators, under the administration lock. */
     public function snapshot(): array

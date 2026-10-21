@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.8
+Version: 1.9
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 7, siehe Abschnitt 17. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 8, siehe Abschnitt 18. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -364,3 +364,30 @@ Auf allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6
 Die Funktionen sind als getestete Anwendungsdienste vorhanden. Eine produktive Oberfläche, OIDC-Anmeldung und Dateioperationen fehlen weiterhin. Die Outbox speichert Ereignisse und stellt sie noch nicht zu. Eine wiederholte Gruppenanlage erzeugt jeweils eine neue Gruppe; automatische HTTP-Retries benötigen später einen zusätzlichen Idempotenzvertrag. README, API- und Verwaltungsdokumentation, Prüfprotokoll und Plan werden gemeinsam mit dem Code veröffentlicht.
 
 Version 1.8: Geschützte Gruppenanlage und konfliktgeprüfte Umbenennung, typisierte Namensvalidierung für Plugins und erweiterter Schutz verbleibender Verwaltungsfähigkeiten; erfolgreiche Vierfachmatrix.
+
+
+## 18. Iteration 8: Geschützte Mappingkanten und sofortiger Quellenabgleich
+
+GroupMappingService ergänzt Vergabe und Entzug einzelner externer Mappingkanten mit dem globalen Recht `identity.groups.mappings.manage` und einer verpflichtenden GroupMappingPolicy. Das RBAC-Plugin prüft sämtliche Zielrollen in sämtlichen Bereichen einschließlich Delegationsobergrenzen. Die Prüfung gilt auch vor der ersten passenden Anmeldung und ohne aktuelle Mitglieder. Globale und administrative RBAC-Gruppen bleiben von diesem ersten Vertrag ausgeschlossen.
+
+Mappingkante und bestehende abgeleitete Mitgliedschaftsquellen werden unter der gemeinsamen Administrationssperre atomar abgeglichen. Maßgeblich sind gespeicherte verifizierte Gruppensichten des exakt passenden Issuers. Andere Quellen und manuelle Mitgliedschaften bleiben erhalten. Versionen erhöhen sich nur bei tatsächlich veränderten Quellenzeilen. Lokale Sperren und Bestätigungszeitpunkte bleiben unverändert. Der interne Snapshotwriter verwendet ebenfalls die Administrationssperre; ein öffentlicher OIDC-Synchronisierungsanwendungsfall ist damit noch nicht implementiert.
+
+Die experimentelle Plugin-API 0.5 ergänzt GroupMappingChange, GroupMappingPolicy und den strikt zugeordneten Mappingvorschlag im MutationContext. Validatoren können die vollständige Kante prüfen. Audit und persistierte Abschlussereignisse verwenden Zielgruppe und einen längengerahmten SHA-256-Fingerabdruck, ohne Roh-Issuer oder externe Kennung automatisch zu kopieren. Ein bereits vorhandenes Mapping ist bei korrekter Projektion unverändert; eine abweichende Quellenprojektion kann derselbe Aufruf korrigieren und meldet dies als Änderung.
+
+Der Schutz verbleibender aktuell nutzbarer Verwaltungsfähigkeiten umfasst jetzt Status, Mitgliedschaften, Gruppenstammdaten und Mappings. Diese Liste wird vor Validatoren erfasst und nach dem Write erneut geprüft. Die bestehenden Status-, Mitgliedschafts- und Stammdatendienste nutzen denselben Schutz. Alle Quellen, Versionen und Protokolleinträge committen gemeinsam oder werden zurückgerollt.
+
+### 18.1 Prüfung
+
+Die Vierfachmatrix aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 ist erfolgreich: jeweils 206 Tests mit 714 Assertions (84 Unit-/Architekturtests und 122 Integrationstests). Die Syntax aller 79 eigenen PHP-Dateien sowie die Migrations-CLI sind ebenfalls geprüft. 15 zusätzliche Unitfälle und 27 zusätzliche Integrationsfälle belegen Delegation auch ohne aktuelle Mitglieder, sofortigen Abgleich mehrerer Benutzer, exakte Issuertrennung, binäre externe Kennungen, Quellenprovenienz, Versionen, Driftkorrektur, Plugin-Veto und Nachprüfung, Administrationsschutz und Rollback sowie die gemeinsame Snapshot-/Administrationssperre. Migrationen und Laufzeitabhängigkeiten bleiben unverändert.
+
+### 18.2 Empfohlene nächste Priorität: Erste Weboberfläche
+
+Es gibt weiterhin kein Frontend. Die bisherigen Anwendungsdienste sind getestet, aber noch nicht über einen produktiv nutzbaren Browserzugang bedienbar. Nach der Nachfrage nach dem Frontend wird empfohlen, den nächsten Durchstich auf eine erste kleine Oberfläche mit Navigation und Benutzer-/Gruppenverwaltung auszurichten, statt zunächst weitere Verwaltungsfunktionen ausschließlich im Backend auszubauen.
+
+Dafür zuerst den HTTP-/Template- und OIDC-Integrationsweg konkret festlegen. Zusätzliche Bibliotheken sind weiterhin vor Einsatz abzustimmen. Für einen echten Login fehlen insbesondere Clientregistrierung, Samla-Callback, tatsächlicher Gruppenclaim und die Gruppenfrische-Richtlinie. Discovery allein ersetzt diese Angaben nicht. Die Oberfläche muss anschließend ausschließlich die geschützten Dienste verwenden, Akteure aus der authentifizierten Sitzung übernehmen und Formulare einschließlich CSRF-Schutz sowie erlaubte und verweigerte Zugriffe mit Tests abdecken. Ein vorläufiger lokaler Entwicklungszugang wäre ausdrücklich von einem produktiven OIDC-Login zu unterscheiden.
+
+Weitere offene Pakete bleiben Gruppenlöschung mit modulübergreifenden Referenzprüfungen, atomare Mehrfach-Mappingänderungen, Rollenbearbeitung/globales Delegieren, Notfallzugang, Outbox-Zustellung, App-Passwörter und der erste Dateidurchstich mit WebDAV. Eine einzelne Mappingänderung wird synchron für alle passenden Benutzer in einer Transaktion verarbeitet; Lastabnahme oder aufgeteilte Hintergrundverarbeitung sind nicht abgeschlossen.
+
+README, API- und Verwaltungsdokumentation, Prüfprotokoll und dieser Plan werden mit der Implementierung veröffentlicht. Die nächste Priorisierung der Oberfläche ist eine Empfehlung; sie stellt keine Freigabe neuer Laufzeitkomponenten oder einen bereits implementierten Login dar.
+
+Version 1.9: Geschützte Mappingkanten mit sofortigem Abgleich gespeicherter externer Quellen und Schutz aller vier beschriebenen Verwaltungsfähigkeiten; erfolgreiche Vierfachmatrix und empfohlener nächster UI-Durchstich.
