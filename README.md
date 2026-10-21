@@ -6,17 +6,18 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 10
+## Entwicklungsstand: Iteration 11 (.env und OIDC-Bibliotheksprüfung)
 
 Vorhanden sind:
 
+- Gemeinsame `.env`-Konfiguration für Web und CLI mit Prozessvorrang und sicherer Vorlage `example.env`.
 - Getestete OIDC-Protokollbasis: Laufzeitkonfiguration, Discovery-Prüfung, Authorization Code mit PKCE S256, State/Nonce und einmalige Callback-Verarbeitung. Noch keine angeschlossene Webanmeldung oder Tokenprüfung.
 - Erste responsive PHP-Weboberfläche mit Übersicht, Benutzer-/Gruppenverzeichnissen, Statusänderungen, Gruppenanlage/Umbenennung und manuellen Mitgliedschaften.
 - Eigene Leseberechtigungen, begrenzte Verzeichnisseiten, CSRF-Schutz, HTML-Escaping, Sicherheitsheader und ausschließlich lokaler Entwicklungszugang.
 - Experimentelle Plugin-API, atomare Registrierung und zentrale Autorisierung.
 - RBAC mit expliziten Berechtigungen und globalen beziehungsweise bereichsbezogenen Rollenzuweisungen.
 - Gruppenmapping mit mehreren Quellen und getrennten manuellen Mitgliedschaften.
-- Umgebungsbasierte Konfiguration ohne zusätzliche Konfigurationsbibliothek.
+- Datei- und umgebungsbasierte Konfiguration ohne zusätzliche Konfigurationsbibliothek.
 - PDO-Anbindung, versionierte Migrationen mit Sperre, Prüfsummen und sichtbarem Fehlerzustand.
 - Persistente Benutzer, Gruppen, bestätigte Gruppenstände, Mitgliedschaften, Rollen und Zuweisungen.
 - Erster geschützter Verwaltungsdienst für fachliche Rollenzuweisungen innerhalb eines Speicherbereichs, mit ausdrücklichen Delegationsregeln und Berechtigungsobergrenzen.
@@ -45,11 +46,13 @@ Ein zusätzlicher Framework-, Node.js-, Redis- oder Suchdienst ist derzeit nicht
 
 ```sh
 composer install
+cp example.env .env
+chmod 600 .env
 ```
 
-`config/environment.example` beschreibt die benötigten Prozess- beziehungsweise Webserver-Umgebungsvariablen. Die Datei wird nicht automatisch geladen. Secrets gehören in die Laufzeitkonfiguration und nicht in das Repository.
+Die `.env` im Projektverzeichnis wird automatisch von Weboberfläche, Migrationen, Entwicklungs-Seed und OIDC-Vorabprüfung geladen. Trage dort die Datenbank- und später die OIDC-Einstellungen ein. Bereits gesetzte Prozess-/Webservervariablen haben Vorrang, auch wenn sie leer sind. `.env` und `.env.*` werden nicht committed. Der PHP-Webserver muss `public` als Document Root verwenden; `.env` liegt außerhalb dieses Verzeichnisses. Dateieigentümer und Leserechte müssen zum PHP-Benutzer passen. Details und unterstützte Syntax: [Konfiguration](docs/configuration.md).
 
-`APP_ENV` unterscheidet `production`, `development` und `test`; der Standard ist `production`. Der Testmodus verwendet ausschließlich `TEST_DB_*`. Eine leere Gruppenfrische-Einstellung lässt Identitätszugriff gesperrt, bis die Richtlinie ausdrücklich festgelegt ist.
+`APP_ENV` unterscheidet `production`, `development` und `test`; der Standard ist `production`. Mit prozessseitigem `APP_ENV=test` ignorieren automatisierte Tests die Deployment-Datei vollständig und verwenden ausschließlich explizite `TEST_DB_*`-Prozesswerte. Eine leere Gruppenfrische-Einstellung lässt Identitätszugriff gesperrt, bis die Richtlinie ausdrücklich festgelegt ist.
 
 ```sh
 composer diagnose
@@ -101,17 +104,19 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 241 Tests mit 916 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 253 Tests mit 953 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC vorbereiten
 
-Die bestätigte Testregistrierung verwendet Authorization Code mit PKCE S256 und `client_secret_basic` (ZITADEL: Basic). `config/environment.example` beschreibt die `OIDC_*`-Prozessvariablen. Client-ID und Secret werden ausschließlich in der eigenen Laufzeitumgebung gesetzt. Eine `.env`-Datei wird nicht automatisch geladen.
+Die bestätigte Testregistrierung verwendet Authorization Code mit PKCE S256 und `client_secret_basic` (ZITADEL: Basic). `example.env` beschreibt die `OIDC_*`-Werte. Trage Client-ID und Secret in die private `.env` ein oder setze sie über die Prozessumgebung. Die Vorlage enthält keine realen Zugangsdaten.
 
 ```sh
 composer oidc:check
 ```
 
 Mit `OIDC_ENABLED=1` und vollständiger OIDC-Konfiguration prüft dieser CLI-Aufruf das Discovery-Dokument über HTTPS. Er sendet weder Client-Secret noch Benutzerzugangsdaten und meldet keine erfolgreiche Anmeldung. PHP benötigt dafür HTTPS-Streams, erlaubtes `allow_url_fopen` und einen gültigen CA-Vertrauensspeicher. `OIDC_ENABLED` aktiviert aktuell ausschließlich die Protokollvorbereitung, keinen Weblogin. Der vorhandene Webzugang bleibt lokal begrenzt. Ablauf, Konfiguration und nächste Integrationsschritte: [OIDC](docs/oidc-provider.md).
+
+Für die nächste Integration wurde `facile-it/php-openid-client 1.0.0` mit seinen 23 transitiven Paketen isoliert unter PHP 8.4/8.5 geprüft. Signatur-/Fehlerfälle, Basic/PKCE und Schlüsselwechsel sind durch ein reproduzierbares Prüfskript belegt. Die Bibliothek ist noch keine Anwendungsabhängigkeit; ihre Aufnahme benötigt die gemäß AGENTS.md vorgesehene Abstimmung. Grenzen, genaue Versionen und zusätzliche Adapterprüfungen stehen in der [Entscheidungsvorlage](docs/oidc-library-decision.md). Diese Vorbereitung erweitert noch nicht die nutzbaren Webfunktionen.
 
 ## Architektur und Dokumentation
 

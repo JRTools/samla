@@ -29,9 +29,9 @@ Die Testregistrierung und ihre Client-Zugangsdaten wurden vom Betreiber bereitge
 | Lokale Origin | `http://127.0.0.1:8080` |
 | Basisscopes | `openid profile email` |
 
-Eine erlaubte Origin ersetzt keine Redirect-URI. Client-ID und Secret sind Prozesskonfiguration, keine Konstanten oder Beispieldaten im Repository. Die vom Betreiber angegebene Audience bezeichnet das ZITADEL-Projekt. Sie kann über den projektspezifischen Audience-Scope angefordert werden. Bei der späteren ID-Tokenprüfung bleibt die Client-ID die erwartete Client-Audience; die Projektkennung ersetzt sie nicht.
+Eine erlaubte Origin ersetzt keine Redirect-URI. Client-ID und Secret gehören in die private `.env` oder Prozessumgebung, nicht in Konstanten oder Beispieldaten im Repository. Die vom Betreiber angegebene Audience bezeichnet das ZITADEL-Projekt. Sie kann über den projektspezifischen Audience-Scope angefordert werden. Bei der späteren ID-Tokenprüfung bleibt die Client-ID die erwartete Client-Audience; die Projektkennung ersetzt sie nicht.
 
-## Prozesskonfiguration und Vorabprüfung
+## Datei-/Prozesskonfiguration und Vorabprüfung
 
 | Variable | Bedeutung |
 |---|---|
@@ -45,7 +45,7 @@ Eine erlaubte Origin ersetzt keine Redirect-URI. Client-ID und Secret sind Proze
 
 Produktion verlangt HTTPS auch für den Callback. Nur in `development` oder `test` ist HTTP auf exakt localhost, 127.0.0.1 oder IPv6-Loopback erlaubt. Zugangsdaten, Query und Fragment sind in den konfigurierten URLs ausgeschlossen. Ein abschließender Slash am Callback wird nicht stillschweigend korrigiert.
 
-Mit gesetzten Prozessvariablen `composer oidc:check` ausführen. Die Vorabprüfung braucht keine Datenbank. Sie benötigt PHP-HTTPS-Streams, `allow_url_fopen` und einen CA-Vertrauensspeicher. Sie lädt höchstens 64 KiB Discovery-Daten, verwendet zehn Sekunden Netzwerk-Timeout und folgt keinen HTTP-Redirects. Sie sendet keine Basic-Zugangsdaten, Tokens oder Benutzerpasswörter. Fehlerausgaben enthalten keine Rohantworten oder Konfiguration.
+Mit eingetragener `.env` oder gesetzten Prozessvariablen `composer oidc:check` ausführen. Syntax und Vorrang stehen in [configuration.md](configuration.md). Die Vorabprüfung braucht keine Datenbank. Sie benötigt PHP-HTTPS-Streams, `allow_url_fopen` und einen CA-Vertrauensspeicher. Sie lädt höchstens 64 KiB Discovery-Daten, verwendet zehn Sekunden Netzwerk-Timeout und folgt keinen HTTP-Redirects. Sie sendet keine Basic-Zugangsdaten, Tokens oder Benutzerpasswörter. Fehlerausgaben enthalten keine Rohantworten oder Konfiguration.
 
 `ProviderMetadata` verlangt eine exakte Issuer-Übereinstimmung und angekündigte Unterstützung für Code, S256 und Basic. Authorization-, Token- und JWKS-Endpunkte müssen HTTPS und denselben Origin wie der Issuer verwenden; abweichende Origins benötigen vor einer späteren Unterstützung eine ausdrückliche Vertrauensrichtlinie. Das ist eine bewusste Einschränkung für den vorliegenden Provider und keine Behauptung, dass OIDC immer denselben Origin verlangt. Das Live-Discovery-Dokument erfüllt diese Bedingungen.
 
@@ -65,7 +65,7 @@ Die Klassen sind noch nicht an `public/index.php` angeschlossen. `/auth/login` u
 
 Für die nächste Phase:
 
-1. Konkrete OIDC-Bibliothek auswählen, mit PHP 8.4/8.5 erproben und vor ihrer Einführung abstimmen.
+1. Die isoliert auf PHP 8.4/8.5 erprobte Bibliothek `facile-it/php-openid-client 1.0.0` zur Aufnahme abstimmen. Die [Entscheidungsvorlage](oidc-library-decision.md) dokumentiert 24 aufgelöste Pakete, Tests und zusätzliche Adapterpflichten. Eine Freigabe oder ein Einbau in Samla ist noch nicht erfolgt.
 2. Adapter für Token-Austausch und strikte Signatur-/Issuer-/Audience-/Nonce-/Zeitprüfung implementieren. Schlüsselrotation und ausdrücklich erlaubte Signaturverfahren testen.
 3. Webrouten und serverseitige Sitzungen anschließen. Verbrauchte Transaktionen müssen unter Sessionlock gespeichert werden, bevor ein Token-Request beginnt. Produktionscookies benötigen Secure/HttpOnly und für den externen GET-Callback einen passenden SameSite-Vertrag; Sitzungswechsel, Laufzeiten und Logout sind gesondert zu testen.
 4. Nur verifizierte Identitäten provisionieren. Tatsächliche Gruppenclaims, Frischerichtlinie und Erstadministration festlegen; vorhandene Sperren und manuelle Mitgliedschaften erhalten.

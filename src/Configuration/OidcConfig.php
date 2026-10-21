@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Samla\Core\Configuration;
 
-/** Trusted process configuration only. No request-derived issuer or callback. */
+/** Trusted configuration only. No request-derived issuer or callback. */
 final readonly class OidcConfig
 {
     private function __construct(
@@ -13,7 +13,7 @@ final readonly class OidcConfig
         public ?string $zitadelProjectId,
     ) {}
 
-    public static function fromGlobals(): ?self { return self::fromEnvironment(getenv()); }
+    public static function fromGlobals(): ?self { return self::fromEnvironment(EnvironmentLoader::fromGlobals()); }
 
     /** @param array<string, string> $env */
     public static function fromEnvironment(#[\SensitiveParameter] array $env): ?self

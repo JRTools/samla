@@ -10,9 +10,9 @@ Iteration 10 ergänzt die interne OIDC-Protokollbasis und die CLI-Vorabprüfung,
 
 ## Lokal starten
 
-Eine eigene leere Datenbank mit Namen `samla_dev_local` oder einem anderen `samla_dev_*`-Namen sowie ein darauf begrenztes Konto bereitstellen. Die normalen DB_HOST-, DB_PORT-, DB_USER- und DB_PASSWORD-Prozessvariablen müssen gesetzt sein; die Beispieldatei wird nicht automatisch geladen. Niemals Zugangsdaten committen.
+Eine eigene leere Datenbank mit Namen `samla_dev_local` oder einem anderen `samla_dev_*`-Namen sowie ein darauf begrenztes Konto bereitstellen. `example.env` im Projektverzeichnis nach `.env` kopieren und dort DB_HOST, DB_PORT, DB_USER und DB_PASSWORD eintragen. Die Datei wird automatisch geladen; Prozesswerte haben Vorrang. Siehe [configuration.md](configuration.md). Niemals Zugangsdaten committen.
 
-Zusätzlich folgende Prozessvariablen setzen:
+Die folgenden Werte ebenfalls in `.env` eintragen oder wie gezeigt als Prozessvariablen setzen:
 
 ```sh
 export APP_ENV=development
@@ -52,7 +52,7 @@ DevelopmentAccess akzeptiert ausschließlich die gleichzeitige Kombination aus:
 
 Produktions-/Testumgebung, FPM, fremder Host, Remoteclient, breite Bindung und fehlendes Opt-in erlauben keinen Zugriff über diesen Adapter. Forwarded-Header schalten ihn nicht frei. Der Zugang ist nur für einen vertrauenswürdigen lokalen Entwicklungsrechner gedacht und darf nicht über einen Reverseproxy, Tunnel oder gemeinsam genutzten Host angeboten werden. Die Prüfung ist kein Ersatz für eine produktive Authentifizierung.
 
-Der Benutzer wird aus der Prozesskonfiguration übernommen, niemals aus Formularen, URL-Parametern oder Actor-Headern. Es gibt kein Loginformular, keinen Benutzerwechsler und keinen scheinbaren OIDC-Logout. Ändern des Entwicklungsakteurs erfolgt durch Anhalten und Neukonfigurieren des lokalen Servers. Bei einer anderen serverseitigen Identität werden Session-ID und CSRF-Token erneuert.
+Der Benutzer wird aus der vertrauenswürdigen Datei-/Prozesskonfiguration übernommen, niemals aus Formularen, URL-Parametern oder Actor-Headern. Es gibt kein Loginformular, keinen Benutzerwechsler und keinen scheinbaren OIDC-Logout. Ändern des Entwicklungsakteurs erfolgt durch Anhalten und Neukonfigurieren des lokalen Servers. Bei einer anderen serverseitigen Identität werden Session-ID und CSRF-Token erneuert.
 
 Sessions verwenden Strict Mode, ausschließlich Cookies, HttpOnly und SameSite=Strict. Das Cookie ist für diese direkte lokale HTTP-Entwicklung nicht Secure. Für produktive HTTPS-Sitzungen wird ein eigener OIDC-/Sessionvertrag einschließlich Secure-Cookie, Laufzeiten und Logout benötigt. CSRF-Token werden mit random_bytes erzeugt, an die Sitzung gebunden und vor allen Schreibzugriffen mit hash_equals geprüft. Fehlerhafte oder fehlende Formulardaten werden abgelehnt.
 

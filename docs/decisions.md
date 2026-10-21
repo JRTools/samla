@@ -40,3 +40,10 @@ Geprüft am 21. Oktober 2026: PHPUnit 13 ist für PHP 8.4 und neuer vorgesehen. 
 ## OIDC-Protokollbasis ohne zusätzliche Laufzeitbibliothek
 
 Iteration 10 setzt die bestätigten Providerangaben in Konfiguration, Metadatenprüfung und den internen State-/Nonce-/PKCE-Ablauf um. Eine CLI-Vorabprüfung sendet keine Zugangsdaten. Sie verwendet vorhandene PHP-HTTPS-Streams und benötigt erlaubtes allow_url_fopen sowie einen CA-Vertrauensspeicher. Zusätzliche Pakete oder ein eigener Token-Signaturprüfer werden nicht eingeführt. Die Webanmeldung bleibt bis zu Bibliotheksadapter, Sitzungsintegration und erfolgreichem Durchstich gesperrt.
+
+Iteration 11 ergänzt die isolierte Bibliothekserprobung und empfiehlt `facile-it/php-openid-client 1.0.0` einschließlich der dokumentierten transitiven Pakete. Der Prüfer weist unter beiden PHP-Versionen die Bibliotheksfunktionen und erforderliche zusätzliche Samla-Prüfungen nach. Die Aufnahme als Laufzeitabhängigkeit ist noch nicht abgestimmt; siehe [Entscheidungsvorlage](oidc-library-decision.md).
+
+
+## .env auf ausdrücklichen Betreiberwunsch
+
+Iteration 11 ergänzt den nativen, begrenzten EnvironmentLoader und ersetzt die bisherige Vorlage durch example.env im Projektverzeichnis. Die private .env wird automatisch gelesen; Prozesswerte behalten Vorrang. Automatisierte Tests mit prozessseitigem APP_ENV=test ignorieren diese Datei. Die früher dokumentierte ausschließliche Prozesskonfiguration gilt damit als abgelöst. Es wird keine zusätzliche Konfigurationsbibliothek eingeführt. Die Syntax und Zugangsgrenzen stehen in configuration.md.

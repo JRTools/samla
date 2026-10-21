@@ -2,7 +2,7 @@
 
 ## Konfiguration
 
-Samla liest Prozessumgebungsvariablen. Eine dotenv-Bibliothek wurde nicht eingeführt. `config/environment.example` ist eine Vorlage für das Hosting, keine ausführbare Konfigurationsdatei. `APP_ENV` ist entweder `production`, `development` oder `test`. Fehlende Datenbankangaben führen zu einem Konfigurationsfehler.
+Samla liest die `.env` im Projektverzeichnis und darüberliegend die Prozessumgebung. Die Vorlage heißt `example.env`; ein begrenzter nativer Loader liest die Werte ohne zusätzliche Bibliothek und ohne Codeausführung. Bereits gesetzte Prozesswerte haben Vorrang. Bei prozessseitigem `APP_ENV=test` wird die Deployment-Datei vollständig ignoriert. Syntax und Einrichtung: [configuration.md](configuration.md). `APP_ENV` ist entweder `production`, `development` oder `test`. Fehlende Datenbankangaben führen zu einem Konfigurationsfehler.
 
 Der Testmodus verlangt ausschließlich `TEST_DB_*`, einen Namen mit Präfix `media_platform_test_` und einen Namen, der sich von einem gegebenenfalls zusätzlich konfigurierten `DB_NAME` unterscheidet. Der Schutz ersetzt keine getrennten Konten: Das Testkonto darf nur auf seine Testdatenbank zugreifen. Eine anders benannte oder mit einem anderen Hostalias erreichbare Produktivdatenbank lässt sich nicht automatisch erkennen.
 

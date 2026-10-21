@@ -5,18 +5,19 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use Samla\Core\Configuration\AppConfig;
+use Samla\Core\Configuration\{AppConfig, EnvironmentLoader};
 use Samla\Core\Database\ConnectionFactory;
 use Samla\Core\Web\{DevelopmentAccess, PageRenderer, Request, Response};
 
 $renderer = new PageRenderer();
-$actor = DevelopmentAccess::actor(getenv(), $_SERVER, PHP_SAPI);
 $data = ['actor' => null, 'csrf' => '', 'caps' => [], 'flash' => null];
 try {
+    $environment = EnvironmentLoader::fromGlobals();
+    $actor = DevelopmentAccess::actor($environment, $_SERVER, PHP_SAPI);
     if ($actor === null) {
         $response = new Response(503, $renderer->render('error', $data + ['status' => 503, 'error' => 'Die Anmeldung für diese Installation ist noch nicht eingerichtet.']));
     } else {
-        $config = AppConfig::fromGlobals();
+        $config = AppConfig::fromEnvironment($environment);
         if ($config->maintenance) { throw new \RuntimeException('Maintenance is active.'); }
         if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 16384) {
             $response = new Response(413, $renderer->render('error', $data + ['status' => 413, 'error' => 'Die Formulardaten sind zu groß.']));

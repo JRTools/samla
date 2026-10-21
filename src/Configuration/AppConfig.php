@@ -12,8 +12,8 @@ final readonly class AppConfig
         public ?int $groupMaxAgeSeconds,
     ) {}
 
-    /** Environment variables only; never merge request headers or query parameters. */
-    public static function fromGlobals(): self { return self::fromEnvironment(getenv()); }
+    /** Trusted .env and process values only; never request headers or query parameters. */
+    public static function fromGlobals(): self { return self::fromEnvironment(EnvironmentLoader::fromGlobals()); }
 
     /** @param array<string, string> $env */
     public static function fromEnvironment(#[\SensitiveParameter] array $env): self

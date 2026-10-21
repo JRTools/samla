@@ -52,7 +52,8 @@ def run(base):
     assert request('/groups',headers={'Host':'evil.example'})[0]==503
     assert request('/groups/create')[0]==405
     assert request('/unknown')[0]==404
-    assert request('/config/environment.example')[0]==404
+    assert request('/example.env')[0]==404
+    assert request('/.env')[0]==404
     assert request('/assets/samla.css')[0]==200
     assert 'Datei- und Medienplattform' in html
     print(json.dumps({'http_smoke':'passed','checks':'session cookie, CSRF, CRUD forms, conflict, protected admin, membership delegation, host gate, routes, headers'},ensure_ascii=False))

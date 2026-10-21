@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.11
+Version: 1.12
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 10, siehe Abschnitt 20. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 11, siehe Abschnitt 21. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -459,3 +459,38 @@ Als Nächstes konkrete OIDC-Bibliothek auswählen und vor Einführung abstimmen,
 README, OIDC-Handbuch, Entscheidungen, Webhinweise, Prüfprotokoll und dieser Plan werden mit der Phase veröffentlicht.
 
 Version 1.11: Bestätigte OIDC-Testregistrierung in eine getestete Konfigurations-, Discovery-, State-/Nonce-/PKCE- und Callback-Protokollbasis umgesetzt; vollständige Anmeldung bleibt ausdrücklich offen.
+
+
+## 21. Iteration 11: .env-Konfiguration und geprüfte OIDC-Bibliotheksentscheidung
+
+Auf Wunsch des Betreibers wird die Konfiguration nun aus einer .env im Projektverzeichnis gelesen. Die versionierte Vorlage heißt example.env und ersetzt config/environment.example. Sie verwendet standardmäßig production sowie deaktivierten Entwicklungs- und OIDC-Zugang. Die echte Datei und .env.* sind von Git ausgeschlossen und liegen außerhalb des Webroots public. Dateibesitz und Leserechte müssen zur PHP-Laufzeit passen.
+
+### 21.1 Gemeinsame Dateikonfiguration
+
+Ein begrenzter nativer EnvironmentLoader liest literale Zuweisungen ohne neue Bibliothek. Webeinstieg, AppConfig und OidcConfig nutzen dieselbe Quelle; Migrationen, Entwicklungs-Seed und OIDC-Vorabprüfung übernehmen sie dadurch ebenfalls. Prozesswerte haben Vorrang, auch wenn sie explizit leer sind. Der Loader verändert keine Prozessumgebung oder Superglobals und speichert keine Konfiguration über Aufrufe hinweg. Requestdaten werden nicht übernommen.
+
+Unterstützt werden Kommentare, leere Werte, optionale export-Präfixe, einfache/doppelte Anführungszeichen, definierte Escapes, BOM und CRLF. Doppelte Schlüssel, unbekannte Escapes, nicht geschlossene Anführungszeichen, Steuerzeichen und Dateien über 64 KiB führen zu generischen Fehlern ohne Wertausgabe. Es gibt keine Variablenersetzung, Ausführung von PHP/Shellcode, Includes oder mehrzeilige Literale. Die Syntax und Startanleitung stehen in configuration.md und README.
+
+Automatisierte Tests mit prozessseitigem APP_ENV=test ignorieren die Deployment-Datei vollständig und verwenden weiterhin ausschließlich explizite TEST_DB_*-Werte und isolierte Testdatenbanken. Die unveränderten Grenzen des lokalen Entwicklungszugangs bleiben wirksam. Dateikonfiguration aktiviert keinen produktiven Weblogin.
+
+### 21.2 OIDC-Bibliothek isoliert erprobt
+
+Als konkrete Integrationsbibliothek wird facile-it/php-openid-client 1.0.0 vorgeschlagen. Die isolierte Auflösung außerhalb der Anwendung umfasst das direkte Paket und 23 transitive Pakete. Sie benötigt keinen zusätzlichen Serverdienst. Anwendungs-composer.json, composer.lock und vendor wurden nicht um diese Pakete erweitert. Composer-Plugins und Scripts blieben bei der Evaluation deaktiviert; ein GMP- oder cURL-Modul ist für den geprüften RS256-/NativeHttpClient-Weg nicht nötig. Die tatsächliche Plattformauflösung verlangt JSON, OpenSSL, iconv und mbstring; dies ist vor Einführung auf dem Zielhost zu prüfen.
+
+Das reproduzierbare optionale tests/Tools/oidc-library-probe.php prüft unter PHP 8.4.5 und 8.5.4 mit synthetischen Daten eine gültige Signatur, 16 abgelehnte Tokenfehler, korrekte Basic-/PKCE-Tokenrequests, kontrolliertes Schlüsselnachladen, OAuth-Fehler und die explizite HTTP-Clientzusammenstellung. Dabei wurden zusätzliche Adapterpflichten nachgewiesen: ID-Token und Nonce zwingend verlangen, azp prüfen und vorhandenes at_hash an das Access-Token binden. Die Entscheidungsvorlage oidc-library-decision.md dokumentiert die genaue Paketauflösung, Grenzen und Reproduktion. Ein echter Tokenaustausch wurde nicht durchgeführt.
+
+Die konkrete Aufnahme der Bibliothek steht wegen der bestehenden Regel „Keine zusätzlichen Laufzeitkomponenten ohne Abstimmung einführen“ noch zur Entscheidung. Diese Evaluation ist keine Freigabe oder bereits eingebaute OIDC-Anmeldung.
+
+### 21.3 Prüfung
+
+Vierfachmatrix erfolgreich: PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6 jeweils 253 Tests, 953 Assertions (117 Unit-/Architekturtests und 136 Integrationstests). Syntax aller 106 eigenen PHP-Dateien geprüft; Migrations-CLI meldet überall aktuelles Schema. Zwölf neue Unitfälle prüfen Dateisyntax, Literalbehandlung, Vorrang leerer Prozesswerte, Fehler ohne Secretreflexion, Größen-/Dateitypgrenzen, Testisolation und gemeinsame Konfiguration.
+
+Zusätzliche echte HTTP-Tests unter beiden PHP-Versionen mit MySQL starten Seed und Web ausschließlich aus einer temporären synthetischen .env. Session-/CSRF-/Formularprüfungen bestehen; weder .env noch example.env werden ausgeliefert. Ein prozessseitiges production überschreibt development aus der Datei und sperrt den Entwicklungszugang. OidcConfig übernimmt die Dateieinstellungen ebenfalls. Die temporäre Datei wurde anschließend entfernt. Der Bibliotheksprüfer und die Composer-Plattformprüfung sind unter beiden PHP-Versionen erfolgreich; die Evaluation meldet keine Warnungen oder Deprecations.
+
+### 21.4 Nächste Schritte
+
+Nach Abstimmung der konkreten OIDC-Bibliothek folgen Adapter, abgesicherter Bibliothekstransport, zusätzliche Claimprüfung, Login-/Callback-/Logoutrouten und Sitzungsintegration. Gruppenclaim-Vertrag, Gruppenfrische und Erstadministration bleiben offene Betriebseinstellungen. Der echte Login-Durchstich und eine Produktivfreigabe sind weiterhin nicht abgeschlossen. Der Datei-/Medienumfang und WebDAV bleiben unverändert offen.
+
+README, Konfigurationshandbuch, Entscheidungsvorlage, OIDC-/Betriebshinweise, Prüfprotokoll und dieser Plan werden gemeinsam veröffentlicht.
+
+Version 1.12: Gemeinsame .env-Konfiguration mit example.env, nachgewiesene Datei-/Prozessgrenzen und isoliert geprüfte konkrete OIDC-Bibliotheksvorlage; vollständige Anmeldung bleibt offen.
