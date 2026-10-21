@@ -139,6 +139,16 @@ final class UserStatusTest extends TestCase
         $this->pdo->exec("UPDATE identity_users SET groups_confirmed_at = 1 WHERE id = 'bob'");
         $this->denied(fn() => $this->service()->setBlocked('alice', 'alice', true));
     }
+    public function testLastConfiguredGroupDetailsAdministratorCannotBeBlocked(): void
+    {
+        $this->identity->createGroup('details-operators', 'Details operators');
+        $this->identity->addManualMembership('bob', 'details-operators');
+        $this->roles->save(new Role('details-operator', Scope::Global, ['identity.groups.details.manage']), $this->runtime);
+        $this->roles->assign(new RoleAssignment('details-operators', 'details-operator', Scope::Global));
+        $this->denied(fn() => $this->service()->setBlocked('alice', 'bob', true));
+        $this->identity->addManualMembership('carol', 'details-operators');
+        self::assertTrue($this->service()->setBlocked('alice', 'bob', true));
+    }
     public function testBlockedSecondAdministratorDoesNotSatisfyRecoveryInvariant(): void
     {
         $this->identity->addManualMembership('bob', 'operators'); $this->identity->setBlocked('bob', true);

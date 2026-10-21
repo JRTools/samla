@@ -1,4 +1,4 @@
-# Experimentelle Plugin-API 0.3
+# Experimentelle Plugin-API 0.4
 
 Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog.
 
@@ -12,6 +12,7 @@ Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog
 | IdentityReader | Nur bestätigte interne Gruppen und aktuellen Zugangsstatus bereitstellen. Implementierung muss lokale Sperren und vereinbarte Gruppenfrische berücksichtigen. |
 | AuthorizationChecker / ResourceDirectory | Vollständige Autorisierung und Ressourcenprüfung für Plugin-Anwendungsdienste. |
 | MutationContext / ChangeValidator / MutationRunner | Unveränderlicher Änderungskontext, vorab ablehnende Plugin-Regeln und gemeinsame Transaktionsgrenze. Details in administration.md. |
+| GroupDetailsChange / MutationConflict | Typisierter, unveränderlicher Namensvorschlag und sichtbarer Konflikt bei abweichendem Erwartungszustand. |
 | GroupMembershipPolicy | Verpflichtende zusätzliche Delegationsprüfung manueller Mitgliedschaften. RBAC prüft sämtliche Rollenzuweisungen der Zielgruppe. |
 | SchemaMigration | Unveränderlicher Migrationsbeitrag mit Eigentümer, Kennung, Prüfsumme und einzelnen SQL-Anweisungen. Explizite Zusammenstellung durch den CLI-Einstiegspunkt. |
 | AuthorizationRequest | Unveränderlicher Akteur, Aktion, Geltungsbereich und optionale Ressourcenkennung. |
@@ -33,3 +34,8 @@ Der Benutzerstatusdienst verwendet dieselben unveränderten Verträge. Validator
 GroupMembershipPolicy.allows(actorId, userId, groupId, grant) ergänzt die vollständige Kern-Autorisierung für `identity.groups.memberships.manage`. Der vertrauenswürdige Aufbau übergibt RbacGroupMembershipPolicy, dieselbe Identitätsquelle, denselben vollständigen AuthorizationChecker sowie dieselbe Registry und Ressourcensicht. Die Policy ist ein verpflichtendes Konstruktorargument des GroupMembershipService. Es gibt keinen erlaubenden Standard oder Rückgriff auf eine fehlende Policy. False oder jede Ausnahme bricht den Vorgang ab. Der Kern kennt die Policy ausschließlich über diesen öffentlichen Vertrag; das RBAC-Plugin importiert keine Kernklassen.
 
 Validatoren erhalten `identity.membership.grant` beziehungsweise `identity.membership.revoke`, Scope Global und die Zielkennungen `user` und `group`. Eine Änderung betrifft alle Rollen der Gruppe und ist deshalb keinem einzelnen Speicherbereich zugeordnet. Die Policy prüft die betroffenen Bereiche jeweils gesondert. Die Abschlussereignisse verwenden dieselben Operationen mit `.completed`. Externe Mitgliedschaften werden durch diese Anwendungsfälle nicht verändert. Beide vollständigen Prüfungen, die Nachbedingungen und der Writer laufen unter derselben Administrationssperre. API-Major bleibt experimentell 0; es werden keine neuen Laufzeitabhängigkeiten eingeführt.
+
+
+Seit API 0.4 hat MutationContext das optionale Feld `groupDetails: ?GroupDetailsChange`. Es ist für `identity.group.create` und `identity.group.rename` erforderlich und für andere Operationen unzulässig. Scope ist Global und das einzige Ziel ist `group`. GroupDetailsChange enthält den gewünschten Namen und optional `expectedName`: null bedeutet Anlage, ein Name bedeutet Umbenennung. Der Kontext prüft diese Zuordnung. Validatoren können Namen vor dem Write prüfen und ablehnen. Die Felder sind readonly. Audit und Outbox serialisieren ausschließlich Kennungen und übernehmen den Namensvorschlag nicht.
+
+Namen sind gültiges UTF-8 mit 1 bis 255 Unicode-Codepoints, ohne Steuerzeichen oder umgebenden Leerraum. Sie werden nicht automatisch getrimmt oder normalisiert. Derselbe Name darf mehrere unterschiedliche Gruppen bezeichnen. Sie sind reine Anzeigetexte; künftige HTML-Adapter müssen sie korrekt escapen. MutationConflict signalisiert eine abweichende gespeicherte Erwartung oder eine bereits belegte Kennung. Ein späterer Adapter muss den Konflikt sichtbar machen und vor erneutem Schreiben den aktuellen Zustand laden. Der Konflikt erzeugt kein erfolgreiches Audit oder Abschlussereignis.

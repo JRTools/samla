@@ -282,6 +282,23 @@ final class GroupMembershipTest extends TestCase
     }
     public function testOutboxFailureRollsBackMembershipVersionAndAudit(): void
     { $this->assertStorageFailureRollsBack('outbox_events'); }
+    public function testIndirectLossOfLastGroupDetailsAdministratorIsRejected(): void
+    {
+        $this->roles->save(new Role('operator', Scope::Global, ['identity.users.status.manage', 'identity.groups.memberships.manage', 'identity.groups.details.manage']), $this->runtime);
+        $this->identity->addManualMembership('alice', 'unassigned');
+        $identity = $this->identity;
+        $runtime = $this->boot([new Extension('example.details-continuity', static function (PluginRegistrar $r) use ($identity): void {
+            $r->restriction(new class($identity) implements AccessRestriction {
+                public function __construct(private PdoIdentityRepository $identity) {}
+                public function decide(AuthorizationRequest $request): AuthorizationResult
+                {
+                    $deny = $request->action === 'identity.groups.details.manage' && !in_array('unassigned', $this->identity->groupIds($request->actorId), true);
+                    return new AuthorizationResult($deny ? Decision::Deny : Decision::NotApplicable, 'test details continuity');
+                }
+            });
+        })]);
+        $this->denied(fn() => $this->service($runtime)->revoke('alice', 'alice', 'unassigned'));
+    }
     private function assertStorageFailureRollsBack(string $table): void
     {
         $before = $this->version();

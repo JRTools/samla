@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Samla\Core\Identity;
 
 use Samla\Core\Database\Transaction;
-use Samla\PluginApi\IdentityReader;
+use Samla\PluginApi\{GroupDetailsChange, IdentityReader, MutationConflict};
 
 /** Internal persistence adapter. Mutations are not authorized administration endpoints. */
 final readonly class PdoIdentityRepository implements IdentityReader
@@ -41,7 +41,27 @@ final readonly class PdoIdentityRepository implements IdentityReader
     public function createGroup(string $id, string $name): void
     {
         self::id($id);
+        new GroupDetailsChange($name);
         $query = $this->pdo->prepare('INSERT INTO identity_groups (id, name) VALUES (?, ?)'); $query->execute([$id, $name]);
+    }
+    /** Internal writer. The application owns authorization, administration lock and continuity checks. */
+    public function changeGroupDetailsInsideTransaction(string $id, GroupDetailsChange $change): bool
+    {
+        if (!$this->pdo->inTransaction()) { throw new \LogicException('An active transaction is required.'); }
+        self::id($id);
+        $query = $this->pdo->prepare('SELECT name FROM identity_groups WHERE id = ? FOR UPDATE');
+        $query->execute([$id]); $current = $query->fetchColumn();
+        if ($change->expectedName === null) {
+            if ($current !== false) { throw new MutationConflict('Group identifier is already in use.'); }
+            $this->createGroup($id, $change->name);
+            return true;
+        }
+        if ($current === false) { throw new \InvalidArgumentException('Unknown group.'); }
+        if ($current !== $change->expectedName) { throw new MutationConflict('Group name has changed.'); }
+        if ($current === $change->name) { return false; }
+        $query = $this->pdo->prepare('UPDATE identity_groups SET name = ? WHERE id = ?');
+        $query->execute([$change->name, $id]);
+        return true;
     }
     public function setBlocked(string $id, bool $blocked): void
     {

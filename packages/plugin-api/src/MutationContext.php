@@ -14,6 +14,7 @@ final readonly class MutationContext
         public Scope $scope,
         public ?string $spaceId,
         public array $targets,
+        public ?GroupDetailsChange $groupDetails = null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -26,6 +27,12 @@ final readonly class MutationContext
                 || !is_string($value) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $value)) {
                 throw new \InvalidArgumentException('Mutation targets must be bounded identifiers.');
             }
+        }
+        $groupOperation = in_array($operation, ['identity.group.create', 'identity.group.rename'], true);
+        if ($groupOperation !== ($groupDetails !== null)
+            || ($groupOperation && ($scope !== Scope::Global || array_keys($targets) !== ['group']
+                || ($operation === 'identity.group.create') !== ($groupDetails->expectedName === null)))) {
+            throw new \InvalidArgumentException('Group details must match the group operation and target.');
         }
     }
 }

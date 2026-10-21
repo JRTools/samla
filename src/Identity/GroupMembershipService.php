@@ -21,17 +21,19 @@ final readonly class GroupMembershipService
         $context = new MutationContext(bin2hex(random_bytes(16)), $actorId,
             $grant ? 'identity.membership.grant' : 'identity.membership.revoke', Scope::Global, null,
             ['user' => $userId, 'group' => $groupId]);
-        $guard = function () use ($actorId, $userId, $groupId, $grant): void {
+        $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
+        $protected = null;
+        $guard = function () use ($actorId, $userId, $groupId, $grant, $continuity, &$protected): void {
             if ($this->authorization->decide(new AuthorizationRequest($actorId,
                     'identity.groups.memberships.manage', Scope::Global))->decision !== Decision::Permit
                 || !$this->resources->hasGroup($groupId)
                 || !$this->policy->allows($actorId, $userId, $groupId, $grant)) { throw new AccessDenied(); }
+            $protected ??= $continuity->snapshot();
         };
-        return $this->mutations->run($context, $guard, function () use ($userId, $groupId, $grant): bool {
+        return $this->mutations->run($context, $guard, function () use ($userId, $groupId, $grant, $continuity, &$protected): bool {
             $changed = $this->identities->setManualMembershipInsideTransaction($userId, $groupId, $grant);
-            $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
             $continuity->assertAvailable('identity.users.status.manage');
-            $continuity->assertAvailable('identity.groups.memberships.manage');
+            $continuity->assertPreserved($protected);
             return $changed;
         });
     }

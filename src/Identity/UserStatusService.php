@@ -15,15 +15,15 @@ final readonly class UserStatusService
     {
         $context = new MutationContext(bin2hex(random_bytes(16)), $actorId,
             $blocked ? 'identity.user.block' : 'identity.user.unblock', Scope::Global, null, ['user' => $userId]);
-        $guard = function () use ($actorId): void {
+        $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
+        $protected = null;
+        $guard = function () use ($actorId, $continuity, &$protected): void {
             if (!$this->canManageStatus($actorId)) { throw new AccessDenied(); }
+            $protected ??= $continuity->snapshot();
         };
-        return $this->mutations->run($context, $guard, function () use ($userId, $blocked): bool {
-            $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
-            $hadMembershipAdministrator = $continuity->hasAvailable('identity.groups.memberships.manage');
+        return $this->mutations->run($context, $guard, function () use ($userId, $blocked, $continuity, &$protected): bool {
             $changed = $this->identities->setBlockedInsideTransaction($userId, $blocked);
-            $continuity->assertAvailable('identity.users.status.manage');
-            if ($hadMembershipAdministrator) { $continuity->assertAvailable('identity.groups.memberships.manage'); }
+            $continuity->assertPreserved($protected);
             return $changed;
         });
     }

@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.7
+Version: 1.8
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 6, siehe Abschnitt 16. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 7, siehe Abschnitt 17. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -19,7 +19,7 @@ Die Entwicklung erfolgt in vertikalen Arbeitspaketen. Jedes Paket liefert einen 
 
 Entsprechend den Annahmen des Konzepts wird mit einer einzelnen Installation, lokalem Dateispeicher außerhalb des Webverzeichnisses und einer gemeinsamen Anwendung für Browser und WebDAV geplant. Diese Annahmen müssen im ersten Arbeitspaket bestätigt werden.
 
-PHP 8.4 ist die vorgesehene Mindestversion; PHP 8.5 wird zusätzlich geprüft. MariaDB 11.8 oder MySQL 8.0 sind als verfügbare Datenbanken bestätigt. Beide werden als Zielplattformen eingeplant; eine erfolgreiche Kompatibilitätsprüfung steht noch aus. Composer, JavaScript, GD und PHPUnit bilden die weitere bestätigte Grundlage. Weitere Bibliotheken, Erweiterungen und Betriebsanforderungen werden vor ihrem Einsatz abgestimmt.
+PHP 8.4 ist die vorgesehene Mindestversion; PHP 8.5 wird zusätzlich geprüft. MariaDB 11.8 oder MySQL 8.0 sind als verfügbare Datenbanken bestätigt. Beide Zielplattformen sind inzwischen mit echten Datenbanken geprüft; die aktuelle Matrix steht im Prüfprotokoll und im jeweils neuesten Iterationsabschnitt. Composer, JavaScript, GD und PHPUnit bilden die weitere bestätigte Grundlage. Weitere Bibliotheken, Erweiterungen und Betriebsanforderungen werden vor ihrem Einsatz abgestimmt.
 
 ## 3. Arbeitspakete und Reihenfolge
 
@@ -338,3 +338,29 @@ Auf allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6
 Die Funktionen liegen als getestete Anwendungsdienste vor. Gruppenstammdaten, Mappings, OIDC-Synchronisierung, Oberfläche und produktive Dateioperationen sind weiterhin offen. Private Repository- und SQL-Writes dürfen nicht als parallele öffentliche Verwaltungswege verwendet werden. Alle späteren Dienste müssen dieselbe Sperrstrategie und ihre eigenen Nachbedingungen einhalten. README, Verwaltungs- und API-Dokumentation, Prüfprotokoll und dieser Plan werden mit der Implementierung veröffentlicht.
 
 Version 1.7: Manuelle Gruppenmitgliedschaften mit vollständiger fachlicher Delegationsprüfung und Schutz der aktuell nutzbaren Status- und Mitgliedschaftsverwaltung; erfolgreiche Vierfachmatrix.
+
+
+## 17. Iteration 7: Geschützte Gruppenstammdaten
+
+GroupDetailsService implementiert Anlegen und Umbenennen interner Gruppen mit dem neuen globalen Recht `identity.groups.details.manage`. Neue Kennungen werden vom Dienst zufällig erzeugt; eine alte Kennung kann über diesen Anwendungsfall nicht wiederverwendet werden. Anzeigenamen dürfen mehrfach vorkommen. Anlegen vergibt keine Mitgliedschaften oder Rollen. Umbenennen erhält Kennung, Rollen, Mappings, manuelle und externe Mitgliedschaftsquellen sowie die Identitätsversionen und Bestätigungszeitpunkte.
+
+Eine Umbenennung verlangt den erwarteten bisherigen Namen. Der Writer vergleicht diesen unter Zeilensperre bytegenau; ein abweichender Zustand führt zu MutationConflict und wird nicht überschrieben. Ein exakter No-op erhält nur Audit ohne weiteres Änderungsereignis. Ein Namensvergleich ersetzt keine allgemeine Revision und erkennt eine zwischenzeitliche Änderung mit Rückkehr zum ursprünglichen Namen nicht.
+
+Die experimentelle Plugin-API 0.4 ergänzt GroupDetailsChange sowie MutationConflict und einen strikt zugeordneten Namensvorschlag im MutationContext. Plugins können gültige UTF-8-Namen mit bis zu 255 Codepoints und ohne Steuerzeichen beziehungsweise umgebenden Leerraum vor dem Write prüfen und ablehnen. Der Vorschlag ist unveränderlich. Audit und Outbox enthalten weiterhin Kennungen, keine automatisch kopierten Namensdaten.
+
+Der gemeinsame AdministrationAccessGuard erfasst vor den Validatoren alle aktuell nutzbaren Fähigkeiten aus Status-, Mitgliedschafts- und Gruppenstammdatenverwaltung und verlangt sie nach der Änderung weiterhin. Die Prüfung verwendet vollständige Permits einschließlich Gruppenfrische und Plugin-Einschränkungen. Sie gilt jetzt auch für Status- und Mitgliedschaftsdienst, sodass diese den letzten eingerichteten Stammdatenadministrator ebenfalls nicht entfernen dürfen. Noch nicht eingerichtete Fähigkeiten blockieren die Stammdatenverwaltung nicht; die zusätzliche Statusverwaltungsnachbedingung des Mitgliedschaftsdienstes bleibt bestehen.
+
+### 17.1 Prüfung
+
+Auf allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 sind jeweils 164 Tests mit 547 Assertions erfolgreich (69 Unit-/Architekturtests und 95 Integrationstests). Die Syntax aller 73 eigenen PHP-Dateien sowie die Migrations-CLI sind ebenfalls geprüft. 20 zusätzliche Unitfälle prüfen Unicode-Grenzen, ungültige Eingaben, Unveränderlichkeit und korrekt zugeordnete Erweiterungskontexte. 21 zusätzliche Integrationsfälle prüfen den vollständigen Stammdatendienst sowie den erweiterten Schutz in Status- und Mitgliedschaftsverwaltung. Migrationen und Laufzeitabhängigkeiten bleiben unverändert.
+
+### 17.2 Nächste Umsetzung und Grenzen
+
+1. Mappingänderungen als eigenen geschützten Anwendungsfall entwerfen: Auswirkungen auf bereits bestätigte Gruppenstände, Berechtigungsdelegation, Quellenprovenienz und verbleibende Administrationsfähigkeit konsistent behandeln.
+2. Gruppenlöschung mit expliziter Prüfung aller modulübergreifenden Referenzen und Regeln zur Kennungswiederverwendung ergänzen. Einfaches Kaskadenlöschen ist kein öffentlicher Anwendungsfall.
+3. Rollenbearbeitung, globale Delegation und Notfallzugang vervollständigen. Die bisherigen Schutzprüfungen sind Momentaufnahmen und ersetzen keine Betriebsregeln für Provider-Ausfall oder Gruppenablauf.
+4. OIDC-Registrierung, Callback, Gruppenclaim und Frische-Richtlinie klären; Integrationsbibliotheken zur Entscheidung vorlegen und anschließend HTTP-Zugänge, App-Passwörter, Dateidurchstich und WebDAV anschließen.
+
+Die Funktionen sind als getestete Anwendungsdienste vorhanden. Eine produktive Oberfläche, OIDC-Anmeldung und Dateioperationen fehlen weiterhin. Die Outbox speichert Ereignisse und stellt sie noch nicht zu. Eine wiederholte Gruppenanlage erzeugt jeweils eine neue Gruppe; automatische HTTP-Retries benötigen später einen zusätzlichen Idempotenzvertrag. README, API- und Verwaltungsdokumentation, Prüfprotokoll und Plan werden gemeinsam mit dem Code veröffentlicht.
+
+Version 1.8: Geschützte Gruppenanlage und konfliktgeprüfte Umbenennung, typisierte Namensvalidierung für Plugins und erweiterter Schutz verbleibender Verwaltungsfähigkeiten; erfolgreiche Vierfachmatrix.
