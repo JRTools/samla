@@ -64,7 +64,7 @@ Alternativ read oder contribute verwenden. Der Befehl ergänzt eine passende Ber
 
 Gleichnamige Einträge werden nicht überschrieben. Name und bisheriger Elternordner sind optimistische Erwartungen jeder Änderung; ein abweichender Stand erzeugt 409. Ordnerzyklen werden abgewiesen. Bäume haben höchstens 128 Ordnerebenen; Verschiebungen von Ordnerbäumen werden auf höchstens 1000 Ordner begrenzt. Rekursive Ordnerkopien und bereichsübergreifende Operationen sind noch nicht enthalten.
 
-Der Papierkorb markiert den ausgewählten Eintrag. Nachfahren eines gelöschten Ordners bleiben logisch erhalten, sind aber auch über direkte Datei-/Ordnerlinks gesperrt. Wiederherstellen verlangt einen noch erreichbaren ursprünglichen Elternordner; gegebenenfalls zuerst den übergeordneten Ordner wiederherstellen. Inhalte im Papierkorb zählen weiterhin zur Quote. Namen bleiben bis zur späteren endgültigen Löschung reserviert. Eine Dateikopie teilt sich unveränderlichen physischen Inhalt, zählt logisch jedoch erneut zur Quote.
+Der Papierkorb markiert den ausgewählten Eintrag. Nachfahren eines gelöschten Ordners bleiben logisch erhalten, sind aber auch über direkte Datei-/Ordnerlinks gesperrt. Wiederherstellen verlangt einen noch erreichbaren ursprünglichen Elternordner; gegebenenfalls zuerst den übergeordneten Ordner wiederherstellen. Inhalte im Papierkorb zählen weiterhin zur Quote. Seit Migration 0006_active_names sind Namen im ursprünglichen Elternordner wieder verwendbar. Eine Wiederherstellung bei inzwischen belegtem Namen wird mit 409 verweigert, ohne einen der Inhalte zu verdrängen. Eine Dateikopie teilt sich unveränderlichen physischen Inhalt, zählt logisch jedoch erneut zur Quote.
 
 ### Kontrollierte Bereinigung
 

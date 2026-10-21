@@ -4,7 +4,7 @@ namespace Samla\Tests\Unit;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Sabre\HTTP;
-use Samla\Core\WebDav\{BufferedSapi, Kernel, RequestIdentity};
+use Samla\Core\WebDav\{BufferedSapi, Kernel, ProtocolPaths, RequestIdentity};
 
 final class WebDavTest extends TestCase
 {
@@ -40,4 +40,20 @@ final class WebDavTest extends TestCase
     }
     public function testRequestIdentityCannotBeRebound(): void
     { $identity=new RequestIdentity(); $identity->bind('alice',str_repeat('a',32)); $this->expectException(\LogicException::class); $identity->bind('bob',str_repeat('b',32)); }
+    public function testDestinationAcceptsOnlyCanonicalOriginAndDavPaths():void
+    {
+        self::assertSame('/dav/a/x',ProtocolPaths::destination('https://samla.example/dav/a/x','https://samla.example'));
+        self::assertSame('/dav/a/%252f',ProtocolPaths::destination('/dav/a/%252f','https://samla.example'));
+        $this->expectException(\InvalidArgumentException::class);ProtocolPaths::destination('https://samla.example:444/dav/a/x','https://samla.example');
+    }
+    public function testOnlyPositiveFullyParsedIfTokensBecomeCoreProof():void
+    {
+        $server=new \Sabre\DAV\Server(new \Sabre\DAV\SimpleCollection(''),new BufferedSapi());$server->setBaseUri('/dav/');
+        $token=str_repeat('a',32);$request=new HTTP\Request('PUT','/dav/a/x',['If'=>'(Not <opaquelocktoken:'.$token.'>)']);$request->setBaseUrl('/dav/');
+        self::assertSame([],ProtocolPaths::proofs($request,$server,'https://samla.example'));
+        $request->setHeader('If','<https://samla.example/dav/a/x> (<opaquelocktoken:'.$token.'> ["v1"])');
+        self::assertSame([$token],ProtocolPaths::proofs($request,$server,'https://samla.example'));
+        $request->setHeader('If','(<opaquelocktoken:'.$token.'>) ignored');
+        $this->expectException(\InvalidArgumentException::class);ProtocolPaths::proofs($request,$server,'https://samla.example');
+    }
 }

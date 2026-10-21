@@ -7,6 +7,7 @@ final class RequestIdentity
 {
     private ?string $actor = null;
     private ?string $credential = null;
+    public array $lockTokens = [];
     public function bind(string $actor, string $credential): void
     {
         if ($this->actor !== null) { throw new \LogicException('Identity already bound.'); }

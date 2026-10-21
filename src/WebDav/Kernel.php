@@ -4,7 +4,7 @@ namespace Samla\Core\WebDav;
 use Sabre\DAV;
 use Sabre\HTTP;
 use Samla\Core\Identity\AppPasswordService;
-use Samla\Core\Storage\{FileService, StorageUnavailable};
+use Samla\Core\Storage\{FileService, StorageLockService, StorageLocked, StorageUnavailable};
 use Samla\Core\Web\Response;
 use Samla\PluginApi\{AccessDenied, MutationConflict};
 
@@ -13,9 +13,11 @@ final class Kernel
 {
     private bool $used = false;
     public function __construct(private readonly AppPasswordService $passwords, private readonly RequestIdentity $identity,
-        private readonly FileService $files) {}
+        private readonly FileService $files, private readonly StorageLockService $locks,
+        private readonly int $maxBytes = 16777216, private readonly string $origin = 'https://samla.invalid') {}
     public function handle(#[\SensitiveParameter] HTTP\RequestInterface $request, string $clientAddress): Response
     {
+        $staged = null;
         try {
             if ($this->used) { throw new \LogicException('DAV kernel is request-local.'); }
             $this->used = true;
@@ -28,17 +30,50 @@ final class Kernel
             $this->identity->bind($actor, substr($password, 6, 32)); unset($password, $decoded, $m, $header);
             $uri = $request->getUrl(); self::validatePath($uri);
             $method = $request->getMethod();
-            // Writing is enabled only once the shared lock and atomic overwrite adapters are complete.
-            if (!in_array($method, ['OPTIONS','PROPFIND','GET','HEAD'], true)) {
-                return $this->error(405, ['Allow' => 'OPTIONS, PROPFIND, GET, HEAD']);
+            $allowed = 'OPTIONS, PROPFIND, GET, HEAD, PUT, MKCOL, MOVE, COPY, DELETE, LOCK, UNLOCK';
+            if (!in_array($method, explode(', ', $allowed), true)) {
+                return $this->error(405, ['Allow' => $allowed]);
             }
             if ($method === 'PROPFIND' && !in_array($request->getHeader('Depth'), ['0','1'], true)) { return $this->error(403); }
-            $this->validateXmlBody($request);
-            $server = new DAV\Server(new Directory($this->files, $actor), new BufferedSapi());
+            if ($method !== 'PUT') { $this->validateXmlBody($request); }
+            $root = new Directory($this->files, $actor);
+            $server = new DAV\Server($root, new BufferedSapi());
             DAV\Server::$exposeVersion = false; $server->debugExceptions = false;
             $server->setBaseUri('/dav/'); $request->setBaseUrl('/dav/');
             $request->removeHeader('X-Sabre-Original-Method');
+            $server->addPlugin(new DAV\Locks\Plugin(new LockBackend($root, $this->files, $this->locks, $actor)));
             $response = new HTTP\Response(); $server->httpRequest = $request; $server->httpResponse = $response;
+            $server->on('beforeUnbind', static function (string $path) use ($method, $request): void {
+                if ($method === 'COPY' || ($method === 'MOVE' && $path !== $request->getPath())) { throw new DAV\Exception\Conflict(); }
+            }, 1);
+            $this->identity->lockTokens = ProtocolPaths::proofs($request, $server, $this->origin);
+            if (strlen($request->getHeader('Lock-Token') ?? '') > 256) { throw new \InvalidArgumentException(); }
+            if (in_array($method, ['MOVE','COPY'], true)) {
+                $destination = ProtocolPaths::destination($request->getHeader('Destination') ?? '', $this->origin);
+                $request->setHeader('Destination', $this->origin . $destination);
+                // Sabre's default overwrite deletes the destination first. Never use that non-atomic fallback.
+                if ($server->tree->nodeExists(rawurldecode(substr($destination, 5)))) {
+                    return $this->error($request->getHeader('Overwrite') === 'F' ? 412 : 409);
+                }
+                $source = $server->tree->getNodeForPath($request->getPath());
+                [$targetParent] = \Sabre\Uri\split(rawurldecode(substr($destination, 5)));
+                $target = $server->tree->getNodeForPath($targetParent);
+                if (!$source instanceof StoredNode || !$target instanceof Directory || $source->getSpace() !== $target->getSpace()) { return $this->error(403); }
+                if ($method === 'COPY' && !$source instanceof File) { return $this->error(501); }
+            }
+            if ($method === 'LOCK') {
+                // Lock-null creation needs an atomic create+lease service, never Sabre's two-write fallback.
+                $server->tree->getNodeForPath($request->getPath());
+                if (!in_array($request->getHeader('Depth'), [null,'0','infinity'], true)) { throw new \InvalidArgumentException(); }
+            }
+            if ($method === 'PUT') {
+                [$parentPath] = \Sabre\Uri\split($request->getPath());
+                $parentNode = $server->tree->getNodeForPath($parentPath);
+                if (!$parentNode instanceof Directory) { throw new DAV\Exception\Conflict(); }
+                $action = $server->tree->nodeExists($request->getPath()) ? 'files.update' : 'files.create';
+                if (!$this->files->allowed($actor, $action, $parentNode->getSpace())) { throw new AccessDenied(); }
+                $staged = $this->boundedPut($request);
+            }
             // Apply read rights before conditional GET/HEAD can return metadata or a 304 response.
             if (in_array($method, ['GET','HEAD'], true)) {
                 $node = $server->tree->getNodeForPath($request->getPath());
@@ -49,11 +84,12 @@ final class Kernel
                 $response->setHeader('Content-Disposition', "attachment; filename*=UTF-8''" . rawurlencode($node->getName()));
             }
             if ($method === 'OPTIONS') {
-                $response->setHeader('Allow', 'OPTIONS, PROPFIND, GET, HEAD');
-                $response->setHeader('DAV', '1');
+                $response->setHeader('Allow', $allowed);
+                $response->setHeader('DAV', '1, 2');
             }
             return self::adapt($response, $method === 'HEAD');
         } catch (AccessDenied) { return $this->error(403); }
+        catch (StorageLocked) { return $this->error(423); }
         catch (MutationConflict) { return $this->error(412); }
         catch (StorageUnavailable) { return $this->error(503); }
         catch (\LengthException) { return $this->error(413); }
@@ -63,6 +99,7 @@ final class Kernel
             error_log(sprintf('Samla DAV failed: %s in %s:%d', get_class($error), $error->getFile(), $error->getLine()));
             return $this->error(503);
         }
+        finally { if (is_resource($staged)) { fclose($staged); } }
     }
     public static function validatePath(string $path): void
     {
@@ -83,7 +120,7 @@ final class Kernel
         if (!is_string($body)) { throw new \InvalidArgumentException(); }
         if (strlen($body) > 65536) { throw new \LengthException(); }
         if ($body !== '') {
-            if ($request->getMethod() !== 'PROPFIND') { throw new \InvalidArgumentException(); }
+            if (!in_array($request->getMethod(), ['PROPFIND','LOCK'], true)) { throw new \InvalidArgumentException(); }
             $old = libxml_use_internal_errors(true);
             try {
                 $xml = new \XMLReader();
@@ -95,6 +132,28 @@ final class Kernel
             } finally { libxml_clear_errors(); libxml_use_internal_errors($old); }
         }
         $request->setBody($body);
+    }
+    /** Bounded disk-spooled stream also prevents Finder's library fallback from copying an unbounded body. */
+    private function boundedPut(HTTP\RequestInterface $request)
+    {
+        $length = $request->getHeader('Content-Length'); $expected = $request->getHeader('X-Expected-Entity-Length');
+        foreach ([$length, $expected] as $value) {
+            if ($value !== null && (!ctype_digit($value) || strlen($value) > 15)) { throw new \InvalidArgumentException(); }
+            if ($value !== null && (int) $value > $this->maxBytes) { throw new \LengthException(); }
+        }
+        if ($request->getHeader('Content-Range') !== null) { throw new \InvalidArgumentException(); }
+        $source = $request->getBodyAsStream(); $temp = fopen('php://temp/maxmemory:1048576', 'w+b'); $size = 0;
+        try {
+            while (!feof($source)) {
+                $chunk = fread($source, 65536); if ($chunk === false || ($chunk === '' && !feof($source))) { throw new \RuntimeException(); }
+                $size += strlen($chunk); if ($size > $this->maxBytes) { throw new \LengthException(); }
+                if (fwrite($temp, $chunk) !== strlen($chunk)) { throw new \RuntimeException(); }
+            }
+            if (($expected !== null && (int) $expected > 0 && $size === 0)
+                || ($expected === null && $length !== null && (int) $length !== $size)) { throw new \InvalidArgumentException(); }
+            rewind($temp); $request->setBody($temp); $request->removeHeader('X-Expected-Entity-Length');
+            $request->setHeader('Content-Length', (string) $size); return $temp;
+        } catch (\Throwable $error) { fclose($temp); throw $error; }
     }
     private function unauthenticated(): Response
     { return $this->error(401, ['WWW-Authenticate' => 'Basic realm="Samla", charset="UTF-8"']); }

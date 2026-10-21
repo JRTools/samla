@@ -1,18 +1,18 @@
 # Samla
 
-Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Eine responsive Oberfläche mit OIDC-Anmeldung, privater Dateiablage, Versionierung und einem WebDAV-Lesezugang ist implementiert. WebDAV-Schreibzugriff und eine Medienbibliothek mit Metadaten und nachvollziehbaren KI-Kennzeichnungen werden weiter umgesetzt. Gruppenbasierte Rechte schützen Browser und Gerätezugriffe.
+Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Eine responsive Oberfläche mit OIDC-Anmeldung, privater Dateiablage, Versionierung und WebDAV-Zugriff ist implementiert. Erweiterte Dateioperationen und eine Medienbibliothek mit Metadaten und nachvollziehbaren KI-Kennzeichnungen werden weiter umgesetzt. Gruppenbasierte Rechte schützen Browser und Gerätezugriffe.
 
 Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgelieferte RBAC-Pflichtplugin verwendet dieselbe Plugin-API wie zusätzliche Erweiterungen. Zuverlässige Dateioperationen, nachvollziehbare Rechte und automatisierte Tests haben Vorrang.
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 18 (WebDAV-Lesezugang)
+## Entwicklungsstand: Iteration 19 (WebDAV-Schreibzugang und gemeinsame Sperren)
 
 Vorhanden sind:
 
-- Öffentlicher WebDAV-Lesezugang unter `/dav/` mit App-Passwörtern, ausschließlich freigegebenen Bereichen, GET/HEAD/PROPFIND, ETags und gestreamten Teil-Downloads. Widerruf, Kontosperre und Gruppenfrische werden erneut geprüft. Schreibzugriffe bleiben bis zum geprüften gemeinsamen Schreibadapter gesperrt. [Einrichtung und Grenzen](docs/webdav.md).
+- WebDAV unter `/dav/` mit App-Passwörtern, Bereichsrechten, GET/HEAD/PROPFIND, ETags und gestreamten Teil-Downloads. PUT archiviert bisherige Inhalte; MKCOL, MOVE, Einzeldatei-COPY und DELETE verwenden die gemeinsamen Kerndienste. LOCK/UNLOCK schützt auch Browseränderungen. Widerruf, Kontosperre und Gruppenfrische werden erneut geprüft. Grenzen wie derzeit abgewiesenes MOVE/COPY-Überschreiben sind ausdrücklich dokumentiert. [Einrichtung und Grenzen](docs/webdav.md).
 
-- Persistente exklusive Ressourcensperren mit stabilen Eintragskennungen, Ordner-/Teilbaumumfang, Eigentümer-/Nachweisprüfung, Ablauf/Verlängerung und transaktionalen Erweiterungspunkten. Browseränderungen respektieren die Sperren mit HTTP 423. Die DAV-Schreibanbindung folgt separat.
+- Persistente exklusive Ressourcensperren mit stabilen Eintragskennungen, Ordner-/Teilbaumumfang, Eigentümer-/Nachweisprüfung, Ablauf/Verlängerung und transaktionalen Erweiterungspunkten. Browser und WebDAV verwenden dieselbe Sperrbasis.
 
 - Dateiversionen mit Konfliktschutz, getrenntem Historienleserecht, Download alter Inhalte und Wiederherstellung als neuer Stand. Frühere Inhalte zählen zur Quote und werden durch Konsistenzprüfung/Bereinigung geschützt.
 - Private lokale Dateiablage mit Bereichsliste, Ordnern, gestreamten Uploads mit konfigurierbarer Grenze (Standard 16 MiB), geschützten Attachment-Downloads, Umbenennen, Verschieben, Einzeldateikopien und Papierkorb/Wiederherstellung. Explizite Bereichsrechte, Quoten, Namenskonflikte, Audit/Outbox, initiale Bereichsanlage und lesender Konsistenzcheck. Einrichtung: [storage.md](docs/storage.md).
@@ -36,7 +36,7 @@ Vorhanden sind:
 - Plugin-Validierung vor Änderungen, transaktionales Audit und persistierte Abschlussereignisse in einer Outbox.
 - Unit-, Architektur- und echte MySQL-/MariaDB-Integrationstests.
 
-Die Weboberfläche kann mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. WebDAV-Schreibzugriff und erweiterte Dateioperationen bleiben offen. Der Betreiber bestätigt erfolgreichen ZITADEL-Login und initiale Administration auf seinem Plesk-Host; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
+Die Weboberfläche kann mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. Erweiterte Dateioperationen und konkrete native Clientabnahme bleiben offen. Der Betreiber bestätigt erfolgreichen ZITADEL-Login und initiale Administration auf seinem Plesk-Host; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
 
 Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen bleiben offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse, stellt sie aber noch nicht zu.
 
@@ -112,7 +112,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 366 Tests mit 1423 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 376 Tests mit 1484 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 

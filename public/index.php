@@ -21,7 +21,7 @@ try {
         elseif (!OidcOrigin::accepts($oidc, $_SERVER, PHP_SAPI)) { $response = new Response(400); }
         elseif ($path === '/dav') { $response = new Response(308, headers: ['Location' => '/dav/']); }
         else {
-            $response = (require dirname(__DIR__) . '/bootstrap/dav.php')((new ConnectionFactory())->connect($config->database), $config)
+            $response = (require dirname(__DIR__) . '/bootstrap/dav.php')((new ConnectionFactory())->connect($config->database), $config, substr($oidc->redirectUri, 0, -strlen('/auth/callback')))
                 ->handle(\Sabre\HTTP\Sapi::getRequest(), (string) ($_SERVER['REMOTE_ADDR'] ?? ''));
         }
     } elseif ($actor === null) {

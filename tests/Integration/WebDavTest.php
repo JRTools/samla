@@ -9,7 +9,7 @@ use Samla\Core\Configuration\AppConfig;
 use Samla\Core\Database\{ConnectionFactory,MigrationRunner};
 use Samla\Core\Identity\{AppPasswordService,IdentityPlugin,PdoIdentityRepository};
 use Samla\Core\Plugins\PluginRuntime;
-use Samla\Core\Storage\{FileService,LocalContentStore,StoragePlugin};
+use Samla\Core\Storage\{FileService,LocalContentStore,StorageLockService,StoragePlugin,StorageWriteGuard};
 use Samla\Core\WebDav\{CredentialAuthorization,Kernel,RequestIdentity};
 use Samla\PluginApi\{AuthorizationRequest,Decision,Scope};
 use Samla\Plugins\Rbac\{PdoRoleRepository,RbacPlugin,Role,RoleAssignment};
@@ -46,12 +46,13 @@ final class WebDavTest extends TestCase
     }
     protected function tearDown(): void
     {foreach(new \DirectoryIterator($this->root) as $f){if(!$f->isDot()){unlink($f->getPathname());}}rmdir($this->root);}
-    private function files(?CredentialAuthorization $auth=null):FileService
-    {return new FileService($this->pdo,$auth??new AuthorizationService($this->runtime,$this->identity),new PdoMutationRunner($this->pdo,$this->runtime),new LocalContentStore($this->root));}
+    private function files(?CredentialAuthorization $auth=null,?RequestIdentity $identity=null):FileService
+    {return new FileService($this->pdo,$auth??new AuthorizationService($this->runtime,$this->identity),new PdoMutationRunner($this->pdo,$this->runtime),new LocalContentStore($this->root,1024),lockTokens:$identity===null?[]:fn():array=>$identity->lockTokens);}
     private function request(string $method,string $path='/dav/a/Gr%C3%BC%C3%9Fe.txt',array $headers=[],string $body=''): \Samla\Core\Web\Response
     {
         $identity=new RequestIdentity();$auth=new CredentialAuthorization(new AuthorizationService($this->runtime,$this->identity),$this->passwords,$identity);
-        return (new Kernel($this->passwords,$identity,$this->files($auth)))->handle(new HTTP\Request($method,$path,$headers+['Authorization'=>'Basic '.base64_encode('alice:'.$this->password)],$body),'127.0.0.1');
+        $locks=new StorageLockService($this->pdo,$auth,new PdoMutationRunner($this->pdo,$this->runtime),new StorageWriteGuard($this->pdo));
+        return (new Kernel($this->passwords,$identity,$this->files($auth,$identity),$locks,1024))->handle(new HTTP\Request($method,$path,$headers+['Authorization'=>'Basic '.base64_encode('alice:'.$this->password)],$body),'127.0.0.1');
     }
     private function body(\Samla\Core\Web\Response $response):string
     {ob_start();echo $response->body;if($response->stream!==null){($response->stream)();}return ob_get_clean();}
@@ -99,12 +100,12 @@ final class WebDavTest extends TestCase
         self::assertSame(400,$this->request('PROPFIND','/dav/a/',['Depth'=>'0'],mb_convert_encoding('<?xml version="1.0" encoding="UTF-16"?>'.$xml,'UTF-16','UTF-8'))->status);
         self::assertSame(400,$this->request('PROPFIND','/dav/a/',['Depth'=>'0'],'<broken')->status);
     }
-    public function testWritesRemainDisabledAndOptionsAdvertisesOnlyImplementedMethods():void
+    public function testUnimplementedPropertiesRemainDisabledAndOptionsListsImplementedMethods():void
     {
         $before=(int)$this->pdo->query('SELECT COUNT(*) FROM storage_entries')->fetchColumn();
-        foreach(['PUT','MKCOL','MOVE','COPY','DELETE','LOCK','UNLOCK','PROPPATCH'] as $method){self::assertSame(405,$this->request($method)->status);}
+        self::assertSame(405,$this->request('PROPPATCH')->status);
         self::assertSame($before,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_entries')->fetchColumn());
-        $response=$this->request('OPTIONS','/dav/');self::assertSame(200,$response->status);self::assertSame('OPTIONS, PROPFIND, GET, HEAD',$response->headers['Allow']);self::assertSame('1',$response->headers['DAV']);
+        $response=$this->request('OPTIONS','/dav/');self::assertSame(200,$response->status);self::assertSame('OPTIONS, PROPFIND, GET, HEAD, PUT, MKCOL, MOVE, COPY, DELETE, LOCK, UNLOCK',$response->headers['Allow']);self::assertSame('1, 2',$response->headers['DAV']);
     }
     public function testTrashedParentsHideDescendantPaths():void
     {
@@ -118,5 +119,102 @@ final class WebDavTest extends TestCase
         $node=new \Samla\Core\WebDav\File($files,'alice','a',$row);
         $this->pdo->prepare('UPDATE storage_entries SET revision=revision+1 WHERE id=?')->execute([$this->file]);
         $this->expectException(\Samla\PluginApi\MutationConflict::class);$node->get();
+    }
+    private function manage():void
+    {$this->roles->save(new Role('reader',Scope::Space,['files.list','files.read','files.create','files.update','files.delete','files.restore','files.versions.read']),$this->runtime);}
+    private function lock(string $path='/dav/a/Gr%C3%BC%C3%9Fe.txt',string $depth='0'):string
+    {
+        $xml='<d:lockinfo xmlns:d="DAV:"><d:lockscope><d:exclusive/></d:lockscope><d:locktype><d:write/></d:locktype></d:lockinfo>';
+        $response=$this->request('LOCK',$path,['Depth'=>$depth,'Timeout'=>'Second-60'],$xml);
+        self::assertSame(200,$response->status,$response->body);return $response->headers['Lock-Token'];
+    }
+    public function testPutCreatesAndVersionsExistingContentWithConflictProtection():void
+    {
+        $this->manage();$path='/dav/a/new.txt';$created=$this->request('PUT',$path,body:'first');self::assertSame(201,$created->status);
+        self::assertSame('first',$this->body($this->request('GET',$path)));
+        self::assertSame(204,$this->request('PUT',$path,['If-Match'=>$created->headers['ETag']],body:'second')->status);
+        self::assertSame(412,$this->request('PUT',$path,['If-Match'=>$created->headers['ETag']],body:'stale')->status);
+        $row=$this->files()->child('alice','a','','new.txt');$history=$this->files()->versions('alice','a',$row['id']);self::assertCount(1,$history['versions']);
+        self::assertSame('second',$this->body($this->request('GET',$path)));
+    }
+    public function testDeleteFreesNameAndRestoreConflictKeepsBothContents():void
+    {
+        $this->manage();self::assertSame(204,$this->request('DELETE')->status);
+        self::assertSame(201,$this->request('PUT',body:'replacement')->status);
+        try{$this->files()->change('alice','a',$this->file,'restore','Grüße.txt','');self::fail('Conflicting restore accepted.');}
+        catch(\Samla\PluginApi\MutationConflict){self::assertFalse($this->pdo->inTransaction());}
+        self::assertSame('replacement',$this->body($this->request('GET')));
+        self::assertSame(204,$this->request('DELETE')->status);self::assertSame(201,$this->request('PUT',body:'third')->status);
+        self::assertSame(2,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_entries WHERE trashed_at IS NOT NULL')->fetchColumn());
+    }
+    public function testMoveCopyAndOverwriteDoNotDeleteDestinationOnFailure():void
+    {
+        $this->manage();self::assertSame(201,$this->request('MKCOL','/dav/a/Folder')->status);
+        self::assertSame(201,$this->request('COPY',headers:['Destination'=>'/dav/a/copy.txt'])->status);
+        self::assertSame(201,$this->request('MOVE',headers:['Destination'=>'https://samla.invalid/dav/a/Folder/moved.txt'])->status);
+        self::assertSame(404,$this->request('GET')->status);
+        self::assertSame(409,$this->request('MOVE','/dav/a/copy.txt',['Destination'=>'/dav/a/Folder/moved.txt'])->status);
+        self::assertSame(412,$this->request('MOVE','/dav/a/copy.txt',['Destination'=>'/dav/a/Folder/moved.txt','Overwrite'=>'F'])->status);
+        self::assertSame('0123456789',$this->body($this->request('GET','/dav/a/copy.txt')));
+        self::assertSame('0123456789',$this->body($this->request('GET','/dav/a/Folder/moved.txt')));
+        self::assertSame(501,$this->request('COPY','/dav/a/Folder',['Destination'=>'/dav/a/Another'])->status);
+    }
+    public function testSharedLocksProtectDavAndBrowserAndRequireOwnerProof():void
+    {
+        $this->manage();$token=$this->lock();
+        self::assertSame(423,$this->request('PUT',body:'blocked')->status);self::assertSame(423,$this->request('DELETE')->status);
+        self::assertSame(204,$this->request('PUT',headers:['If'=>'('.$token.')'],body:'updated')->status);
+        $controller=new \Samla\Core\Web\FileController($this->files());$csrf=str_repeat('a',64);
+        $response=$controller->handle(new \Samla\Core\Web\Request('POST','/files/change',post:['csrf'=>$csrf,'space'=>'a','entry'=>$this->file,'operation'=>'trash','expected_name'=>'Grüße.txt','expected_parent'=>'','parent'=>'']),'alice',$csrf,['actor'=>'alice','csrf'=>$csrf,'caps'=>[],'flash'=>null]);
+        self::assertSame(423,$response->status);
+        self::assertSame(200,$this->request('LOCK',headers:['If'=>'('.$token.')','Timeout'=>'Second-120'])->status);
+        self::assertSame(204,$this->request('UNLOCK',headers:['Lock-Token'=>$token])->status);
+        self::assertSame(204,$this->request('PUT',body:'unlocked')->status);
+    }
+    public function testRecursiveLockAndMissingLockTargetHaveNoPartialCreation():void
+    {
+        $this->manage();self::assertSame(201,$this->request('MKCOL','/dav/a/Folder')->status);$token=$this->lock('/dav/a/Folder','infinity');
+        self::assertSame(423,$this->request('PUT','/dav/a/Folder/child',body:'blocked')->status);
+        self::assertSame(201,$this->request('PUT','/dav/a/Folder/child',['If'=>'('.$token.')'],body:'allowed')->status);
+        self::assertSame(404,$this->request('LOCK','/dav/a/missing',['Depth'=>'0'],'<d:lockinfo xmlns:d="DAV:"/>')->status);
+        self::assertNull($this->files()->child('alice','a','','missing'));
+    }
+    public function testMalformedConditionsForeignDestinationAndOversizedPutAreRejected():void
+    {
+        $this->manage();
+        foreach(['https://other.example/dav/a/x','https://samla.invalid/dav/a/%2e%2e/x','https://samla.invalid@other.example/dav/a/x','//other.example/dav/a/x']as$destination){self::assertSame(400,$this->request('COPY',headers:['Destination'=>$destination])->status);}
+        self::assertSame(400,$this->request('PUT',headers:['If'=>'garbage'],body:'rejected')->status);
+        self::assertSame(400,$this->request('PUT',headers:['If'=>'<https://other.example/dav/a/x> (<opaquelocktoken:'.str_repeat('a',32).'>)'],body:'rejected')->status);
+        self::assertSame(413,$this->request('PUT',body:str_repeat('x',1025))->status);
+        self::assertSame(413,$this->request('PUT',headers:['Content-Length'=>'1025'],body:'small')->status);
+        self::assertSame(400,$this->request('PUT',headers:['X-Expected-Entity-Length'=>'2'],body:'')->status);
+        self::assertSame('0123456789',$this->body($this->request('GET')));
+    }
+    public function testOtherActorCannotUseDiscoveredTokenToWriteOrUnlock():void
+    {
+        $this->manage();$token=$this->lock();
+        $this->identity->createUser('bob','https://id.example','bob','Bob');$this->identity->replaceVerifiedGroups('bob',[]);$this->identity->addManualMembership('bob','readers');
+        $password=$this->passwords->create('bob','Other device');$auth='Basic '.base64_encode('bob:'.$password);
+        self::assertSame(423,$this->request('PUT',headers:['Authorization'=>$auth,'If'=>'('.$token.')'],body:'forged')->status);
+        self::assertSame(403,$this->request('UNLOCK',headers:['Authorization'=>$auth,'Lock-Token'=>$token])->status);
+        self::assertSame('0123456789',$this->body($this->request('GET')));
+    }
+    public function testCredentialRevocationByValidatorBlocksFinalWriteAndRollsBack():void
+    {
+        $this->manage();$pdo=$this->pdo;$id=substr($this->password,6,32);
+        $extension=new \Samla\Tests\Fixtures\Extension('test.revoke',static function(\Samla\PluginApi\PluginRegistrar $r)use($pdo,$id):void{
+            $r->validator(new class($pdo,$id) implements \Samla\PluginApi\ChangeValidator{
+                public function __construct(private \PDO $pdo,private string $id){}
+                public function priority():int{return 0;}
+                public function validate(\Samla\PluginApi\MutationContext $context):void{
+                    if($context->operation==='storage.file.replace'){$this->pdo->prepare('UPDATE identity_app_passwords SET revoked_at=? WHERE id=?')->execute([time(),$this->id]);}
+                }
+            });
+        });
+        $this->runtime=PluginRuntime::boot([new IdentityPlugin(),new StoragePlugin(),new RbacPlugin($this->roles,$this->identity),$extension]);
+        $before=(int)$pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn();
+        self::assertSame(403,$this->request('PUT',body:'must roll back')->status);
+        self::assertSame($before,(int)$pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+        self::assertTrue($this->passwords->isCredentialActive('alice',$id));self::assertSame('0123456789',$this->body($this->request('GET')));
     }
 }

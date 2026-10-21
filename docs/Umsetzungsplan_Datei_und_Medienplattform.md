@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.19
+Version: 1.20
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 18, siehe Abschnitt 28. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 19, siehe Abschnitt 29. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -753,3 +753,29 @@ Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 366 Test
 Der nächste Schritt ist der Schreibadapter für dieselben Kerndienste und persistenten Sperren. Vor Freischaltung sind If-/Destination-Validierung, begrenzte PUT-Streams, Lock-Backend und atomare Namens-/Versionskonflikte nachzuweisen. Native Clients auf iOS, Android, Windows und macOS bleiben gesondert abzunehmen; derzeit wird keine konkrete Gerätekompatibilität behauptet. Weitere Konzeptpunkte bleiben gemäß vorheriger Statusmatrix offen. Die durchgehende Fortsetzung bleibt autorisiert.
 
 Version 1.19: Öffentlicher DAV-Lesezugang mit App-Passwörtern, wiederholter Ressourcenprüfung, bedingten/gestreamten Downloads und begrenztem XML-Protokolladapter.
+
+## 29. Iteration 19: WebDAV-Schreibadapter und wieder verwendbare Namen
+
+### 29.1 Gemeinsame Dateidienste
+
+PUT verwendet die vorhandene private Inhaltsveröffentlichung und versionierte Ersetzung mit erneut erwarteter Revision. MKCOL, MOVE innerhalb eines Bereichs, COPY einzelner Dateien und DELETE verwenden denselben FileService wie Browseränderungen. DELETE legt den Eintrag im Papierkorb ab. Bereichswurzeln können nicht umbenannt oder gelöscht werden. Alle Operationen verwenden explizite Bereichsrechte, obligatorische Kern-Sperrprüfung, Quote, MutationRunner mit erneuten Guards nach Validatoren sowie Audit/Outbox. Das vorgeschlagene Fachereignis ist kein besonderer unkontrollierter DAV-Schreibpfad.
+
+Die neue unveränderliche Migration 0006_active_names ersetzt die bisherige Namenseindeutigkeit durch den generierten aktiven Namen. Papierkorbeinträge reservieren ihren bisherigen Namen nicht mehr. Wiederholtes Löschen/Neuanlegen gleicher Namen bleibt möglich, die bisherigen Inhalte bleiben erhalten und zählen zur Quote. Eine Wiederherstellung bei erneut belegtem Namen ist ein atomarer sichtbarer Konflikt ohne Verdrängung. Auch Browseroperationen profitieren davon. Vor Deployment ist der dokumentierte gesicherte Migrationsablauf erforderlich.
+
+### 29.2 Sperren und Protokollgrenzen
+
+Der Sabre-Lock-Backend-Adapter projiziert ausschließlich die gemeinsame storage_locks-Tabelle über stabile Bereichs-/Eintragskennungen. Vorhandene Ressourcen, Depth 0/infinity, höchstens 3600 Sekunden, Verlängerung und Freigabe sind angeschlossen. Ordnernamen/Pfade werden beim Lesen der Sperren aus aktuellen Eintragskennungen rekonstruiert. Same-actor-Token und normale Rechte bleiben obligatorisch. Browser ohne Token erhält weiterhin 423. Ein fremder berechtigter Benutzer kann mit einem entdeckten Token weder schreiben noch freigeben.
+
+If wird vor Übergabe vollständig auf die von Sabre ausgewertete Grammatik und Grenzwerte geprüft. Nur positive gültige opaquelocktoken-Nachweise gehen an den Kerndienst. Getaggte Ressourcen müssen ebenfalls zur eigenen Origin gehören. Destination wird auf kanonische Origin, Port und DAV-Pfad begrenzt; es gibt keinen Abruf fremder Ziele. Ein Schutz vor beforeUnbind verhindert Sabres nicht atomare vorangestellte Ziellöschung auch bei einem erst später sichtbar werdenden Ziel. Name-/Revisions-/Sperrkonflikte werden zusätzlich unter der Kerntransaktion geprüft.
+
+PUT prüft Schreibrecht vor Übernahme des Inhalts und übernimmt tatsächliche Bytes begrenzt in einen diskgestützten temporären Stream. Höchstens 1 MiB bleibt in diesem zusätzlichen Puffer im Arbeitsspeicher. Danach greift die vorhandene private Veröffentlichung mit erneuter Autorisierung und Sperrprüfung vor SQL-Referenzierung. Headergrenzen, tatsächliche Uploadgrenze, Content-Range-Verbot und leere Finder-Ankünfte bei positiver erwarteter Länge werden geprüft. Eine zusätzliche temporäre Kopie bleibt als bewusster, noch nicht auf Durchsatz optimierter Zwischenschritt bestehen.
+
+### 29.3 Noch begrenzte Fälle
+
+Bestehende MOVE/COPY-Ziele werden ohne Löschung mit 409 beziehungsweise Overwrite F mit 412 abgewiesen. Rekursive Ordnerkopien, bereichsübergreifende Operationen und Lock-null-Anlage benötigen weitere atomare Kerndienste und bleiben ohne Teiländerung gesperrt. PROPPATCH ist nicht freigeschaltet. Diese Einschränkungen sind kein vollständiger Nachweis nativer Clientkompatibilität und bleiben Teil der nächsten Dateioperationen. Browser-Sperrverwaltung, endgültige Papierkorbbereinigung, Medien-/Such-/Sammlungsfunktionen und administrative Restfunktionen sind ebenfalls weiter offen.
+
+### 29.4 Verifikation
+
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 376 Tests und 1484 Assertions (166 Unit-/Architekturtests, 210 Integrationstests), Syntax aller 173 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Echte HTTP-/HTTPS-Anfragen bestätigen MKCOL, PUT, Versionierung/If-Match, LOCK/UNLOCK, COPY/MOVE und DELETE/Neuanlage neben sämtlichen bisherigen Abläufen. Ein Validator widerruft absichtlich das verwendete Credential innerhalb der Transaktion; der letzte Guard muss Dateireferenz, Audit und Widerruf gemeinsam zurückrollen. Die Clientplattformen bleiben iOS, Android, Windows und macOS; konkrete native Abnahme ist weiterhin gesondert nötig. Neue Funktionen werden nicht automatisch auf dem Betreiberhost ausgerollt.
+
+Version 1.20: DAV-Schreibzugriff über gemeinsame Fach-/Sperrdienste, begrenzte Streams, sichere Protokollpfade und wieder verwendbare Papierkorbnamen.

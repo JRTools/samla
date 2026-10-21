@@ -14,4 +14,4 @@ Die Authentifizierungsfunktion begrenzt Hashprüfungen auf zehn Versuche je Benu
 
 App-Passwörter verleihen keine Rollen. Jede spätere WebDAV-Anfrage muss zusätzlich für den Benutzer und den konkreten Speicherbereich autorisiert werden. Ein bestehender Browserlogin verwendet weiterhin OIDC und Session/CSRF. App-Passwörter sind keine Browser-Anmeldedaten. Die Oberfläche ist ausschließlich über die verifizierte OIDC-Sitzung erreichbar, nicht über den lokalen Entwicklungsadapter.
 
-Seit Iteration 18 verwendet der öffentliche WebDAV-Lesezugang diese Credentials für Bereichslisten und Downloads. Bei jeder Ressourcenautorisierung wird der Credentialstatus erneut geprüft. Der Schreibadapter mit gemeinsamen Sperren wird anschließend ergänzt. Einrichtung und derzeitige Grenzen: [webdav.md](webdav.md).
+Seit Iteration 19 verwendet der öffentliche WebDAV-Zugang diese Credentials auch für Schreiboperationen und gemeinsame Sperren. Bei jeder Ressourcenautorisierung wird der Credentialstatus erneut geprüft, auch im letzten Mutationsguard nach Plugin-Validatoren. Einrichtung und derzeitige Grenzen: [webdav.md](webdav.md).

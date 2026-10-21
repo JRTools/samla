@@ -8,7 +8,9 @@ final readonly class FileService
 {
     public function __construct(private \PDO $pdo, private AuthorizationChecker $authorization,
         private MutationRunner $mutations, private LocalContentStore $content, private ?StorageWriteGuard $writeLocks = null,
-        private array $lockTokens = []) {}
+        private array|\Closure $lockTokens = []) {}
+
+    private function proof(): array { return $this->lockTokens instanceof \Closure ? ($this->lockTokens)() : $this->lockTokens; }
 
     private function locks(): StorageWriteGuard { return $this->writeLocks ?? new StorageWriteGuard($this->pdo); }
 
@@ -44,7 +46,7 @@ final readonly class FileService
         // Reject unauthorized and invalid targets before reading or staging any content.
         $this->requireAccess($actor, 'files.create', $space); EntryName::validate($name);
         $this->space($space); $this->parent($space, $parent);
-        $this->locks()->assertWritable($actor,$space,$parent,$this->lockTokens);
+        $this->locks()->assertWritable($actor,$space,$parent,$this->proof());
         $blob = $this->content->publish($source);
         // On ambiguous transaction failure keep the immutable object. Never delete a potentially committed object.
         return $this->create($actor, $space, $parent, $name, $blob);
@@ -58,10 +60,10 @@ final readonly class FileService
             storageChange: new StorageChange($name, $parent, $blob['size'] ?? null, $blob['sha256'] ?? null));
         $guard = function () use ($actor, $space, $parent): void {
             $this->requireAccess($actor, 'files.create', $space); $this->space($space); $this->parent($space, $parent, 1);
-            $this->locks()->assertWritable($actor,$space,$parent,$this->lockTokens);
+            $this->locks()->assertWritable($actor,$space,$parent,$this->proof());
         };
         $this->mutations->run($context, $guard, function () use ($space, $parent, $name, $id, $blob): bool {
-            $query = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ?');
+            $query = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ? AND trashed_at IS NULL');
             $query->execute([$space, $parent, $name]); if ($query->fetchColumn() !== false) { throw new MutationConflict(); }
             $catalog = $this->space($space);
             if (StorageUsage::bytes($this->pdo, $space) + ($blob['size'] ?? 0) > (int) $catalog['quota_bytes']) { throw new \LengthException('Space quota exceeded.'); }
@@ -142,7 +144,7 @@ final readonly class FileService
     }
     /** A single-entry lifecycle operation; folder copy is deliberately not recursive. */
     public function change(string $actor, string $space, string $id, string $operation, string $expectedName,
-        string $expectedParent, ?string $name = null, string $parent = ''): string
+        string $expectedParent, ?string $name = null, string $parent = '', ?int $expectedRevision = null): string
     {
         $rights = ['rename' => ['files.update'], 'move' => ['files.update','files.create','files.delete'],
             'copy' => ['files.read','files.create'], 'trash' => ['files.delete'], 'restore' => ['files.restore','files.create']];
@@ -152,15 +154,16 @@ final readonly class FileService
         $context = new MutationContext(bin2hex(random_bytes(16)), $actor,
             $operation === 'copy' ? 'storage.file.copy' : 'storage.entry.' . $operation, Scope::Space, $space,
             ['entry' => $id, 'result' => $newId], storageChange: new StorageChange($name, $parent));
-        $guard = function () use ($actor, $space, $id, $operation, $rights, $expectedName, $expectedParent, $parent): void {
+        $guard = function () use ($actor, $space, $id, $operation, $rights, $expectedName, $expectedParent, $parent, $expectedRevision): void {
             foreach ($rights[$operation] as $action) { $this->requireAccess($actor, $action, $space); }
             $row = $this->entry($space, $id);
             if ($row['name'] !== $expectedName || $row['parent_id'] !== $expectedParent) { throw new MutationConflict(); }
+            if ($expectedRevision !== null && (int) $row['revision'] !== $expectedRevision) { throw new MutationConflict(); }
             if (($operation === 'restore') !== ($row['trashed_at'] !== null)) { throw new MutationConflict(); }
             $this->parent($space, $row['parent_id']);
-            if ($operation !== 'copy') { $this->locks()->assertWritable($actor,$space,$id,$this->lockTokens,$row['kind'] === 'folder',true); }
+            if ($operation !== 'copy') { $this->locks()->assertWritable($actor,$space,$id,$this->proof(),$row['kind'] === 'folder',true); }
             if (in_array($operation, ['move','copy'], true)) {
-                $this->locks()->assertWritable($actor,$space,$parent,$this->lockTokens);
+                $this->locks()->assertWritable($actor,$space,$parent,$this->proof());
                 $this->parent($space, $parent); $ancestor = $parent; $seen = 0;
                 while ($ancestor !== '') {
                     if ($ancestor === $id || ++$seen > 128) { throw new \InvalidArgumentException('Folder cycle.'); }
@@ -175,12 +178,17 @@ final readonly class FileService
         $this->mutations->run($context, $guard, function () use ($space, $id, $newId, $operation, $name, $parent): bool {
             $row = $this->entry($space, $id);
             if ($operation === 'trash' || $operation === 'restore') {
+                if ($operation === 'restore') {
+                    $query = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ? AND trashed_at IS NULL AND id <> ?');
+                    $query->execute([$space, $row['parent_id'], $row['name'], $id]);
+                    if ($query->fetchColumn() !== false) { throw new MutationConflict(); }
+                }
                 $query = $this->pdo->prepare('UPDATE storage_entries SET trashed_at = ?, revision = revision + 1 WHERE id = ?');
                 $query->execute([$operation === 'trash' ? time() : null, $id]); return true;
             }
             $newName = $name ?? $row['name']; $newParent = $operation === 'rename' ? $row['parent_id'] : $parent;
             if ($operation !== 'copy' && $newName === $row['name'] && $newParent === $row['parent_id']) { return false; }
-            $query = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ? AND id <> ?');
+            $query = $this->pdo->prepare('SELECT 1 FROM storage_entries WHERE space_id = ? AND parent_id = ? AND name = ? AND id <> ? AND trashed_at IS NULL');
             $query->execute([$space, $newParent, $newName, $newId]); if ($query->fetchColumn() !== false) { throw new MutationConflict(); }
             if ($operation === 'copy') {
                 if (StorageUsage::bytes($this->pdo, $space) + (int) $row['size_bytes'] > (int) $this->space($space)['quota_bytes']) { throw new \LengthException('Quota exceeded.'); }
@@ -221,7 +229,7 @@ final readonly class FileService
     {
         $this->requireAccess($actor, 'files.update', $space); $row = $this->details($actor, $space, $id);
         if ($row['kind'] !== 'file' || (int) $row['revision'] !== $expectedRevision) { throw new MutationConflict(); }
-        $this->locks()->assertWritable($actor,$space,$id,$this->lockTokens);
+        $this->locks()->assertWritable($actor,$space,$id,$this->proof());
         $blob = $this->content->publish($source);
         $this->publishVersion($actor, $space, $id, $expectedRevision, $row, $blob, false);
     }
@@ -241,7 +249,7 @@ final readonly class FileService
             $this->requireAccess($actor, 'files.update', $space);
             if ($restore) { $this->requireAccess($actor, 'files.read', $space); $this->requireAccess($actor, 'files.versions.read', $space); }
             $row = $this->details($actor, $space, $id);
-            $this->locks()->assertWritable($actor,$space,$id,$this->lockTokens);
+            $this->locks()->assertWritable($actor,$space,$id,$this->proof());
             if ($row['kind'] !== 'file' || (int) $row['revision'] !== $expectedRevision || $row['name'] !== $expected['name'] || $row['parent_id'] !== $expected['parent_id']) { throw new MutationConflict(); }
             $q = $this->pdo->prepare('SELECT COUNT(*) FROM storage_versions WHERE entry_id = ?'); $q->execute([$id]);
             if ((int) $q->fetchColumn() >= 1000) { throw new \LengthException('History capacity reached. No versions deleted.'); }

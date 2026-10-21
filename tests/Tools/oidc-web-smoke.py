@@ -61,6 +61,13 @@ class AppTls(BaseHTTPRequestHandler):
     do_PROPFIND=relay
     do_HEAD=relay
     do_OPTIONS=relay
+    do_PUT=relay
+    do_MKCOL=relay
+    do_MOVE=relay
+    do_COPY=relay
+    do_DELETE=relay
+    do_LOCK=relay
+    do_UNLOCK=relay
 with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
     p=Path(temp);name=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME,'Samla test CA')]);now=datetime.datetime.now(datetime.timezone.utc)
     cert=(x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key()).serial_number(x509.random_serial_number()).not_valid_before(now-datetime.timedelta(minutes=1)).not_valid_after(now+datetime.timedelta(hours=1)).add_extension(x509.BasicConstraints(ca=True,path_length=None),critical=True).add_extension(x509.SubjectAlternativeName([x509.IPAddress(ipaddress.ip_address('127.0.0.1'))]),critical=False).sign(key,hashes.SHA256()))
@@ -177,8 +184,8 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert status==201
                     dav_secret=re.search(r'samla_[a-f0-9]{32}\.[a-f0-9]{64}',created).group()
                     dav_auth='Basic '+base64.b64encode((user+':'+dav_secret).encode()).decode()
-                    def dav(method,path,headers=None):
-                        request=urllib.request.Request(app_url+path,headers={'Authorization':dav_auth,**(headers or {})},method=method)
+                    def dav(method,path,headers=None,body=None):
+                        request=urllib.request.Request(app_url+path,data=None if body is None else body.encode(),headers={'Authorization':dav_auth,**(headers or {})},method=method)
                         # A separate opener deliberately has no browser cookie jar.
                         try:response=urllib.request.build_opener(NoRedirect,urllib.request.HTTPSHandler(context=ssl.create_default_context(cafile=str(p/'cert.pem')))).open(request,timeout=20)
                         except urllib.error.HTTPError as error:response=error
@@ -197,6 +204,27 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     for _ in range(2):
                         granted=subprocess.run(php+['bin/storage-space-access.php',user,space,'samla.administrators','manage'],cwd=project,env=bootstrap,capture_output=True,text=True)
                         assert granted.returncode==0,granted.stdout+granted.stderr
+                    status,credentials,_=req('/account/app-passwords')
+                    status,created,_=req('/account/app-passwords/create',{'csrf':csrf(credentials),'label':'DAV writes','days':'30'})
+                    assert status==201
+                    dav_secret=re.search(r'samla_[a-f0-9]{32}\.[a-f0-9]{64}',created).group()
+                    dav_auth='Basic '+base64.b64encode((user+':'+dav_secret).encode()).decode()
+                    dav_folder='/dav/'+space+'/DAV'
+                    assert dav('MKCOL',dav_folder)[0]==201
+                    dav_file=dav_folder+'/device.txt'
+                    status,_,dav_headers=dav('PUT',dav_file,body='created via DAV');assert status==201
+                    lock_xml='<d:lockinfo xmlns:d="DAV:"><d:lockscope><d:exclusive/></d:lockscope><d:locktype><d:write/></d:locktype></d:lockinfo>'
+                    status,_,lock_headers=dav('LOCK',dav_file,{'Depth':'0','Timeout':'Second-60','Content-Type':'application/xml'},lock_xml)
+                    assert status==200
+                    device_lock=lock_headers['Lock-Token']
+                    assert dav('PUT',dav_file,body='blocked')[0]==423
+                    assert dav('PUT',dav_file,{'If':'('+device_lock+')','If-Match':dav_headers['ETag']},'updated via DAV')[0]==204
+                    assert dav('UNLOCK',dav_file,{'Lock-Token':device_lock})[0]==204
+                    assert dav('COPY',dav_file,{'Destination':app_url+dav_folder+'/copy.txt'})[0]==201
+                    assert dav('MOVE',dav_folder+'/copy.txt',{'Destination':app_url+dav_folder+'/moved.txt'})[0]==201
+                    assert dav('DELETE',dav_folder+'/moved.txt')[0]==204
+                    assert dav('PUT',dav_folder+'/moved.txt',body='name reused')[0]==201
+                    assert dav('GET',dav_file)[1]=='updated via DAV'
                     assert req('/files/detail?space='+space+'&entry='+entry)[0]==200
                     headers={'Content-Type':'multipart/form-data; boundary='+boundary}
                     replacement=multipart(token,{'entry':entry,'revision':'1'},'updated version')
@@ -253,7 +281,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV listing/download/range/conditional read/revocation, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

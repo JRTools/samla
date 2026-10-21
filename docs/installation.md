@@ -1,10 +1,10 @@
 # Samla mit OIDC installieren
 
-Dieser Stand bietet OIDC-Anmeldung, eigenes Konto und berechtigungsgeschützte Benutzer-/Gruppenverwaltung. Dateioperationen, Medienbibliothek und WebDAV sind noch nicht enthalten. Der Login ist mit einem kontrollierten TLS-Testprovider geprüft; die konkrete Installation mit ZITADEL muss nach Einrichtung ebenfalls abgenommen werden.
+Dieser Stand bietet OIDC-Anmeldung, eigenes Konto, geschützte Benutzer-/Gruppenverwaltung, private Dateiablage mit Versionen und WebDAV. Einrichtung und aktuelle Grenzen stehen ergänzend in [storage.md](storage.md), [app-passwords.md](app-passwords.md) und [webdav.md](webdav.md). Medienbibliothek und erweiterte administrative Funktionen werden weiter umgesetzt. Der Login ist mit einem kontrollierten TLS-Testprovider geprüft; der Betreiber bestätigt zusätzlich die erfolgreiche ZITADEL-Anmeldung auf seinem Plesk-Host.
 
 ## 1. Code und PHP-Abhängigkeiten
 
-PHP 8.4 oder 8.5 mit PDO/pdo_mysql, ctype, JSON, OpenSSL, iconv, mbstring und Sessionfunktion verwenden. Für die HTTPS-Streams müssen allow_url_fopen sowie ein funktionierender CA-Vertrauensspeicher verfügbar sein. GD ist für die späteren Medienfunktionen vorgesehen.
+PHP 8.4 oder 8.5 mit PDO/pdo_mysql, ctype, JSON, OpenSSL, iconv, mbstring, cURL, DOM, SimpleXML, XMLReader, XMLWriter und Sessionfunktion verwenden. Für die HTTPS-Streams müssen allow_url_fopen sowie ein funktionierender CA-Vertrauensspeicher verfügbar sein. Die Plattformprüfung von Composer muss mit derselben PHP-Version wie PHP-FPM bestehen. GD ist für die späteren Medienfunktionen vorgesehen.
 
 Im Projektverzeichnis aktualisieren:
 

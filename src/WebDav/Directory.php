@@ -5,12 +5,34 @@ use Sabre\DAV;
 use Samla\Core\Storage\FileService;
 
 /** Stable space IDs in URLs, human folder names below each space. */
-final class Directory extends DAV\Collection implements DAV\IProperties
+final class Directory extends DAV\Collection implements DAV\IProperties, DAV\IMoveTarget, DAV\ICopyTarget, StoredNode
 {
+    use MutableEntry;
     public function __construct(private readonly FileService $files, private readonly string $actor,
         public readonly ?string $space = null, public readonly string $entry = '', private readonly string $name = '',
         private readonly ?string $displayName = null) {}
     public function getName() { return $this->name; }
+    public function snapshot(): array
+    {
+        if ($this->entry === '') { throw new DAV\Exception\Forbidden(); }
+        return $this->files->details($this->actor, $this->getSpace(), $this->entry);
+    }
+    public function createFile($name, $data = null)
+    {
+        $id = $this->files->upload($this->actor, $this->getSpace(), $this->entry, $name, $data);
+        return '"' . $id . '-1"';
+    }
+    public function createDirectory($name)
+    { $this->files->createFolder($this->actor, $this->getSpace(), $this->entry, $name); }
+    public function moveInto($targetName, $sourcePath, DAV\INode $sourceNode)
+    { return $this->receive($targetName, $sourceNode, false); }
+    public function copyInto($targetName, $sourcePath, DAV\INode $sourceNode, $depth)
+    { return $this->receive($targetName, $sourceNode, true); }
+    private function receive(string $name, DAV\INode $source, bool $copy): bool
+    {
+        if (!$source instanceof StoredNode || $source->getSpace() !== $this->getSpace()) { throw new DAV\Exception\Forbidden(); }
+        $source->transfer($name, $this->entry, $copy); return true;
+    }
     public function getChild($name)
     {
         if ($this->space === null) {
