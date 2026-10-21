@@ -56,17 +56,55 @@ final readonly class PdoRoleRepository implements RoleRepository
     }
     public function assign(RoleAssignment $assignment): void
     {
+        $this->transaction(fn() => $this->assignInsideTransaction($assignment));
+    }
+    /** Internal writer used only inside an authorized mutation transaction. */
+    public function assignInsideTransaction(RoleAssignment $assignment): bool
+    {
+        $this->lockAssignmentRole($assignment);
+        $params = [$assignment->groupId, $assignment->roleId, $assignment->scope->value, $assignment->spaceId ?? ''];
+        $query = $this->pdo->prepare('SELECT 1 FROM rbac_assignments WHERE group_id = ? AND role_id = ? AND scope = ? AND space_id = ?'); $query->execute($params);
+        if ($query->fetchColumn() !== false) { return false; }
+        $query = $this->pdo->prepare('INSERT INTO rbac_assignments (group_id, role_id, scope, space_id) VALUES (?, ?, ?, ?)'); $query->execute($params);
+        return true;
+    }
+    public function revokeInsideTransaction(RoleAssignment $assignment): bool
+    {
+        $this->lockAssignmentRole($assignment);
+        $query = $this->pdo->prepare('DELETE FROM rbac_assignments WHERE group_id = ? AND role_id = ? AND scope = ? AND space_id = ?');
+        $query->execute([$assignment->groupId, $assignment->roleId, $assignment->scope->value, $assignment->spaceId ?? '']);
+        return $query->rowCount() === 1;
+    }
+    private function lockAssignmentRole(RoleAssignment $assignment): void
+    {
+        if (!$this->pdo->inTransaction()) { throw new \LogicException('Assignment writer requires a transaction.'); }
         self::id($assignment->groupId);
         if ($assignment->spaceId !== null) { self::id($assignment->spaceId); }
-        $this->transaction(function () use ($assignment): void {
-            $query = $this->pdo->prepare('SELECT scope FROM rbac_roles WHERE id = ? FOR UPDATE'); $query->execute([$assignment->roleId]);
-            if ($query->fetchColumn() !== $assignment->scope->value) { throw new \InvalidArgumentException('Role scope does not match assignment.'); }
-            $params = [$assignment->groupId, $assignment->roleId, $assignment->scope->value, $assignment->spaceId ?? ''];
-            $query = $this->pdo->prepare('SELECT 1 FROM rbac_assignments WHERE group_id = ? AND role_id = ? AND scope = ? AND space_id = ?'); $query->execute($params);
-            if ($query->fetchColumn() === false) {
-                $query = $this->pdo->prepare('INSERT INTO rbac_assignments (group_id, role_id, scope, space_id) VALUES (?, ?, ?, ?)'); $query->execute($params);
-            }
-        });
+        $query = $this->pdo->prepare('SELECT scope FROM rbac_roles WHERE id = ? FOR UPDATE'); $query->execute([$assignment->roleId]);
+        if ($query->fetchColumn() !== $assignment->scope->value) { throw new \InvalidArgumentException('Role scope does not match assignment.'); }
+    }
+    /** An explicit matching rule is always needed. A grant additionally respects its frozen permission ceiling. */
+    public function canDelegate(array $groups, RoleAssignment $assignment, PermissionRegistry $registry, bool $grant): bool
+    {
+        if ($groups === [] || count($groups) > 1000 || $assignment->scope !== Scope::Space) { return false; }
+        $role = $this->find($assignment->roleId);
+        if ($role === null || $role->scope !== Scope::Space) { return false; }
+        // This first service cannot alter administration-bearing assignments or remove its own administrative foundation.
+        foreach ($role->permissions as $action) { if (str_starts_with($action, 'rbac.')) { return false; } }
+        $query = $this->pdo->prepare('SELECT grantor_group_id FROM rbac_delegations WHERE role_id = ? AND space_id = ? AND grantor_group_id IN (' . implode(',', array_fill(0, count($groups), '?')) . ')');
+        $query->execute([$assignment->roleId, $assignment->spaceId, ...array_values($groups)]);
+        $rules = $query->fetchAll(\PDO::FETCH_COLUMN);
+        if (!$grant) { return $rules !== []; }
+        foreach ($role->permissions as $action) {
+            $permission = $registry->find($action);
+            if ($permission === null || !in_array(Scope::Space, $permission->scopes, true)) { return false; }
+        }
+        foreach ($rules as $group) {
+            $ceiling = $this->pdo->prepare('SELECT permission_id FROM rbac_delegation_permissions WHERE grantor_group_id = ? AND role_id = ? AND space_id = ?');
+            $ceiling->execute([$group, $assignment->roleId, $assignment->spaceId]);
+            if (array_diff($role->permissions, $ceiling->fetchAll(\PDO::FETCH_COLUMN)) === []) { return true; }
+        }
+        return false;
     }
     private function transaction(\Closure $operation): void
     {

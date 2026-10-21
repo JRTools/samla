@@ -20,7 +20,7 @@ Benutzermutationen sperren die Benutzerzeile innerhalb ihrer Transaktion. Rollen
 
 ## Migrationen
 
-`bin/migrate.php` setzt die freigegebenen Kern- und Plugin-Migrationsbeiträge explizit zusammen. Die öffentliche SchemaMigration beschreibt Eigentümer, Kennung und einzelne SQL-Anweisungen. Der Runner verwendet pro Datenbank eine benannte Verbindungssperre und speichert Prüfsumme sowie Zustand (`running`, `applied`, `failed`).
+`bin/migrate.php` lädt die freigegebenen Kern- und Plugin-Migrationsbeiträge aus bootstrap/migrations.php. Die öffentliche SchemaMigration beschreibt Eigentümer, Kennung und einzelne SQL-Anweisungen. Der Runner verwendet pro Datenbank eine benannte Verbindungssperre und speichert Prüfsumme sowie Zustand (`running`, `applied`, `failed`).
 
 DDL ist nicht Teil einer gemeinsamen rückrollbaren Datentransaktion. Daher wird vor der Ausführung `running` gespeichert. Nach Fehlern bleibt `failed` beziehungsweise bei Verbindungsverlust `running` erkennbar. Ein weiterer Lauf verweigert unbekannte, veränderte oder nicht vollständig abgeschlossene Migrationen. Auch das Weglassen eines bereits installierten Plugins wird nicht stillschweigend als zulässiger Migrationszustand behandelt.
 
@@ -42,3 +42,7 @@ Die vorhandenen Tests prüfen unter anderem persistente Rechteentscheidungen, lo
 - https://www.php.net/manual/en/ref.pdo-mysql.php
 - https://dev.mysql.com/doc/refman/8.0/en/implicit-commit.html
 - https://dev.mysql.com/doc/refman/8.0/en/locking-functions.html
+
+## Erweiterungen in Iteration 4
+
+Neue versionierte Migrationen ergänzen administration_lock, audit_events und outbox_events sowie den anfänglichen storage_spaces-Katalog. Das RBAC-Plugin ergänzt eigene Delegationsregeln und deren explizite Berechtigungsobergrenzen. Bereits veröffentlichte Migrationen wurden nicht verändert. Bestehende Installationen führen die neuen Beiträge regulär im Wartungszustand aus. Die Tests wurden auf beiden Datenbankfamilien gegen das bereits vorhandene Schema aus Iteration 2/3 und die ergänzenden Migrationen ausgeführt. Vollständiger Anwendungs-Update und Restore bleiben eine eigene Betriebsabnahme.

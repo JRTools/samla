@@ -8,13 +8,15 @@
 - Composer-PSR-4, PHPUnit-Konfiguration und Lockdatei; installierte Testabhängigkeit PHPUnit 13.4.3.
 - Zielmatrix PHP 8.4.5 und 8.5.4 gegen MySQL 8.0.46 erfolgreich geprüft.
 - Umgebungsbasierte Konfiguration, PDO-Adapter und eigene Migrationen ohne zusätzliche Laufzeitbibliotheken.
-- Keine positiven Berechtigungs-Caches in der ersten Iteration.
+- Erster öffentlicher Verwaltungsdienst nur für fachliche Rollenzuweisungen in Speicherbereichen. Globale und administrative Zuweisungen bleiben außerhalb dieses Vertrags.
+- Exakte Delegationsregeln mit Berechtigungsobergrenzen, Plugin-Vorabvalidierung, transaktionales Audit und persistierte Abschlussereignisse.
+- Keine positiven Berechtigungs-Caches.
 - API-Major 0, ausdrücklich experimentell.
 - Keine impliziten Dateiaktionen durch globale Verwaltungsrollen.
 
 ## Bestätigte Datenbankziele
 
-Am 21. Oktober 2026 bestätigt: MariaDB 11.8 oder MySQL 8.0 stehen zur Verfügung. Beide werden als Zielplattformen eingeplant. Die tatsächlich eingesetzte Produktivdatenbank bleibt konfigurierbar. Die vorhandenen Migrationen und Integrationstests wurden gegen MySQL 8.0.46 geprüft. Die entsprechende MariaDB-11.8-Prüfung ist unter MariaDB 11.8.6 ebenfalls erfolgreich.
+Am 21. Oktober 2026 bestätigt: MariaDB 11.8 oder MySQL 8.0 stehen zur Verfügung. Beide werden als Zielplattformen eingeplant. Die tatsächlich eingesetzte Produktivdatenbank bleibt konfigurierbar. Die vorhandenen Migrationen und Integrationstests wurden gegen MySQL 8.0.46 und MariaDB 11.8.6 unter beiden PHP-Unterversionen geprüft.
 
 ## Vor Integration erforderlich
 

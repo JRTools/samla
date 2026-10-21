@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Samla\Core\Plugins;
 
-use Samla\PluginApi\{AccessRestriction, AuthorizationProvider, Permission, PermissionRegistry, Plugin, PluginRegistrar};
+use Samla\PluginApi\{AccessRestriction, AuthorizationProvider, ChangeValidator, Permission, PermissionRegistry, Plugin, PluginRegistrar};
 
 final class PluginRuntime implements PermissionRegistry
 {
@@ -17,6 +17,8 @@ final class PluginRuntime implements PermissionRegistry
     private bool $sealed = false;
     /** @var list<array{plugin: string, priority: int, index: int, restriction: AccessRestriction}> */
     private array $restrictions = [];
+    /** @var list<array{plugin: string, priority: int, index: int, validator: ChangeValidator}> */
+    private array $validators = [];
 
     private function __construct() {}
 
@@ -44,6 +46,9 @@ final class PluginRuntime implements PermissionRegistry
                 public function authorizationProvider(AuthorizationProvider $provider): void {
                     $this->check(); $this->runtime->setProvider($this->owner, $provider);
                 }
+                public function validator(ChangeValidator $validator, int $priority = 0): void {
+                    $this->check(); $this->runtime->addValidator($this->owner, $validator, $priority);
+                }
                 public function restriction(AccessRestriction $restriction, int $priority = 0): void {
                     $this->check(); $this->runtime->addRestriction($this->owner, $restriction, $priority);
                 }
@@ -51,6 +56,8 @@ final class PluginRuntime implements PermissionRegistry
             try { $plugin->register($registrar); } finally { $registrar->close(); }
         }
         usort($runtime->restrictions, static fn(array $a, array $b): int =>
+            ($b['priority'] <=> $a['priority']) ?: strcmp($a['plugin'], $b['plugin']) ?: ($a['index'] <=> $b['index']));
+        usort($runtime->validators, static fn(array $a, array $b): int =>
             ($b['priority'] <=> $a['priority']) ?: strcmp($a['plugin'], $b['plugin']) ?: ($a['index'] <=> $b['index']));
         $runtime->sealed = true;
         return $runtime;
@@ -77,5 +84,12 @@ final class PluginRuntime implements PermissionRegistry
     {
         if ($this->sealed) { throw new \LogicException('Registration is closed.'); }
         $this->restrictions[] = ['plugin' => $owner, 'priority' => $priority, 'index' => count($this->restrictions), 'restriction' => $restriction];
+    }
+    /** @return list<ChangeValidator> */
+    public function validators(): array { return array_column($this->validators, 'validator'); }
+    public function addValidator(string $owner, ChangeValidator $validator, int $priority): void
+    {
+        if ($this->sealed) { throw new \LogicException('Registration is closed.'); }
+        $this->validators[] = ['plugin' => $owner, 'priority' => $priority, 'index' => count($this->validators), 'validator' => $validator];
     }
 }

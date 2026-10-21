@@ -1,0 +1,31 @@
+<?php
+declare(strict_types=1);
+
+namespace Samla\PluginApi;
+
+/** Immutable validation/audit context; targets contain identifiers only, never credentials. */
+final readonly class MutationContext
+{
+    /** @param array<string, string> $targets */
+    public function __construct(
+        public string $id,
+        public string $actorId,
+        public string $operation,
+        public Scope $scope,
+        public ?string $spaceId,
+        public array $targets,
+    ) {
+        if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
+            || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
+            || ($scope === Scope::Space && ($spaceId === null || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $spaceId)))
+            || ($scope === Scope::Global && $spaceId !== null) || count($targets) > 8) {
+            throw new \InvalidArgumentException('Invalid mutation context.');
+        }
+        foreach ($targets as $key => $value) {
+            if (!is_string($key) || !preg_match('/^[a-z][a-z_]{0,31}$/D', $key)
+                || !is_string($value) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $value)) {
+                throw new \InvalidArgumentException('Mutation targets must be bounded identifiers.');
+            }
+        }
+    }
+}

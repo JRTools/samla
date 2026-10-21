@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.4
+Version: 1.5
 Stand: 21. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 3, siehe Abschnitt 13. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 4, siehe Abschnitt 14. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -267,3 +267,26 @@ Die dokumentierten Zielkombinationen umfassen damit beide PHP-Unterversionen mit
 Die vom Nutzer bereitgestellte Discovery-URL https://id.jrtools.org/.well-known/openid-configuration wurde als Integrationsgrundlage dokumentiert. Testregistrierung, Callback-URL, Gruppenclaim und Gruppenfrische-Richtlinie bleiben offen. README, Prüfprotokoll und Entscheidungen wurden aktualisiert. Nächster Implementierungsumfang ist die geschützte, explizit delegierte Rollenzuweisung innerhalb eines Speicherbereichs mit Audit und Erweiterungsvalidierung.
 
 Version 1.4: MariaDB-Nachweis und bekannte OIDC-Discovery ergänzt.
+
+
+## 14. Iteration 4: Geschützte fachliche Rollenzuweisung
+
+RoleAssignmentService implementiert die ersten öffentlichen Verwaltungsanwendungsfälle: fachliche Rollen innerhalb eines existierenden Speicherbereichs vergeben und entziehen. Jeder Aufruf prüft die vollständige Kern-Autorisierung und eine ausdrückliche Delegationsregel für Akteursgruppe, Rolle und Bereich. Eine gespeicherte Berechtigungsobergrenze verhindert indirekte Ausweitung der Delegation durch Rollenänderungen. Globale und administrative Rollenzuweisungen sind außerhalb dieses ersten Vertrags gesperrt.
+
+Die öffentliche Plugin-API erhält AuthorizationChecker, ResourceDirectory, MutationContext, ChangeValidator und MutationRunner. Validatoren können Änderungen vorab ablehnen und werden in dokumentierter Reihenfolge ausgeführt. Vorbedingungen werden nach Validierung erneut geprüft. Das Referenzplugin verwendet den neuen Vertrag bereits mit einer wirksamen Beispielregel.
+
+Ein gemeinsamer transaktionaler Änderungsablauf serialisiert diese Verwaltungszugriffe und speichert Rollenzuweisung, Audit und bei tatsächlicher Änderung das Abschlussereignis zusammen. Audit-/Outbox-Fehler rollen den gesamten Vorgang zurück. Eine unveränderte Wiederholung ist nachvollziehbar protokolliert und erzeugt kein weiteres Änderungsereignis. Die Outbox persistiert Ereignisse, liefert sie jedoch noch nicht aus.
+
+Neue, zusätzliche Migrationen ergänzen Audit/Outbox und Administrationssperre, einen anfänglichen Speicherbereichskatalog und RBAC-eigene Delegationsdaten. Bereits veröffentlichte Migrationen bleiben unverändert. Kern und RBAC verwenden weiterhin öffentliche Verträge und getrennte Tabellenverantwortung.
+
+### 14.1 Prüfung
+
+In allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 sind jeweils 81 Tests mit 236 Assertions erfolgreich (49 Unit-/Architekturtests und 32 Integrationstests). Die Syntax aller 60 eigenen PHP-Dateien sowie die Migrations-CLI sind ebenfalls geprüft. Die zusätzlichen Tests umfassen Ablehnungen, Delegationsgrenzen, Plugin-Veto, erneute Rechteprüfung, fehlende und konkurrierend gehaltene Administrationssperre sowie Audit-/Outbox-Fehler und Rollback.
+
+### 14.2 Noch offen
+
+Die vollständige Verwaltungsphase ist noch nicht abgeschlossen: globale Delegation, Rollenbearbeitung, Benutzerstatus- und Gruppenverwaltung, Mappingänderungen sowie umfassender Schutz des letzten Administrators und Notfallzugang folgen. Direkte Repository- beziehungsweise SQL-Schreibzugriffe sind interne Einrichtungswerkzeuge; sie sind keine unterstützten parallelen Verwaltungswege. Zukünftige öffentliche Schreibdienste einschließlich OIDC-Synchronisierung müssen in die gemeinsame Sperr-/Transaktionsstrategie eingebunden werden.
+
+Weiterhin offen sind eine Oberfläche, die OIDC-Anmeldung, App-Passwörter, WebDAV und Dateioperationen, Ereigniszustellung sowie die Betriebsabnahme. Der anfängliche Speicherbereichskatalog ist noch kein fertiger Dateispeicher. Bekannte Discovery-Daten sind in oidc-provider.md dokumentiert; Clientregistrierung, Callback-URL, Gruppenclaim und Gruppenfrische bleiben erforderlich. README, API-Handbuch, Datenbankhinweise, Prüfprotokoll und Plan wurden mit dem Code fortgeschrieben.
+
+Version 1.5: Erste geschützte fachliche Rollenzuweisung mit Delegation, Plugin-Validierung und atomarem Audit/Outbox; erfolgreiche Vierfachmatrix dokumentiert.

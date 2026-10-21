@@ -6,7 +6,7 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 3
+## Entwicklungsstand: Iteration 4
 
 Vorhanden sind:
 
@@ -16,9 +16,11 @@ Vorhanden sind:
 - Umgebungsbasierte Konfiguration ohne zusätzliche Konfigurationsbibliothek.
 - PDO-Anbindung, versionierte Migrationen mit Sperre, Prüfsummen und sichtbarem Fehlerzustand.
 - Persistente Benutzer, Gruppen, bestätigte Gruppenstände, Mitgliedschaften, Rollen und Zuweisungen.
-- Unit-, Architektur- und echte MySQL-Integrationstests.
+- Erster geschützter Verwaltungsdienst für fachliche Rollenzuweisungen innerhalb eines Speicherbereichs, mit ausdrücklichen Delegationsregeln und Berechtigungsobergrenzen.
+- Plugin-Validierung vor Änderungen, transaktionales Audit und persistierte Abschlussereignisse in einer Outbox.
+- Unit-, Architektur- und echte MySQL-/MariaDB-Integrationstests.
 
-Es gibt noch keine produktiv nutzbare Weboberfläche, keinen OIDC-Login, keinen WebDAV-Endpunkt und keine Dateioperationen. Repository-Schreibmethoden sind interne Adapter. Autorisierte Verwaltungsdienste mit Delegation und Audit folgen vor ihrer Nutzung durch öffentliche Endpunkte.
+Es gibt noch keine produktiv nutzbare Weboberfläche, keinen OIDC-Login, keinen WebDAV-Endpunkt und keine Dateioperationen. Repository-Schreibmethoden sind interne Adapter. Der erste autorisierte Dienst für fachliche Rollenzuweisungen ist vorhanden. Globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung sowie Benutzer- und Gruppenverwaltung sind noch kein öffentlicher Anwendungsfall. Die Outbox speichert Ereignisse; ein Zustellungsdienst ist noch nicht implementiert.
 
 ## Voraussetzungen
 
@@ -69,7 +71,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: unter PHP 8.4.5 und PHP 8.5.4 jeweils 61 Tests mit 147 Assertions, PHPUnit 13.4.3 und MySQL 8.0.46. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Dieselbe Matrix ist auch gegen MariaDB 11.8.6 erfolgreich. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 81 Tests mit 236 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## Architektur und Dokumentation
 
@@ -79,6 +81,7 @@ Nachgewiesen: unter PHP 8.4.5 und PHP 8.5.4 jeweils 61 Tests mit 147 Assertions,
 | `packages/plugin-api` | Öffentliche, vorläufige Plugin-Verträge |
 | `plugins/rbac` | RBAC-Plugin mit eigener Persistenz und Migrationen |
 | `migrations` | Kernmigrationen |
+| `bootstrap` | Vertrauenswürdige Zusammenstellung der Kern- und Plugin-Migrationsbeiträge |
 | `examples` | Beispielerweiterung |
 | `tests` | Unit-, Architektur- und Integrationstests |
 | `docs` | Konzept, Umsetzungsplan, Entscheidungen, Verträge und Betriebshinweise |
@@ -87,6 +90,8 @@ Nachgewiesen: unter PHP 8.4.5 und PHP 8.5.4 jeweils 61 Tests mit 147 Assertions,
 - [Konzept](docs/Konzept_Datei_und_Medienplattform.md)
 - [Plugin-API](docs/plugin-api.md)
 - [Datenbankbetrieb](docs/database.md)
+- [Verwaltungsdienst und Delegation](docs/administration.md)
+- [OIDC-Providerdaten](docs/oidc-provider.md)
 - [Entscheidungen und offene Angaben](docs/decisions.md)
 
 Nach jeder Implementierungsphase werden README, Umsetzungsplan und Prüfergebnisse aktualisiert und gemeinsam mit dem Code committed. Offene Prüfungen werden ausdrücklich als offen geführt.

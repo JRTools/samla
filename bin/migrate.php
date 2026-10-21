@@ -12,7 +12,7 @@ try {
     $config = AppConfig::fromGlobals();
     if (!$config->maintenance) { throw new \RuntimeException('Set APP_MAINTENANCE=1 before migration.'); }
     $pdo = (new ConnectionFactory())->connect($config->database);
-    $migrations = [...require __DIR__ . '/../migrations/identity.php', ...require __DIR__ . '/../plugins/rbac/migrations.php'];
+    $migrations = require __DIR__ . '/../bootstrap/migrations.php';
     foreach ((new MigrationRunner($pdo))->migrate($migrations) as $id) { echo 'Applied: ' . $id . PHP_EOL; }
     echo 'Schema is current.' . PHP_EOL;
 } catch (\Throwable) {

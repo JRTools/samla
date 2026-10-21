@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Samla\Core\Authorization;
 
 use Samla\Core\Plugins\PluginRuntime;
-use Samla\PluginApi\{AuthorizationRequest, AuthorizationResult, Decision, IdentityReader};
+use Samla\PluginApi\{AuthorizationChecker, AuthorizationRequest, AuthorizationResult, Decision, IdentityReader};
 
-final readonly class AuthorizationService
+final readonly class AuthorizationService implements AuthorizationChecker
 {
     public function __construct(private PluginRuntime $runtime, private IdentityReader $identities) {}
 

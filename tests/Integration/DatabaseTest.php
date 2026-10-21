@@ -21,7 +21,7 @@ final class DatabaseTest extends TestCase
     private int $now = 2000000000;
     private function migrations(): array
     {
-        return [...require __DIR__ . '/../../migrations/identity.php', ...require __DIR__ . '/../../plugins/rbac/migrations.php'];
+        return require __DIR__ . '/../../bootstrap/migrations.php';
     }
     protected function setUp(): void
     {
@@ -31,7 +31,7 @@ final class DatabaseTest extends TestCase
         $this->pdo = (new ConnectionFactory())->connect($config->database);
         (new MigrationRunner($this->pdo))->migrate($this->migrations());
         // Only inside the explicitly validated media_platform_test_* database.
-        foreach (['rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups'] as $table) {
+        foreach (['outbox_events','audit_events','rbac_delegation_permissions','rbac_delegations','rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups','storage_spaces'] as $table) {
             $this->pdo->exec('DELETE FROM ' . $table);
         }
         $this->identities = new PdoIdentityRepository($this->pdo, 3600, fn(): int => $this->now);
@@ -44,7 +44,7 @@ final class DatabaseTest extends TestCase
     }
     public function testMigrationsAreRecordedAndSecondRunDoesNothing(): void
     {
-        self::assertSame(2, (int) $this->pdo->query("SELECT COUNT(*) FROM schema_migrations WHERE status = 'applied'")->fetchColumn());
+        self::assertSame(count($this->migrations()), (int) $this->pdo->query("SELECT COUNT(*) FROM schema_migrations WHERE status = 'applied'")->fetchColumn());
         self::assertSame([], (new MigrationRunner($this->pdo))->migrate($this->migrations()));
     }
     public function testVerifiedSnapshotPreservesRemainingSourceAndManualMembership(): void
