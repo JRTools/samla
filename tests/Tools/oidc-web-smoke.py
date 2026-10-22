@@ -247,6 +247,10 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert req('/catalog/save',save)[0]==303
                     assert req('/catalog/save',save)[0]==409
                     status,catalog,_=req(catalog_url);assert 'Manuell &lt;Text&gt;' in catalog and 'selected>HTTP Sommer</option>' in catalog
+                    search_url='/catalog/search?'+urllib.parse.urlencode({'space':space,'q':'Manuell','tag':tag,'extension':'.PHP'})
+                    status,search,_=req(search_url);assert status==200 and '>test.php</a>' in search and 'Manuell &lt;Text&gt;' in search
+                    status,search,_=req('/catalog/search?'+urllib.parse.urlencode({'space':space,'q':'HTTP Sommer'}));assert status==200 and '>test.php</a>' in search
+                    assert req('/catalog/search?'+urllib.parse.urlencode({'space':space,'q':'Manuell','extension':'png'}))[1].find('>test.php</a>')==-1
                     # Exact tag batch plans, stale selection and URL-encoded UTF-8 at the catalog byte limit.
                     batch_url='/catalog/batch?'+urllib.parse.urlencode({'space':space,'parent':parent})
                     status,batch,_=req(batch_url);assert status==200 and 'HTTP Sommer</option>' in batch
@@ -262,11 +266,12 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     long_form=urllib.parse.urlencode([('csrf',csrf(catalog)),('space',space),('entry',entry),('entry_revision','1'),('catalog_revision',revision),('description',long_description),('tags[]',tag)]).encode()
                     assert len(long_form)>16384 and req('/catalog/save',long_form)[0]==303
                     status,catalog,_=req(catalog_url);assert long_description in catalog
+                    status,search,_=req('/catalog/search?'+urllib.parse.urlencode({'space':space,'q':'Ä'}));assert status==200 and '>test.php</a>' in search and long_description not in search
                     assert req('/catalog/tag',{'csrf':csrf(catalog),'space':space,'entry':entry,'operation':'delete','selection':tag+':1','confirm':'1'})[0]==409
                     assert req('/files/download?space='+space+'&entry='+entry)[1]=='<?php echo 123;'
                     status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':space}))
                     catalog_access.update(csrf=csrf(permissions),selection=profile_selection(permissions,'samla.catalog.manage'),operation='revoke')
-                    assert req('/permissions/change',catalog_access)[0]==303 and req(catalog_url)[0]==403
+                    assert req('/permissions/change',catalog_access)[0]==303 and req(catalog_url)[0]==403 and req(search_url)[0]==403
                     # Authorized browser export -> actual CLI worker -> binary ZIP -> current-rights revocation.
                     status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':space}))
                     export_fields={'csrf':csrf(permissions),'group':'samla.administrators','space':space,'selection':profile_selection(permissions,'samla.files.export'),'operation':'grant','confirm':'1'}
@@ -526,7 +531,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, claim-aware IdP mapping UI, automatic personal space and protected ownership, manual catalog and named tags with independent revisions, atomic tag batches and full UTF-8 form limits, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, claim-aware IdP mapping UI, automatic personal space and protected ownership, bounded catalog search with descriptions/tags/extension filters, manual catalog and named tags with independent revisions, atomic tag batches and full UTF-8 form limits, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

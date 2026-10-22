@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.43
+Version: 1.44
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 39, automatische persönliche Bereiche bei OIDC-Anmeldung, siehe Abschnitt 51. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 40, Katalogsuche mit Beschreibungen und Tags, siehe Abschnitt 52. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1158,3 +1158,17 @@ Unit- und Integrationsprüfungen umfassen stabile Kennungen, genaue Selbstbindun
 Weitere unabhängige Konzeptteile bleiben Katalogsuche, Sammlungen, freie Felder, zusätzliche Verwaltungsoberflächen und abschließende Betriebs-/Geräteabnahme. Offene Lebenszyklus-, Offline- und Komponentenentscheidungen bleiben in offene-entscheidungen.md sichtbar. Umsetzung und Einzelveröffentlichung werden ohne Go-Abfragen fortgesetzt.
 
 Version 1.43: persönliche Bereitstellung mit Eigentümervertrag, atomarer Rollenanlage und Verwaltungskennzeichnung.
+
+## 52. Iteration 40: Katalogsuche mit Beschreibungen und Tags
+
+Die Dateiliste und der manuelle Katalog öffnen eine geschützte Suchseite über Dateinamen, manuelle Beschreibungen und zugeordnete Tags. Ein Tag-Dropdown zeigt Namen; ein zusätzlich kombinierbarer Dateiendungsfilter wird ausdrücklich nicht als inhaltliche Formatprüfung ausgegeben. Unicode-groß-/kleinschreibungsunabhängige wörtliche Suche, begrenzte Beschreibungsausschnitte, escaped Ordner-/Taglabels und Cursorseiten bis 100 Treffer sind umgesetzt. Es werden keine Gesamttrefferzahlen versteckter Dateien angezeigt.
+
+Original-/Katalogleserechte werden aktuell geprüft, Kandidaten stammen aus sichtbaren Elternketten. Vor Ausgabe wird jeder Treffer nochmals auf aktive Sichtbarkeit/Dateirevision und die aktuellen Bereichsrechte geprüft. Papierkorb und gelöschte/kaputte Eltern bleiben ausgeschlossen. Eingebettete sensible Medienfelder, Originalbytes und andere Pluginfelder werden nicht still in den Suchumfang aufgenommen. Keine neue Migration, externe Suchkomponente oder Inhaltsindexierung.
+
+Der neue öffentliche FileCatalogReader und unveränderliche FileCatalogEntry-Werte stellen den begrenzten sichtbaren Namens-/Revisionskatalog ohne private Serverpfade oder Bytes bereit. FileService implementiert den Vertrag und teilt die bewährte Pfadprüfung mit der bestehenden Namenssuche. Katalogwerte werden blockweise gelesen; die technischen Grenzen bleiben 10000 Katalogeinträge, 100 Tags je Bereich, 50 Tags je Datei und 16 KiB Beschreibung. Details: catalog-search.md.
+
+Ein neuer Unitfall und fünf Integrationstests ergänzen öffentliche Werte, kombinierte/literale Unicode-Suche, Namen/Tags/Beschreibungen, gelöschte Eltern, aktuelle Rechte, fremde Referenzen, Escaping und 101-Treffer-Seitenwechsel. Der vollständige HTTP-/HTTPS-Ablauf prüft tatsächliche Suchseiten, Filter, Unicode bei großer Beschreibung und Rechteentzug; die bestehende Namenssuche bleibt in der Regression. Genaue Ergebnisse: verification.md. GitHub-CI von Paket 39 ist vollständig erfolgreich.
+
+Weitere Konzeptarbeit: Sammlungen/Referenzen, freie Katalogfelder, weitere Verwaltungsoberflächen und abschließende Betriebs-/Geräteabnahme. Offene konkrete Betreiberentscheidungen bleiben dokumentiert und ersetzen keine erneute Go-Abfrage für unabhängige Arbeiten.
+
+Version 1.44: manueller Katalog einschließlich geschützter bereichsweiter Suche.

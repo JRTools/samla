@@ -9,10 +9,15 @@ final readonly class CatalogController
     public function handle(Request $request,string $actor,string $csrf,array $data):Response
     {
         try{
-            if(!in_array($request->path,['/catalog','/catalog/save','/catalog/tag','/catalog/batch','/catalog/batch/change'],true)){return $this->error(404,'Diese Seite wurde nicht gefunden.',$data);}
-            $method=in_array($request->path,['/catalog','/catalog/batch'],true)?'GET':'POST';if($request->method!==$method){return $this->error(405,'Diese Methode ist hier nicht erlaubt.',$data,['Allow'=>$method]);}
+            if(!in_array($request->path,['/catalog','/catalog/save','/catalog/tag','/catalog/batch','/catalog/batch/change','/catalog/search'],true)){return $this->error(404,'Diese Seite wurde nicht gefunden.',$data);}
+            $method=in_array($request->path,['/catalog','/catalog/batch','/catalog/search'],true)?'GET':'POST';if($request->method!==$method){return $this->error(405,'Diese Methode ist hier nicht erlaubt.',$data,['Allow'=>$method]);}
             $space=$method==='GET'?($request->query['space']??null):$request->field('space',64);
             if(!is_string($space)||!preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D',$space)){throw new \InvalidArgumentException();}
+            if($request->path==='/catalog/search'){
+                $text=$request->query['q']??'';$tag=$request->query['tag']??'';$extension=$request->query['extension']??'';
+                if(!is_string($text)||!is_string($tag)||!is_string($extension)){throw new \InvalidArgumentException();}
+                return new Response(200,$this->renderer->render('catalog-search',$data+$this->catalog->search($actor,$space,$text,$tag===''?null:$tag,strtolower(ltrim($extension,'.')),$request->after())));
+            }
             if(in_array($request->path,['/catalog/batch','/catalog/batch/change'],true)){return $this->batch($request,$actor,$csrf,$data,$space);}
             $entry=$method==='GET'?($request->query['entry']??null):$request->field('entry',32);
             if(!is_string($space)||!preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D',$space)||!is_string($entry)||!preg_match('/^[a-f0-9]{32}$/D',$entry)){throw new \InvalidArgumentException();}
@@ -36,7 +41,7 @@ final readonly class CatalogController
             return new Response(303,headers:['Location'=>'/catalog?'.http_build_query(['space'=>$space,'entry'=>$entry])],flash:$changed?'Katalogangaben gespeichert.':'Die Angaben sind unverändert.');
         }catch(AccessDenied){return $this->error(403,'Für diese Katalogangaben fehlt die Berechtigung.',$data);}
         catch(MutationConflict){return $this->error(409,'Datei, Katalog oder Tag wurde geändert; der Tagname ist bereits belegt oder der Tag wird noch verwendet. Bitte lade die Angaben erneut.',$data);}
-        catch(\LengthException){return $this->error(413,'Die Grenze von 100 Tags je Bereich oder 50 Tags je Datei ist erreicht.',$data);}
+        catch(\LengthException){return $this->error(413,'Die Auswahl oder der Katalog überschreitet die unterstützte Größe.',$data);}
         catch(\InvalidArgumentException){return $this->error(400,'Die Katalogeingabe oder Auswahl ist ungültig.',$data);}
     }
     private function batch(Request $request,string $actor,string $csrf,array $data,string $space):Response

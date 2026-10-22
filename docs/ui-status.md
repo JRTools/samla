@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, Funktionsphasen bis 39. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 22. Oktober 2026, Funktionsphasen bis 40. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -26,6 +26,7 @@ Stand: 22. Oktober 2026, Funktionsphasen bis 39. Codeveröffentlichung ist keine
 | Private ZIP-Exporte aktueller Dateien | Dateiauswahl unter Dateien; Meine Exporte unter /exports | Eigene Aufträge, Status/Ablauf, geschützter Download, Retry und Entfernen; separates Exportprofil und ZIP-fähiger Worker erforderlich |
 | Manuelle Beschreibungen und Tags | Dateien → Eintrag verwalten → Beschreibung und Tags | Texte, Namens-Mehrfachauswahl, Taganlage/-umbenennung und bestätigtes Löschen unbenutzter Tags; gesonderte Bereichsprofile, neue Migration |
 | Tag-Mehrfachbearbeitung | Dateiliste → Tags für mehrere Dateien ändern | Ordnerweise Auswahl bis 100 Dateien, benannter Tag und Add/Remove, Bestätigung, atomare Revisions-/Rechteprüfung und Einzelaudit |
-| Tagsuche, Sammlungen, C2PA, frei konfigurierbare manuelle Felder | Noch offen | Noch nicht als im UI vorhanden ausgewiesen |
+| Katalogsuche | Dateiliste → Beschreibungen und Tags durchsuchen | Name/Beschreibung/Tags, Namens-Dropdown und Endungsfilter, Ordnerpfad, begrenzte Treffertexte und Cursorseiten; separate aktuelle Katalog-/Originalleserechte |
+| Sammlungen, C2PA, frei konfigurierbare manuelle Felder | Noch offen | Noch nicht als im UI vorhanden ausgewiesen |
 
 Die bloße Sichtbarkeit eines Buttons gewährt keine Berechtigung. Jeder tatsächliche Dienstaufruf prüft seine Rechte erneut. Fehlende Rechte blenden passende Aktionen aus oder verhindern direkte Aufrufe. Dateisperren schützen Browseränderungen auch ohne zusätzliche Browser-Sperrenschaltfläche.

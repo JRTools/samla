@@ -180,4 +180,51 @@ final class CatalogTest extends TestCase
         self::assertSame(403,$this->page('/catalog/batch',actor:'bob')->status);
     }
 
+    public function testSearchMatchesNamesManualDescriptionsAndTagsLiterallyWithCombinedFilters():void
+    {
+        $tag=$this->tag('Sommer');$this->save('KÜSTE 100% a_b <Text>',[$tag]);
+        foreach(['HALLO','küste','%','a_b','SOMMER']as$query){$rows=$this->catalog->search('alice','space',$query)['rows'];self::assertCount(1,$rows);self::assertSame($this->entry,$rows[0]['entry']->id);}
+        self::assertCount(1,$this->catalog->search('alice','space','küste',$tag,'txt')['rows']);self::assertSame([],$this->catalog->search('alice','space','küste',$tag,'png')['rows']);
+        self::assertSame([],$this->catalog->search('alice','space','does-not-match')['rows']);
+        $file=$this->files->visibleEntries('alice','space')[0];self::assertInstanceOf(\Samla\PluginApi\FileCatalogEntry::class,$file);self::assertSame('',$file->folderPath);
+    }
+    public function testSearchAndPublicCatalogExcludeTrashAndDeletedParentChains():void
+    {
+        $folder=$this->files->createFolder('alice','space','','Geheimer Ordner');$s=fopen('php://temp','w+b');fwrite($s,'img');rewind($s);
+        try{$id=$this->files->upload('alice','space',$folder,'Versteckt.PNG',$s);}finally{fclose($s);}
+        $this->catalog->save('alice',new CatalogEntryChange('space',$id,1,0,'Vertrauliche Beschreibung',[]));
+        $found=$this->catalog->search('alice','space','vertrauliche')['rows'];self::assertSame('Geheimer Ordner',$found[0]['entry']->folderPath);
+        $this->files->change('alice','space',$folder,'trash','Geheimer Ordner','');
+        self::assertSame([],$this->catalog->search('alice','space','vertrauliche')['rows']);self::assertNotContains($id,array_map(static fn($e)=>$e->id,$this->files->visibleEntries('alice','space')));
+        $this->files->change('alice','space',$this->entry,'trash','Hallo <Team>.txt','');self::assertSame([],$this->catalog->search('alice','space')['rows']);
+    }
+    public function testSearchRequiresCurrentCatalogAndOriginalRightsAndRejectsForeignTagsAndInvalidInputs():void
+    {
+        try{$this->catalog->search('bob','space');self::fail('Foreign search allowed.');}catch(AccessDenied){self::assertTrue(true);}
+        $foreign=str_repeat('f',32);$this->pdo->prepare('INSERT INTO catalog_tags(id,space_id,name,name_key) VALUES(?,?,?,?)')->execute([$foreign,'other','Foreign',hash('sha256','foreign')]);
+        foreach([
+            fn()=>$this->catalog->search('alice','space','',$foreign),fn()=>$this->catalog->search('alice','space',str_repeat('x',129)),
+            fn()=>$this->catalog->search('alice','space',"bad\n"),fn()=>$this->catalog->search('alice','space','',null,'../'),fn()=>$this->catalog->search('alice','space','',null,'','bad'),
+        ]as$call){try{$call();self::fail('Invalid search allowed.');}catch(\InvalidArgumentException){self::assertTrue(true);}}
+        $this->roles->save(new Role('editor',Scope::Space,['files.list','catalog.read']),$this->runtime);
+        try{$this->catalog->search('alice','space');self::fail('Search without original read.');}catch(AccessDenied){self::assertTrue(true);}
+    }
+    public function testCatalogSearchPaginatesWithoutDuplicatesOrTotalCounts():void
+    {
+        $q=$this->pdo->prepare("INSERT INTO storage_entries(id,space_id,parent_id,name,kind,blob_id,size_bytes,sha256,created_at) SELECT ?,space_id,'',?,'file',blob_id,size_bytes,sha256,created_at FROM storage_entries WHERE id=?");
+        for($i=0;$i<101;$i++){$q->execute([bin2hex(random_bytes(16)),'Page '.str_pad((string)$i,3,'0',STR_PAD_LEFT).'.txt',$this->entry]);}
+        $first=$this->catalog->search('alice','space','Page');self::assertCount(100,$first['rows']);self::assertNotNull($first['next']);
+        $second=$this->catalog->search('alice','space','Page',after:$first['next']);self::assertCount(1,$second['rows']);self::assertNull($second['next']);
+        $ids=array_map(static fn($row)=>$row['entry']->id,[...$first['rows'],...$second['rows']]);self::assertCount(101,array_unique($ids));self::assertArrayNotHasKey('total',$first);
+    }
+    public function testSearchHttpEscapesLabelsAndUsesNamedTagSelectionAndGetOnly():void
+    {
+        $tag=$this->tag('Sommer <Team>');$this->save('<script>description</script>',[$tag]);$controller=new CatalogController($this->catalog);
+        $data=['actor'=>'alice','csrf'=>$this->csrf,'caps'=>[],'flash'=>null];
+        $page=$controller->handle(new Request('GET','/catalog/search',['space'=>'space','q'=>'description','extension'=>'.TXT']), 'alice',$this->csrf,$data);
+        self::assertSame(200,$page->status);self::assertStringContainsString('Sommer &lt;Team&gt;</option>',$page->body);self::assertStringContainsString('&lt;script&gt;description&lt;/script&gt;',$page->body);self::assertStringNotContainsString('<script>description</script>',$page->body);
+        self::assertSame(405,$controller->handle(new Request('POST','/catalog/search'), 'alice',$this->csrf,$data)->status);
+        self::assertSame(400,$controller->handle(new Request('GET','/catalog/search',['space'=>'space','q'=>[]]), 'alice',$this->csrf,$data)->status);
+    }
+
 }

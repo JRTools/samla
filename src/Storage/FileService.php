@@ -4,7 +4,7 @@ namespace Samla\Core\Storage;
 
 use Samla\PluginApi\{AccessDenied, AuthorizationChecker, AuthorizationRequest, Decision, MutationConflict, MutationContext, MutationRunner, Scope, StorageChange, StorageLockChange, StoragePurgeChange};
 
-final readonly class FileService
+final readonly class FileService implements \Samla\PluginApi\FileCatalogReader
 {
     public function __construct(private \PDO $pdo, private AuthorizationChecker $authorization,
         private MutationRunner $mutations, private LocalContentStore $content, private ?StorageWriteGuard $writeLocks = null,
@@ -37,6 +37,7 @@ final readonly class FileService
         return ['space' => $catalog, 'folder' => $folder, 'parent' => $parent, 'rows' => $rows, 'next' => $next,
             'used' => StorageUsage::bytes($this->pdo, $space), 'upload_max_bytes' => $this->content->maxBytes, 'can_create' => $this->allowed($actor, 'files.create', $space),
             'can_read' => $this->allowed($actor, 'files.read', $space), 'can_export'=>$this->allowed($actor,'files.export',$space)&&$this->allowed($actor,'files.read',$space), 'can_restore' => $this->allowed($actor, 'files.restore', $space),
+            'can_catalog_read'=>$this->allowed($actor,'files.read',$space)&&$this->allowed($actor,'catalog.read',$space),
             'can_tag_batch'=>$this->allowed($actor,'files.read',$space)&&$this->allowed($actor,'catalog.read',$space)&&$this->allowed($actor,'catalog.write',$space),
             'can_view_trash' => $this->allowed($actor, 'files.restore', $space) || $this->allowed($actor, 'files.purge', $space)];
     }
@@ -50,26 +51,40 @@ final readonly class FileService
         if (strlen($text) > 512 || !mb_check_encoding($text, 'UTF-8') || mb_strlen($text, 'UTF-8') > 128
             || preg_match('/[\x00-\x1f\x7f]/', $text) || !in_array($kind, ['all','file','folder'], true)
             || ($after !== null && !preg_match('/^[a-f0-9]{32}$/D', $after))) { throw new \InvalidArgumentException('Invalid file search.'); }
-        $q = $this->pdo->prepare('SELECT id,parent_id,name,kind,size_bytes,revision,trashed_at FROM storage_entries WHERE space_id = ? ORDER BY id LIMIT 10001');
-        $q->execute([$space]); $entries = $q->fetchAll();
-        if (count($entries) > 10000) { throw new \LengthException('Search catalog capacity reached.'); }
+        $entries=$this->catalogRows($space);
         $nodes = array_column($entries, null, 'id'); $rows = [];
         foreach ($entries as $row) {
             if ($row['trashed_at'] !== null || ($after !== null && strcmp($row['id'], $after) <= 0)
                 || ($kind !== 'all' && $row['kind'] !== $kind)
                 || ($text !== '' && mb_stripos($row['name'], $text, 0, 'UTF-8') === false)) { continue; }
-            $parent = $row['parent_id']; $seen = [$row['id'] => true]; $parts = [];
-            while ($parent !== '') {
-                if (isset($seen[$parent]) || count($seen) >= 128 || !isset($nodes[$parent])
-                    || $nodes[$parent]['kind'] !== 'folder' || $nodes[$parent]['trashed_at'] !== null) { continue 2; }
-                $seen[$parent] = true; array_unshift($parts, $nodes[$parent]['name']); $parent = $nodes[$parent]['parent_id'];
-            }
-            unset($row['trashed_at']); $row['folder_path'] = implode(' / ', $parts); $rows[] = $row;
+            $path=$this->catalogPath($row,$nodes);if($path===null){continue;}
+            unset($row['trashed_at']); $row['folder_path']=$path; $rows[]=$row;
             if (count($rows) === 101) { break; }
         }
         $next = null; if (count($rows) > 100) { array_pop($rows); $next = $rows[99]['id']; }
         return ['space' => $catalog, 'rows' => $rows, 'next' => $next, 'search_text' => $text, 'search_kind' => $kind,
             'can_read' => $this->allowed($actor, 'files.read', $space)];
+    }
+    private function catalogRows(string $space):array
+    {
+        $q=$this->pdo->prepare('SELECT id,parent_id,name,kind,size_bytes,revision,trashed_at FROM storage_entries WHERE space_id=? ORDER BY id LIMIT 10001');$q->execute([$space]);$rows=$q->fetchAll();
+        if(count($rows)>10000){throw new \LengthException('Search catalog capacity reached.');}return $rows;
+    }
+    private function catalogPath(array $row,array $nodes):?string
+    {
+        $parent=$row['parent_id'];$seen=[$row['id']=>true];$parts=[];
+        while($parent!==''){
+            if(isset($seen[$parent])||count($seen)>=128||!isset($nodes[$parent])||$nodes[$parent]['kind']!=='folder'||$nodes[$parent]['trashed_at']!==null){return null;}
+            $seen[$parent]=true;array_unshift($parts,$nodes[$parent]['name']);$parent=$nodes[$parent]['parent_id'];
+        }return implode(' / ',$parts);
+    }
+    public function visibleEntries(string $actorId,string $spaceId):array
+    {
+        $this->requireAccess($actorId,'files.list',$spaceId);$this->space($spaceId);$entries=$this->catalogRows($spaceId);$nodes=array_column($entries,null,'id');$rows=[];
+        foreach($entries as$row){
+            if($row['trashed_at']!==null){continue;}$path=$this->catalogPath($row,$nodes);if($path===null){continue;}
+            $rows[]=new \Samla\PluginApi\FileCatalogEntry($row['id'],$spaceId,$row['parent_id'],$row['name'],$row['kind'],(int)$row['revision'],(int)$row['size_bytes'],$path);
+        }$this->requireAccess($actorId,'files.list',$spaceId);return $rows;
     }
     /** @param resource $source */
     public function upload(string $actor, string $space, string $parent, string $name, $source): string

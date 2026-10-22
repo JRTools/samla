@@ -48,6 +48,35 @@ final readonly class CatalogService
                 $q=$this->pdo->prepare('INSERT INTO catalog_entry_tags(entry_id,tag_id) VALUES(?,?)');foreach($change->tagIds as$id){$q->execute([$change->entryId,$id]);}return true;
             });
     }
+    public function search(string $actor,string $space,string $text='',?string $tag=null,string $extension='',?string $after=null):array
+    {
+        $this->guard($actor,$space);
+        if(strlen($text)>512||!mb_check_encoding($text,'UTF-8')||mb_strlen($text,'UTF-8')>128||preg_match('/[\x00-\x1f\x7f]/u',$text)
+            ||($tag!==null&&!preg_match('/^[a-f0-9]{32}$/D',$tag))||($after!==null&&!preg_match('/^[a-f0-9]{32}$/D',$after))
+            ||($extension!==''&&!preg_match('/^[a-z0-9]{1,16}$/D',$extension))){throw new \InvalidArgumentException('Invalid catalog search.');}
+        $tags=$this->tags($actor,$space);$names=array_column($tags,'name','id');if($tag!==null&&!array_key_exists($tag,$names)){throw new \InvalidArgumentException('Unknown search tag.');}
+        $candidates=array_values(array_filter($this->files->visibleEntries($actor,$space),static fn(\Samla\PluginApi\FileCatalogEntry $e):bool=>
+            $e->kind==='file'&&($after===null||strcmp($e->id,$after)>0)&&($extension===''||strtolower(pathinfo($e->name,PATHINFO_EXTENSION))===$extension)));
+        $rows=[];
+        foreach(array_chunk($candidates,100)as$chunk){
+            $ids=array_map(static fn($e):string=>$e->id,$chunk);$marks=implode(',',array_fill(0,count($ids),'?'));
+            $q=$this->pdo->prepare('SELECT entry_id,description FROM catalog_entries WHERE entry_id IN ('.$marks.')');$q->execute($ids);$descriptions=$q->fetchAll(\PDO::FETCH_KEY_PAIR);
+            $q=$this->pdo->prepare('SELECT entry_id,tag_id FROM catalog_entry_tags WHERE entry_id IN ('.$marks.') ORDER BY entry_id,tag_id LIMIT 5001');$q->execute($ids);$links=$q->fetchAll();
+            if(count($links)>5000){throw new \LengthException('Tag search reference limit.');}
+            $byEntry=[];foreach($links as$link){if(isset($names[$link['tag_id']])){$byEntry[$link['entry_id']][$link['tag_id']]=$names[$link['tag_id']];}}
+            foreach($chunk as$entry){
+                $labels=$byEntry[$entry->id]??[];$description=$descriptions[$entry->id]??'';
+                if(strlen($description)>\Samla\PluginApi\CatalogEntryChange::MAX_DESCRIPTION_BYTES||count($labels)>50){throw new \LengthException('Catalog search field limit.');}
+                if(($tag!==null&&!isset($labels[$tag]))||($text!==''&&mb_stripos($entry->name."\n".$description."\n".implode("\n",$labels),$text,0,'UTF-8')===false)){continue;}
+                try{$current=$this->files->details($actor,$space,$entry->id);}catch(\InvalidArgumentException){continue;}
+                if((int)$current['revision']!==$entry->revision){continue;}
+                sort($labels,SORT_STRING);$rows[]=['entry'=>$entry,'description'=>mb_substr($description,0,160,'UTF-8'),'tags'=>$labels];
+                if(count($rows)===101){break 2;}
+            }
+        }
+        $this->guard($actor,$space);$next=null;if(count($rows)>100){array_pop($rows);$next=$rows[99]['entry']->id;}
+        return ['rows'=>$rows,'next'=>$next,'tags'=>$tags,'search_text'=>$text,'search_tag'=>$tag,'search_extension'=>$extension,'space_id'=>$space];
+    }
     public function batchListing(string $actor,string $space,string $parent='',?string $after=null):array
     {
         $this->guard($actor,$space,'catalog.write');$data=$this->files->listing($actor,$space,$parent,$after);

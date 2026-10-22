@@ -6,7 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 39 (Automatische persönliche Bereiche)
+## Entwicklungsstand: Iteration 40 (Katalogsuche mit Beschreibungen und Tags)
+
+**Beschreibungen und Tags durchsuchen** findet Dateien über Namen, manuelle Beschreibungen und Tagbezeichnungen. Tag und Dateiendung lassen sich kombinieren, Ergebnisse sind geschützt und paginiert. Ausgelesene sensible Medienfelder und Originalinhalte werden nicht mit durchsucht. Keine neue Migration. [Bedienung und Grenzen](docs/catalog-search.md).
 
 Bei erfolgreicher OIDC-Anmeldung entsteht einmalig ein **persönlicher Speicherbereich** mit Eigentümerrechten. Wiederholte Anmeldungen erhalten geänderte Namen und Quoten; Systemgruppen sind vor manueller Änderung geschützt. Andere Konten und globale Administratoren erhalten dadurch keine impliziten Inhaltsrechte. Automatische Anlage und vorläufige Standardquote (10 GiB) sind konfigurierbar. **Neue Migration erforderlich.** [Einrichtung und Lebenszyklus](docs/personal-spaces.md).
 
