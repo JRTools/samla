@@ -40,6 +40,8 @@ Die Validatoren laufen vor der Änderung innerhalb der Transaktion, dürfen Kont
 
 Die Outbox-Zustellung, Wiederholungssteuerung, Empfängerregistrierung und idempotente Empfänger sind noch nicht implementiert. Persistiert bedeutet hier nicht bereits zugestellt. Abgelehnte Versuche erzeugen kein erfolgreiches Abschlussereignis; eine zusätzliche transaktionsunabhängige Protokollierung abgelehnter Sicherheitsereignisse folgt separat.
 
+Für die später ergänzte endgültige Papierkorbbereinigung gibt es ein Audit und begrenzte atomar gespeicherte Outbox-Chunks. Die gemeinsame Vorgangskennung steht dort ausdrücklich in batch_id; payload.id identifiziert den einzelnen Chunk. Details und Deduplizierungsregel stehen in plugin-api.md. Die normalen hier beschriebenen Verwaltungsereignisse behalten ihre einzelne mit dem Audit identische Kennung.
+
 ## Betriebs- und Umfangsgrenzen
 
 - Delegationsregeln und Speicherbereichskatalog werden vorerst im kontrollierten Einrichtungs-/Migrationskontext gepflegt. Es gibt keine Oberfläche und keinen öffentlichen Endpunkt dafür.

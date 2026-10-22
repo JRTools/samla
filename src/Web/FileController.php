@@ -11,10 +11,15 @@ final readonly class FileController
     public function handle(Request $request, string $actor, string $csrf, array $data): Response
     {
         try {
-            if (in_array($request->path, ['/files/folder', '/files/upload', '/files/change', '/files/replace', '/files/version/restore'], true)) {
+            if (in_array($request->path, ['/files/folder', '/files/upload', '/files/change', '/files/replace', '/files/version/restore', '/files/purge'], true)) {
                 if ($request->method !== 'POST') { return new Response(405, headers: ['Allow' => 'POST']); }
                 if (!preg_match('/^[a-f0-9]{64}$/D', $csrf) || !hash_equals($csrf, $request->field('csrf', 64))) { throw new AccessDenied(); }
                 $space = $request->field('space', 64); $parent = $request->field('parent', 32);
+                if ($request->path === '/files/purge') {
+                    if (($request->post['confirm'] ?? null) !== 'delete') { return $this->error(400, 'Bitte bestätige ausdrücklich die endgültige Löschung des Eintrags und seines Inhalts.', $data); }
+                    $this->files->purge($actor, $space, $request->field('entry', 32), $this->revision($request));
+                    return new Response(303, headers: ['Location' => '/files/trash?' . http_build_query(['space' => $space])], flash: 'Der Papierkorbeintrag wurde endgültig entfernt.');
+                }
                 if ($request->path === '/files/version/restore') {
                     $this->files->restoreVersion($actor, $space, $request->field('entry', 32), $request->field('version', 32), $this->revision($request));
                 }

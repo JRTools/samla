@@ -140,3 +140,19 @@ Eine Ordnersperre ohne Teilbaumumfang schützt den Ordner und seine unmittelbare
 Quotenänderungen und Sperranlage/-prüfung werden durch denselben kurzen Administrationslock serialisiert. Große Inhaltstransfers liegen weiterhin außerhalb dieser SQL-Transaktion; vor Metadatenfreigabe wird die Sperre erneut geprüft. Erwerb, Verlängerung und Freigabe haben Validatoren und Audit/Outbox. Frei übermittelte Labels und Tokens gelangen nicht in diese Ereignisse.
 
 Technische Schutzgrenzen der ersten Implementierung: höchstens 1000 aktive Sperren und 10000 Katalogeinträge je Bereich sowie höchstens 32 mitgegebene Tokens pro Mutation. Das sind keine zugesicherten Lastwerte; der vereinbarte Zielbestand liegt bei ungefähr 1000 Dateien und fünf aktiven Benutzern. Native Client-/Crashabnahme und die öffentliche Protokollintegration folgen.
+
+## Endgültiges Löschen ab Iteration 23
+
+Im Papierkorb ist „Endgültig löschen“ ausschließlich mit dem separaten Bereichsrecht files.purge sichtbar. Zusätzlich ist files.list nötig, nicht zwingend ein Leserecht für Originalbytes oder das Wiederherstellungsrecht. Bestehende manage-Rollen bleiben unverändert. Ein Betreiber kann das zusätzliche Profil nach dem üblichen gesicherten Offline-Verfahren ausdrücklich zuweisen:
+
+```sh
+APP_MAINTENANCE=1 php bin/storage-space-access.php ACTOR_ID SPACE_ID GROUP_ID purge
+```
+
+Das Profil enthält ausschließlich files.purge und ergänzt beispielsweise ein vorhandenes read-/manage-Profil. Allgemeine Administration gewährt weiterhin keine automatischen Inhaltsrechte. Im Browser sind gültige Sitzung, CSRF, erwartete Eintragsrevision und eine ausdrücklich angekreuzte Bestätigung erforderlich. Es werden der gewählte Papierkorbeintrag, alle enthaltenen Nachfahren und ihre Historien aus dem Katalog entfernt. Aktive Wurzeln können damit nicht gelöscht werden. Bereits ausdrücklich gelöschte Kinder können auch unter einem ebenfalls gelöschten Elternordner bereinigt werden.
+
+Der Dienst erfasst vorab die genaue Map aus Eintragskennungen und Revisionen. Vor und nach Plugins werden Rechte, Wurzelzustand, vollständiger Teilbaum und Sperren unter derselben Transaktion geprüft. Eine zwischenzeitliche Änderung verhindert die Löschung. Betroffene Leases, Referenzen, Audit und begrenzte Outbox-Chunks committen gemeinsam oder gar nicht. Auch ein Fehler im zweiten Chunk lässt keinen teilweise gelöschten Teilbaum zurück. Große Abschlussereignisse enthalten höchstens 500 Eintragskennungen je Chunk, keine Dateinamen oder Tokens; die Plugin-API dokumentiert ihre gemeinsame Batchkennung.
+
+Das endgültige Entfernen gibt logische Quote und Katalogplätze frei. Unveränderliche Dateiobjekte werden hier nicht vom Datenträger gelöscht. Die bestehende separate Objektbereinigung schützt verbleibende aktuelle/historische Referenzen und gemeinsam genutzte Inhalte. Ihre 24-Stunden-Grenze bezieht sich auf das Objektalter, nicht auf den Zeitpunkt der endgültigen Löschung. Daraus folgt keine Wiederherstellungsfrist: In Samla kann der endgültig entfernte Katalogeintrag nicht mehr wiederhergestellt werden.
+
+WebDAV DELETE bleibt eine Papierkorboperation. Es gibt keine implizite endgültige Löschung durch ein erneutes DELETE und keine automatisch eingerichtete Retentionsregel. Der WebDAV-Adapter ist inzwischen entsprechend webdav.md implementiert; native Geräte-/Crashabnahme bleibt separat offen.

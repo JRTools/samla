@@ -1,4 +1,4 @@
-# Experimentelle Plugin-API 0.8
+# Experimentelle Plugin-API 0.9
 
 Die API ist vorläufig. Sie ist kein vollständiger stabiler Erweiterungskatalog.
 
@@ -106,3 +106,11 @@ Alle geschützten Speichermutationen prüfen aktive Sperren vor und nach Validat
 ## Gemeinsame Datei-/Sperranlage ab API 0.8
 
 storage.file.create_locked verlangt gleichzeitig StorageChange für den neuen leeren Inhalt und StorageLockChange mit positiver Laufzeit sowie targets.entry und targets.lock. Beide Vorschläge fehlen niemals teilweise. files.create und files.update gelten gemeinsam im exakten Bereich. Die Guards prüfen Namen, Ziel, Eltern, Kapazität, Quote und überlappende Sperren vor und nach Validatoren. Neue Dateireferenz, Lease, Audit und Outbox sind ein SQL-Vorgang. Token und Owner-XML bleiben aus dem Vorschlag und den Ereignissen ausgeschlossen. Ein Veto kann damit beide Teilanlagen gemeinsam verhindern; es gibt keine vorab bereits sichtbare leere Datei.
+
+## Endgültige Bereinigung ab API 0.9
+
+storage.entry.purge verlangt StorageChange für den bisherigen Wurzeleintrag und StoragePurgeChange mit einer kanonisch nach Zeichenfolgen sortierten Map entryRevisions. Sie enthält genau die geplanten festen Eintragskennungen mit positiven Revisionen, höchstens 10000. Der Konstruktor löst auch Referenzen auf übergebene Skalarvariablen auf. MutationContext verlangt den Wurzeleintrag in dieser Map; andere Operationen dürfen keinen Purge-Vorschlag verwenden. files.list und das neue explizite Bereichsrecht files.purge werden vor und nach Validatoren geprüft. Aktive Wurzeln sind nicht zulässig. Der Guard vergleicht den gesamten aktuellen Teilbaum erneut mit dem unveränderlichen Vorschlag.
+
+Ein erfolgreiches Purge erzeugt ein Audit und vollständige Abschlussereignisse in Chunks bis 500 Eintragskennungen. Alle Chunks, Katalog-/Historienlöschung und Leasebereinigung committen gemeinsam. Der Ereignistyp ist storage.entry.purge.completed. payload.id ist die eindeutige Ereigniskennung, batch_id die gemeinsame Audit-/Vorgangskennung, chunk_index beginnt bei 0, chunk_count nennt die Anzahl und purged_entries enthält die jeweilige Kennungsliste. Empfänger deduplizieren nach Ereigniskennung, nicht nach batch_id, und dürfen weitere Chunks derselben Batch nicht verwerfen. Auch ein Fehler im letzten Chunk rollt frühere Chunks und alle Löschungen zurück. Keine Freitextnamen, Objektbytes oder Tokens im Payload. Persistiert bedeutet weiterhin nicht zugestellt.
+
+Physische Objekte werden durch diesen Vorgang nicht entfernt. Die separat berechtigte bestehende GC prüft alle verbleibenden aktuellen/historischen Referenzen und ihre Objektaltergrenze. Ein Plugin darf daher weder aus einem Purge-Ereignis allein auf sofortige physische Vernichtung schließen noch geteilte Inhaltsobjekte ungeprüft entfernen.

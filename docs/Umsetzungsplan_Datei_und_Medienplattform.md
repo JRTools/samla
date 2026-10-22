@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.23
+Version: 1.24
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 22, siehe Abschnitt 32. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 23, siehe Abschnitt 33. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -843,3 +843,29 @@ Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 390 Test
 Echte HTTP-/HTTPS-Anfragen bestätigen zusätzlich LOCK-Neuanlage (201), PUT mit If-Nachweis (204) und UNLOCK (204). Alle bisherigen OIDC-/DAV-/Browser-/Versions-/Quoten-/Konsistenzprüfungen bleiben erfolgreich. Keine neue Migration oder Laufzeitabhängigkeit. Der folgende Schritt ist die explizit berechtigte endgültige Papierkorbbereinigung, danach die verbleibenden Baum-/Bereichsoperationen. Medien-, administrative Restfunktionen und native Clientabnahme bleiben offen; die Fortsetzung bleibt autorisiert.
 
 Version 1.23: Atomare Datei-/Sperranlage, vollständiger gemeinsamer Plugin-Vorschlag, korrekt beworbene Sperren und eingehaltene Kataloggrenze.
+
+GitHub-Nachweis Iteration 22: Lauf 39696359449 zu dba1a5ea83178981a89756508849fabdd0a31d15 erfolgreich in allen vier Jobs. Status und vollständige Logs gelesen: PHP 8.4.27/8.5.12, jeweils 167 Unit-/Architekturtests mit 545 Assertions, 223 Integrationstests mit 1022 Assertions sowie HTTP/HTTPS. Damit 390 Tests und 1567 Assertions pro Job. Keine native Clientabnahme daraus abgeleitet.
+
+## 33. Iteration 23: Explizite endgültige Papierkorbbereinigung
+
+### 33.1 Rechte und Benutzerentscheidung
+
+Das neue Bereichsrecht files.purge ist von Papierkorbzugriff, normalem Löschen und Wiederherstellen getrennt. Keine bestehende manage-Rolle wird erweitert. Der Offline-Bereichsinstaller unterstützt das ausdrücklich ergänzende purge-Profil. Die Papierkorbübersicht kann mit list und restore oder purge gelesen werden; nur berechtigte Aktionen erscheinen. Im Browser erfordert endgültiges Löschen POST, gültiges CSRF, erwartete Revision und eine eigene ausdrückliche Bestätigung. Der Benutzer bestätigt den gesamten Inhalt einschließlich Nachfahren und früherer Versionen. Aktive Wurzeln sind nicht zulässig; ein ausdrücklich gelöschtes Kind kann auch unter einem ebenfalls gelöschten Elternordner bereinigt werden.
+
+### 33.2 Unveränderlicher Teilbaumvorschlag und Atomizität
+
+API 0.9 ergänzt StoragePurgeChange und die Operation storage.entry.purge. Der Vorschlag enthält höchstens 10000 stabile Kennungen mit erwarteten positiven Revisionen, kanonisch nach Zeichenfolgen sortiert und gegen nachträgliche Änderung über übergebene PHP-Skalarreferenzen kopiert. MutationContext verlangt den Wurzeleintrag in der Map und den bisherigen StorageChange-Wurzelkontext. Vor und nach Validatoren werden Identität, Rechte, Wurzelzustand, gesamter aktueller Teilbaum und betroffene Sperren erneut geprüft. Änderungen eines Kindes invalidieren den gesamten Plan.
+
+Ein SQL-Vorgang entfernt die betroffenen Leases und Katalogeinträge samt kaskadierenden Historien, schreibt ein Audit und vollständige begrenzte Abschlussereignisse. Je Outbox-Chunk höchstens 500 Eintragskennungen, gemeinsame batch_id und einzelne eindeutige payload.id mit chunk_index/chunk_count. Dadurch bleiben Payloads unter der TEXT-Grenze, ohne große Teilbäume ungeprüft abzuschneiden. Ein Fehler auch im zweiten Chunk rollt Löschung, Audit und frühere Chunks gemeinsam zurück. Empfänger müssen nach Ereigniskennung deduplizieren; die Zustellung selbst ist weiterhin gesondert umzusetzen.
+
+### 33.3 Dateiobjekte und Grenzen
+
+Die logische Quote und Katalogplätze werden frei. Private unveränderliche Objekte werden durch diesen Vorgang nicht physisch gelöscht. Die separate bestehende Objektbereinigung beachtet weiterhin verbleibende aktuelle/historische Referenzen, geteilte Inhaltsobjekte und das Objektalter. Die 24-Stunden-Grenze ist keine Wiederherstellungsfrist ab Purge. Im Produkt ist eine endgültig entfernte Katalogreferenz nicht mehr wiederherstellbar. WebDAV DELETE bleibt normaler Papierkorb, eine zeitgesteuerte Retentionsregel wird nicht erfunden.
+
+### 33.4 Prüfung und Fortsetzung
+
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 402 Tests und 1627 Assertions (170 Unit-/Architekturtests, 232 Integrationstests), Syntax aller 177 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Echte HTTP/HTTPS-Anfragen prüfen das separate CLI-Profil, ausdrückliche Bestätigung und endgültige Bereinigung. Geprüft sind explizite Rechte, fremde Bereiche/Benutzer, aktive/veraltete Wurzeln, gelöschte Eltern, Quoten-/Historienbereinigung, Erhalt gemeinsam verwendeter Objekte bei anschließender GC, vollständige Teilbäume über mehrere Outbox-Chunks, Fehler im zweiten Chunk mit vollständigem Rollback, geänderte Nachfahren, erhaltene aktive Leases und getrennte Purge-/Restore-Oberfläche. Opaque hexadezimale Kennungen werden auch in Testvergleichen explizit als Zeichenfolgen sortiert; eine zufällig wissenschaftlich lesbare Kennung darf keine numerische Sortierung auslösen.
+
+Keine neue Migration oder zusätzliche Laufzeitkomponente. Native Clients, vollständige Crash-/Last-/Restore-Abnahme, Medien, verbleibende Baum-/Bereichsoperationen und administrative Restfunktionen bleiben gesondert offen. Die durchgehende Umsetzung bleibt autorisiert.
+
+Version 1.24: Explizit berechtigte endgültige Papierkorbbereinigung mit unveränderlichem Teilbaumplan und vollständig transaktionalen Outbox-Chunks.

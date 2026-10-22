@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 22 (atomare WebDAV-Neuanlage mit Sperre)
+## Entwicklungsstand: Iteration 23 (endgültige Papierkorbbereinigung)
 
 Vorhanden sind:
+
+- Endgültige Papierkorbbereinigung mit separatem Bereichsrecht files.purge, ausdrücklicher Bestätigung und exaktem Revisionsplan des gesamten Teilbaums. Historien und Quote werden transaktional bereinigt; gemeinsam verwendete Inhalte bleiben durch die referenzbasierte Objektbereinigung geschützt. Bestehende manage-Rollen erhalten das zusätzliche Recht nicht automatisch. [Dateiablage](docs/storage.md).
 
 - Erfolgreicher GitHub-Workflow für die vier PHP-/Datenbankkombinationen mit Plattform-/Syntaxprüfung, Unit-/Architektur-/Integrationstests und synthetischem OIDC-/DAV-Durchlauf über HTTP/HTTPS. Fixierte Actions, isolierte Testdatenbank und ausschließlich lesender Repository-Token. [Erster vollständiger erfolgreicher Lauf](https://github.com/JRTools/samla/actions/runs/39693200739), [Prüfprotokoll](docs/verification.md), [Ablauf und Grenzen](docs/continuous-integration.md).
 
@@ -114,7 +116,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 390 Tests mit 1567 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 402 Tests mit 1627 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 

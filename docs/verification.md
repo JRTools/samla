@@ -1,17 +1,21 @@
-# Prüfung Iteration 22
+# Prüfung Iteration 23
 
-Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 390 Tests, 1567 Assertions (167 Unit-/Architekturtests, 223 Integrationstests). Syntax aller 174 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Keine neue Migration oder Laufzeitabhängigkeit.
+Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 402 Tests, 1627 Assertions (170 Unit-/Architekturtests, 232 Integrationstests). Syntax aller 177 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Keine neue Migration oder produktive Laufzeitabhängigkeit.
 
-Neue Fälle prüfen atomare LOCK-Neuanlage mit leeren Dateibytes und anschließendem versionierten PUT, exakten gemeinsamen Plugin-Vorschlag, fehlende create/update-Rechte, abgewiesene Shared-Sperren, unterstützte exklusive XML-Lockstruktur, kodierte Lockroots, rekursive Vorfahrenskonflikte ohne Teilanlage, erzwungenen Lease-INSERT-Fehler mit gemeinsamem Rollback sowie Veto vor beiden Referenzen. Die gekürzten PDOException-Zeilen im Protokoll stammen aus den absichtlich ausgelösten Audit-/Lease-Fehlerfixtures. Ein unvollständiges Lock-XML wurde zunächst von der Bibliothek als Shared vorbelegt; der Adapter prüft nun die verpflichtende Struktur und meldet 400.
+Neue Fälle prüfen das separate Purge-Recht ohne automatische manage-Erweiterung, fremde Benutzer/Bereiche, aktive/veraltete Wurzeln, gelöschte Kinder unter ebenfalls gelöschten Eltern, gesamte Teilbäume, Historiendeletion und freigegebene Quote. Die anschließende tatsächliche Objektbereinigung entfernt nur den nicht mehr referenzierten alten Versionsinhalt und erhält den von einer Kopie weiter benutzten aktuellen Blob.
 
-Der 10000-Einträge-Test erreicht die bereits dokumentierte technische Grenze und bestätigt Abweisung weiterer MKCOL/PUT/COPY/LOCK-Anlagen bei weiter möglichem DELETE. Die bisherigen 1000-Dateien-/Fünfprozessfälle bleiben erhalten. Unterstützte Sperrarten werden per DOM/XPath am konkreten XML-Element statt nur an einer Textteilzeichenfolge geprüft.
+Ein 501-Einträge-Teilbaum wird vollständig mit zwei begrenzten Outbox-Chunks und einem Audit bereinigt. Der erzwungene Fehler genau im zweiten Chunk rollt Kataloglöschung, Audit und ersten Chunk zurück. Ein Validator ändert einen Nachfahren; der zweite Guard verwirft den unveränderlichen Gesamtplan und rollt auch die Fixtureänderung zurück. Aktive aufbewahrte Leases blockieren bis zum Ablauf. DTO-Tests prüfen rootgebundenen Operationskontext, Grenzen, positive Revisionen, Zeichenfolgensortierung numerisch aussehender IDs und Kopie statt übergebener PHP-Skalarreferenz.
 
-Echte HTTP-Anfragen unter PHP 8.4/8.5 und HTTPS mit PHP 8.4-Produktionskonfiguration bestätigen LOCK auf neuen Dateinamen (201), PUT mit If-Nachweis (204), UNLOCK (204) und alle bisherigen Lese-/Schreib-/Überschreib-/OIDC-/Browser-/Historien-/Konsistenzfälle. Die zuletzt erfolgreiche GitHub-Matrix der vorangegangenen Iteration ist in verification-iteration-21.md dokumentiert; der neue Commit startet anschließend die CI-Matrix. Native Clients, vollständige Crash-/Last-/Restore-Abnahme und Betreiberdeployment bleiben offen.
+Browsertests prüfen Purge-Oberfläche mit ausschließlich list/purge ohne Restore, Escaping, POST-Pflicht, CSRF, explizite Bestätigung und erfolgreiche endgültige Löschung. Der echte HTTP-/HTTPS-Prüfer erteilt das separate purge-Profil per Wartungs-CLI, legt eine Testdatei an, verschiebt sie in den Papierkorb, verweigert fehlende Bestätigung und bestätigt die endgültige Löschung. Sämtliche bisherigen OIDC-/DAV-/Versions-/Überschreib-/Sperr-/Quoten-/Konsistenzfälle bleiben erfolgreich.
+
+Ein früher Testvergleich sortierte opaque IDs implizit numerisch; nun wird SORT_STRING verwendet, wie bereits im eigentlichen Purge-Vorschlag. Unterbrochene lokale Testläufe hinterließen Fehlerfixtures; die bekannten Testtrigger werden gezielt bereinigt und die temporären Matrixwrapper erzeugen frische isolierte Datenbanken je Zelle. Die lokale MySQL-Testinstanz wurde nach einem fehlenden Redo-Log aus vollständig reproduzierbaren Fixtures neu initialisiert; der alte Testbestand ist zur Diagnose erhalten. Der endgültige MySQL-Lauf verwendet dieselbe laufende Instanz auch für HTTP statt eines Zwischenneustarts. Daraus wird kein allgemeiner Crash-/Restore-Nachweis abgeleitet. Die erwarteten gekürzten PDOException-Zeilen stammen aus absichtlichen Audit-/Lease-Fehlerfixtures.
+
+Die vorige tatsächliche GitHub-Matrix ist in verification-iteration-22.md dokumentiert. Die neue Implementierung startet nach Veröffentlichung ihren CI-Lauf. Native Clientabnahme, vollständige Crash-/Last-/Restore-Abnahme und Betreiberdeployment bleiben offen.
 
 ### locked-matrix-results.txt
 
 ```text
-PHP 8.4, lint 174 files
+PHP 8.4, lint 177 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -19,13 +23,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 167 ( 37%)
-............................................................... 126 / 167 ( 75%)
-.........................................                       167 / 167 (100%)
+...............................................................  63 / 170 ( 37%)
+............................................................... 126 / 170 ( 74%)
+............................................                    170 / 170 (100%)
 
-Time: 00:04.551, Memory: 24.00 MB
+Time: 00:05.307, Memory: 26.00 MB
 
-OK (167 tests, 545 assertions)
+OK (170 tests, 556 assertions)
 
 
 8.4 / phpunit.integration.xml
@@ -34,22 +38,22 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 223 ( 28%)
-............................................................... 126 / 223 ( 56%)
-............................................................... 189 / 223 ( 84%)
-..................................                              223 / 223 (100%)
+...............................................................  63 / 232 ( 27%)
+............................................................... 126 / 232 ( 54%)
+............................................................... 189 / 232 ( 81%)
+...........................................                     232 / 232 (100%)
 
-Time: 01:19.158, Memory: 34.00 MB
+Time: 01:22.906, Memory: 36.00 MB
 
-OK (223 tests, 1022 assertions)
+OK (232 tests, 1071 assertions)
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
-Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:109
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:110
 
 
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 174 files
+PHP 8.5, lint 177 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -57,13 +61,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 167 ( 37%)
-............................................................... 126 / 167 ( 75%)
-.........................................                       167 / 167 (100%)
+...............................................................  63 / 170 ( 37%)
+............................................................... 126 / 170 ( 74%)
+............................................                    170 / 170 (100%)
 
-Time: 00:05.318, Memory: 24.00 MB
+Time: 00:06.022, Memory: 26.00 MB
 
-OK (167 tests, 545 assertions)
+OK (170 tests, 556 assertions)
 
 
 8.5 / phpunit.integration.xml
@@ -72,16 +76,16 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 223 ( 28%)
-............................................................... 126 / 223 ( 56%)
-............................................................... 189 / 223 ( 84%)
-..................................                              223 / 223 (100%)
+...............................................................  63 / 232 ( 27%)
+............................................................... 126 / 232 ( 54%)
+............................................................... 189 / 232 ( 81%)
+...........................................                     232 / 232 (100%)
 
-Time: 01:16.337, Memory: 34.00 MB
+Time: 01:21.433, Memory: 36.00 MB
 
-OK (223 tests, 1022 assertions)
+OK (232 tests, 1071 assertions)
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
-Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:109
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:110
 
 
 8.5 / migrate CLI: Schema is current.
@@ -90,7 +94,7 @@ Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation
 ### mariadb-matrix-results.txt
 
 ```text
-PHP 8.4, lint 174 files
+PHP 8.4, lint 177 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -98,13 +102,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 167 ( 37%)
-............................................................... 126 / 167 ( 75%)
-.........................................                       167 / 167 (100%)
+...............................................................  63 / 170 ( 37%)
+............................................................... 126 / 170 ( 74%)
+............................................                    170 / 170 (100%)
 
-Time: 00:05.049, Memory: 24.00 MB
+Time: 00:04.877, Memory: 26.00 MB
 
-OK (167 tests, 545 assertions)
+OK (170 tests, 556 assertions)
 
 
 8.4 / phpunit.integration.xml
@@ -113,22 +117,22 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 223 ( 28%)
-............................................................... 126 / 223 ( 56%)
-............................................................... 189 / 223 ( 84%)
-..................................                              223 / 223 (100%)
+...............................................................  63 / 232 ( 27%)
+............................................................... 126 / 232 ( 54%)
+............................................................... 189 / 232 ( 81%)
+...........................................                     232 / 232 (100%)
 
-Time: 01:07.935, Memory: 34.00 MB
+Time: 01:13.811, Memory: 36.00 MB
 
-OK (223 tests, 1022 assertions)
+OK (232 tests, 1071 assertions)
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
-Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:109
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:110
 
 
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 174 files
+PHP 8.5, lint 177 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -136,13 +140,13 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 167 ( 37%)
-............................................................... 126 / 167 ( 75%)
-.........................................                       167 / 167 (100%)
+...............................................................  63 / 170 ( 37%)
+............................................................... 126 / 170 ( 74%)
+............................................                    170 / 170 (100%)
 
-Time: 00:04.816, Memory: 24.00 MB
+Time: 00:05.704, Memory: 26.00 MB
 
-OK (167 tests, 545 assertions)
+OK (170 tests, 556 assertions)
 
 
 8.5 / phpunit.integration.xml
@@ -151,16 +155,16 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 223 ( 28%)
-............................................................... 126 / 223 ( 56%)
-............................................................... 189 / 223 ( 84%)
-..................................                              223 / 223 (100%)
+...............................................................  63 / 232 ( 27%)
+............................................................... 126 / 232 ( 54%)
+............................................................... 189 / 232 ( 81%)
+...........................................                     232 / 232 (100%)
 
-Time: 01:09.573, Memory: 34.00 MB
+Time: 01:12.201, Memory: 34.00 MB
 
-OK (223 tests, 1022 assertions)
+OK (232 tests, 1071 assertions)
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
-Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:109
+Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:110
 
 
 8.5 / migrate CLI: Schema is current.

@@ -29,6 +29,7 @@ final class WebDavTest extends TestCase
         $config=AppConfig::fromGlobals(); if($config->environment!=='test'){throw new \RuntimeException();}
         $this->pdo=(new ConnectionFactory())->connect($config->database);
         (new MigrationRunner($this->pdo))->migrate(require __DIR__.'/../../bootstrap/migrations.php');
+        foreach(['test_dav_audit_failure','test_dav_lock_failure']as$fixture){$this->pdo->exec('DROP TRIGGER IF EXISTS '.$fixture);}
         foreach(['outbox_events','audit_events','rbac_delegation_permissions','rbac_delegations','rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups','storage_spaces','identity_app_auth_limits'] as $table){$this->pdo->exec('DELETE FROM '.$table);}
         $this->identity=new PdoIdentityRepository($this->pdo,3600);
         $this->identity->createUser('alice','https://id.example','alice','Alice');$this->identity->replaceVerifiedGroups('alice',[]);

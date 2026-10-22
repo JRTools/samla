@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Samla\Core\Storage;
 
-use Samla\PluginApi\{AccessDenied, AuthorizationChecker, AuthorizationRequest, Decision, MutationConflict, MutationContext, MutationRunner, Scope, StorageChange, StorageLockChange};
+use Samla\PluginApi\{AccessDenied, AuthorizationChecker, AuthorizationRequest, Decision, MutationConflict, MutationContext, MutationRunner, Scope, StorageChange, StorageLockChange, StoragePurgeChange};
 
 final readonly class FileService
 {
@@ -36,7 +36,8 @@ final readonly class FileService
         if (count($rows) > 100) { array_pop($rows); $next = $rows[99]['id']; }
         return ['space' => $catalog, 'folder' => $folder, 'parent' => $parent, 'rows' => $rows, 'next' => $next,
             'used' => StorageUsage::bytes($this->pdo, $space), 'upload_max_bytes' => $this->content->maxBytes, 'can_create' => $this->allowed($actor, 'files.create', $space),
-            'can_read' => $this->allowed($actor, 'files.read', $space), 'can_restore' => $this->allowed($actor, 'files.restore', $space)];
+            'can_read' => $this->allowed($actor, 'files.read', $space), 'can_restore' => $this->allowed($actor, 'files.restore', $space),
+            'can_view_trash' => $this->allowed($actor, 'files.restore', $space) || $this->allowed($actor, 'files.purge', $space)];
     }
     public function createFolder(string $actor, string $space, string $parent, string $name): string
     { return $this->create($actor, $space, $parent, $name, null); }
@@ -148,11 +149,42 @@ final readonly class FileService
 
     public function trashListing(string $actor, string $space, ?string $after = null): array
     {
-        $this->requireAccess($actor, 'files.list', $space); $this->requireAccess($actor, 'files.restore', $space);
-        $query = $this->pdo->prepare('SELECT id, parent_id, name, kind, size_bytes FROM storage_entries WHERE space_id = ? AND trashed_at IS NOT NULL AND id > ? ORDER BY id LIMIT 101');
+        $this->requireAccess($actor, 'files.list', $space);
+        $restore = $this->allowed($actor, 'files.restore', $space); $purge = $this->allowed($actor, 'files.purge', $space);
+        if (!$restore && !$purge) { throw new AccessDenied(); }
+        $query = $this->pdo->prepare('SELECT id, parent_id, name, kind, size_bytes, revision FROM storage_entries WHERE space_id = ? AND trashed_at IS NOT NULL AND id > ? ORDER BY id LIMIT 101');
         $query->execute([$space, $after ?? '']); $rows = $query->fetchAll(); $next = null;
         if (count($rows) > 100) { array_pop($rows); $next = $rows[99]['id']; }
-        return ['space' => $this->space($space), 'rows' => $rows, 'next' => $next];
+        return ['space' => $this->space($space), 'rows' => $rows, 'next' => $next, 'can_restore' => $restore, 'can_purge' => $purge];
+    }
+    public function purge(string $actor, string $space, string $id, int $expectedRevision): void
+    {
+        $this->requireAccess($actor, 'files.list', $space); $this->requireAccess($actor, 'files.purge', $space);
+        $expected = $this->entry($space, $id);
+        if ($expected['trashed_at'] === null || (int) $expected['revision'] !== $expectedRevision) { throw new MutationConflict(); }
+        $proposal = new StoragePurgeChange($this->purgeSnapshot($space, $id));
+        $context = new MutationContext(bin2hex(random_bytes(16)), $actor, 'storage.entry.purge', Scope::Space, $space, ['entry' => $id],
+            storageChange: new StorageChange($expected['name'], $expected['parent_id']), storagePurge: $proposal);
+        $this->mutations->run($context, function () use ($actor, $space, $id, $expected, $expectedRevision, $proposal): void {
+            $this->requireAccess($actor, 'files.list', $space); $this->requireAccess($actor, 'files.purge', $space);
+            $row = $this->entry($space, $id);
+            if ($row['trashed_at'] === null || (int) $row['revision'] !== $expectedRevision || $row['name'] !== $expected['name'] || $row['parent_id'] !== $expected['parent_id']
+                || $this->purgeSnapshot($space, $id) !== $proposal->entryRevisions) { throw new MutationConflict(); }
+            $this->locks()->assertWritable($actor, $space, $id, $this->proof(), $row['kind'] === 'folder', true);
+        }, function () use ($space, $proposal): bool {
+            $ids = array_keys($proposal->entryRevisions); $marks = implode(',', array_fill(0, count($ids), '?'));
+            $q = $this->pdo->prepare('DELETE FROM storage_locks WHERE space_id = ? AND entry_id IN (' . $marks . ')'); $q->execute([$space, ...$ids]);
+            $q = $this->pdo->prepare('DELETE FROM storage_entries WHERE space_id = ? AND id IN (' . $marks . ')'); $q->execute([$space, ...$ids]);
+            if ($q->rowCount() !== count($ids)) { throw new MutationConflict(); } return true;
+        });
+        // No unlink here. The separate GC applies its existing reference and object-age checks.
+    }
+    private function purgeSnapshot(string $space, string $id): array
+    {
+        $ids = array_keys($this->subtreeEntryIds($space, $id)); $marks = implode(',', array_fill(0, count($ids), '?'));
+        $q = $this->pdo->prepare('SELECT id, revision FROM storage_entries WHERE space_id = ? AND id IN (' . $marks . ') ORDER BY id'); $q->execute([$space, ...$ids]);
+        $snapshot = []; foreach ($q->fetchAll() as $row) { $snapshot[$row['id']] = (int) $row['revision']; }
+        return $snapshot;
     }
     public function details(string $actor, string $space, string $id): array
     {

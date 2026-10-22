@@ -270,6 +270,17 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert req('/files/trash?space='+space)[0]==200
                     assert change(parent,'restore','Documents','')==303
                     assert req('/files/download?space='+space+'&entry='+entry)[0]==200
+                    granted=subprocess.run(php+['bin/storage-space-access.php',user,space,'samla.administrators','purge'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                    assert granted.returncode==0,granted.stdout+granted.stderr
+                    assert dav('PUT',dav_folder+'/to-purge.txt',body='purge test')[0]==201
+                    assert dav('DELETE',dav_folder+'/to-purge.txt')[0]==204
+                    status,purge_page,_=req('/files/trash?space='+space);assert status==200
+                    purge_entry=re.search(r'<h3>to-purge\.txt</h3>.*?name="entry" value="([a-f0-9]{32})"',purge_page,re.S).group(1)
+                    purge_revision=re.search(r'<h3>to-purge\.txt</h3>.*?name="revision" value="([0-9]+)"',purge_page,re.S).group(1)
+                    purge_form={'csrf':csrf(purge_page),'space':space,'entry':purge_entry,'parent':'','revision':purge_revision}
+                    assert req('/files/purge',purge_form)[0]==400
+                    assert req('/files/purge',{**purge_form,'confirm':'delete'})[0]==303
+                    assert 'to-purge.txt' not in req('/files/trash?space='+space)[1]
                     checked=subprocess.run(php+['bin/storage-check.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
                     assert checked.returncode==2 and 'Unreferenced object:' in checked.stdout,checked.stdout+checked.stderr
                     gc=subprocess.run(php+['bin/storage-gc.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
