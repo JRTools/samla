@@ -1,0 +1,17 @@
+# Portabler Export
+
+## Arbeitspaket 34: geprüfter interner Paketkern
+
+Native ext-zip/ZipArchive und libzip sind vom Betreiber freigegeben. Der Paketkern erstellt private ZIP-Dateien mit aktuellen Originalbytes und einem JSON-Manifest (format samla-export, version 1). Der anschließende Auftrags-/Worker-/UI-Ausbau ist noch in Arbeit; dieses Paket allein stellt noch keinen Browserexport bereit.
+
+Originale werden ohne Konvertierung und ohne ZIP-Kompression gestreamt. Das vermeidet zusätzlichen Kompressionsaufwand, benötigt aber entsprechend Platz für Staging und Archiv. Die ZIP-Archivnamen sind relativ, mit Eintragskennung als eigenem Verzeichnis und bereinigten Dateinamen; Originalnamen stehen unverändert im Manifest. Pfadtrennung, Windows-Sonderzeichen und reservierte Gerätenamen werden behandelt. Eine beliebig lange externe Entpack-Zieladresse ist damit nicht auf allen Clients zugesichert.
+
+Private Arbeitsverzeichnisse liegen unter dem bereits privaten Speicherstamm in .exports, mit 0700 für Verzeichnisse und 0600 für Dateien. Pro Auftrag schützt eine Dateisperre gegen paralleles Erstellen/Bereinigen. Arbeitsdateien enthalten ausschließlich abgeleitete temporäre Kopien. Bei Fehlern und Zeitabbruch wird kein fertiges Paket veröffentlicht. Nach einem Prozessabbruch kann der nächste gesperrte Versuch zurückgebliebene Arbeitsdateien bereinigen.
+
+Öffentliche ExportMetadataProvider liefern begrenzte typisierte Beiträge über ExportSource und ExportMetadataValue. Feldverträge nutzen die vorhandene explizite Exportfreigabe, Sensitivität und Leseberechtigung. Nicht exportierbare oder nicht lesbare Felder erscheinen mit weder Wert noch Label im Manifest. Sensible Beiträge brauchen zusätzlich files.export.sensitive. Der anschließende Download muss alle tatsächlich verwendeten Rechte erneut prüfen und eine geänderte Provider-/Policyversion zurückweisen. Provider müssen ihre Version bei Interpretations-/Exportpolicyänderungen erhöhen. Derzeit bleiben die eingebauten Medienfelder standardmäßig nicht exportierbar; Originaldateien enthalten weiterhin ihre eingebetteten Angaben.
+
+Konfigurationsvertrag: standardmäßig höchstens 100 ausgewählte Dateien, 1 GiB Originalbytes, 20 Sekunden kooperatives Budget, 24 Stunden Paketlebensdauer und 5 GiB globale Platzreservierung. Das sind technische konfigurierbare Startgrenzen und keine neuen fachlichen Vorgaben für den Gesamtbestand oder einzelne Originaldateien. Die Umgebungsverdrahtung und Verwaltung der reservierten Pakete folgen mit der Auftragsfunktion. Dateien von mehr als 100 MB sind im Paketkern möglich und mit 128 MiB geprüft. Ein Gesamtbestand von 100 GB ist kein einzelner Exportauftrag.
+
+Die ZIP-Fähigkeit ist optional. Kernfunktionen dürfen bei fehlendem ZIP-Modul weiterlaufen; die spätere Exportfunktion meldet dann ihre fehlende Fähigkeit. Die verwendete Workerlaufzeit muss auch die libzip-Abbruchfunktion anbieten. Die Laufzeitgrenze ist kooperativ (Streamschritte und ZIP-Abbruchcallback), keine vom Betriebssystem erzwungene harte Zeitgarantie für beliebige native oder Pluginoperationen.
+
+Primärquellen: [PHP addFile](https://www.php.net/manual/en/ziparchive.addfile.php), [PHP close](https://www.php.net/manual/en/ziparchive.close.php), [Abbruchcallback](https://www.php.net/manual/en/ziparchive.registercancelcallback.php). Der Paketabschluss und dessen Ergebnis müssen geprüft werden; Fehler können erst beim Schließen auftreten. Der Callback setzt libzip mindestens 1.6 voraus.

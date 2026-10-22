@@ -21,6 +21,7 @@ final class PluginRuntime implements PermissionRegistry
     private array $validators = [];
     /** @var array<string, \Samla\PluginApi\OutboxSubscription> */
     private array $subscribers = [];
+    private array $exportProviders=[];
     private array $mediaFields=[];
     private array $mediaProviders=[];
 
@@ -59,6 +60,8 @@ final class PluginRuntime implements PermissionRegistry
                 public function outboxSubscriber(\Samla\PluginApi\OutboxSubscription $subscription): void {
                     $this->check(); $this->runtime->addSubscriber($this->owner, $subscription);
                 }
+                public function exportProvider(\Samla\PluginApi\ExportMetadataProvider $provider):void
+                {$this->check();$this->runtime->addExportProvider($this->owner,$provider);}
                 public function mediaField(\Samla\PluginApi\MediaField $field):void
                 {$this->check();$this->runtime->addMediaField($this->owner,$field);}
                 public function mediaProvider(\Samla\PluginApi\MediaProvider $provider,int $priority=0):void
@@ -74,6 +77,7 @@ final class PluginRuntime implements PermissionRegistry
             if($permission===null||!in_array(\Samla\PluginApi\Scope::Space,$permission->scopes,true)
                 ||($permission->ownerPlugin!==$entry['owner']&&($field->sensitive||$field->readPermission!=='media.metadata.read'))){throw new \LogicException('Invalid field permission.');}}
         uasort($runtime->mediaProviders,static fn(array $a,array $b):int=>($b['priority']<=>$a['priority'])?:strcmp($a['provider']->id(),$b['provider']->id()));
+        ksort($runtime->exportProviders,SORT_STRING);
         $runtime->sealed = true;
         return $runtime;
     }
@@ -115,6 +119,16 @@ final class PluginRuntime implements PermissionRegistry
     }
     /** @return array<string, \Samla\PluginApi\OutboxSubscription> */
     public function subscribers(): array { return $this->subscribers; }
+    public function addExportProvider(string $owner,\Samla\PluginApi\ExportMetadataProvider $provider):void
+    {
+        $id=$provider->id();$version=$provider->version();
+        if($this->sealed||!isset($this->active[$owner])||!str_starts_with($id,$owner.'.')
+            ||!preg_match('/^[a-z][a-z0-9_.]{1,95}$/D',$id)||!preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D',$version)
+            ||isset($this->exportProviders[$id])||count($this->exportProviders)>=8){throw new \LogicException('Invalid export provider.');}
+        $this->exportProviders[$id]=['owner'=>$owner,'provider'=>$provider];
+    }
+    /** @return list<array{owner:string,provider:\Samla\PluginApi\ExportMetadataProvider}> */
+    public function exportProviders():array{return array_values($this->exportProviders);}
     public function addMediaField(string $owner,\Samla\PluginApi\MediaField $field):void
     {
         if($this->sealed||!isset($this->active[$owner])||!str_starts_with($field->id,$owner.'.')||isset($this->mediaFields[$field->id])||count($this->mediaFields)>=64){throw new \LogicException('Invalid media field registration.');}

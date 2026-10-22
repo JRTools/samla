@@ -6,7 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 33 (Bereiche und Berechtigungen im UI)
+## Entwicklungsstand: Iteration 34 (Portabler Exportkern)
+
+Der geprüfte interne ZIP-Kern erhält Originalbytes, Manifest und explizit exportierbare Metadaten. Aufträge, Workeranbindung und Browserexport folgen unmittelbar; noch keine fertige Exportoberfläche. [Umfang und Grenzen](docs/portable-export.md).
 
 Gruppenrechte für Datei-/Medienbereiche und Hintergrundaufgaben lassen sich unter **Berechtigungen** zuweisen und entziehen. **Bereiche verwalten** bietet Anlage, Name-/Quotenänderung und bestätigtes Löschen vollständig leerer Bereiche. Dropdowns zeigen Gruppen-, Benutzer-, Bereichs- und Profilnamen. Der bestehende Standardadministrator kann diese Funktionen ohne zusätzlichen Konsolenschritt verwenden. [Bedienung, feste Profile und Grenzen](docs/access-administration.md).
 

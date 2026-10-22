@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.37
+Version: 1.38
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 33, Bereichs- und feste Berechtigungsverwaltung im Browser, siehe Abschnitt 45. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 34, geprüfter interner ZIP-Exportkern, siehe Abschnitt 46. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1081,3 +1081,14 @@ Prüfung: Unit-/Architekturverträge, Integrationsfälle für Rechteentzug, sens
 Weitere Konzeptarbeit bleibt offen, insbesondere freie Rollen-/Delegationsverwaltung, IdP-Mapping-UI, automatische persönliche Bereiche, konfigurierbare Retention, geprüfte Offline-Synchronisierung und der bereits freigegebene portable ZIP-Export. Für diese Punkte wird kein Abschluss behauptet und keine neue pauschale Freigabe verlangt.
 
 Version 1.37: Bereichs- und feste Berechtigungsverwaltung, benannte Dropdowns und Schutz leerer Bereichslöschungen.
+
+
+## 46. Iteration 34: interner portabler Paketkern
+
+Die freigegebene native ZIP-Fähigkeit wird als optionale Composer-Empfehlung und CI-Testmodul aufgenommen. Typisierte öffentliche Exportquellen, Feldwerte und Providerregistrierungen ergänzen die Erweiterungspunkte. Beiträge verlangen ausdrückliche Exportfreigabe und aktuelle Feldrechte; sensible Angaben benötigen zusätzlich ein gesondertes Exportrecht. Eine versionierte Verarbeitungssignatur bindet die folgenden Aufträge an ihre Provider. Bestehende Medienfelder werden nicht automatisch exportierbar.
+
+Der interne ZIP-Speicher erstellt Pakete mit JSON-Manifest und unveränderten Originalen, sicheren relativen Namen, Quellen-/Archivprüfsummen, privaten Rechten und Staging. Quellen werden gestreamt und vor der Archivierung auf Größe/Hash geprüft. Dateianzahl, Gesamtbytes, Manifest und kooperative Laufzeit bleiben begrenzt. Native Abschlussabbrechung, Fehlerbereinigung und ein 128-MiB-Video sind geprüft. Es wird keine harte Betriebssystem-Zeitgrenze oder native Clientabnahme behauptet.
+
+Dieses Paket allein veröffentlicht noch keine Fachfunktion im Web. Es folgt ohne neue Go-Abfrage die persistente Auftragsebene mit aktuellen Rechten, reserviertem Platz, Worker, Status, Ablauf/Bereinigung und geschütztem UI-Download. Technische Voreinstellungen sind konfigurierbar und ersetzen weder 100 GB geplanten Gesamtbestand noch die noch unbestimmte Obergrenze größerer Videos. Primärquellen und Grenzen: portable-export.md. Tests: verification.md.
+
+Version 1.38: geprüfter Paketkern und öffentliche Exportbeiträge; native ext-zip/libzip innerhalb der erteilten Freigabe.

@@ -47,6 +47,7 @@
   },
   "suggest": {
     "ext-gd": "Raster image previews in the configured worker runtime",
-    "ext-exif": "EXIF orientation and selected JPEG/TIFF metadata in the configured worker runtime"
+    "ext-exif": "EXIF orientation and selected JPEG/TIFF metadata in the configured worker runtime",
+    "ext-zip": "Portable ZIP exports in the configured worker runtime (libzip with cancellation support)"
   }
 }
