@@ -20,6 +20,13 @@ final readonly class AdministrationQueryService
         $query = $this->pdo->prepare('SELECT g.id, g.name, (SELECT COUNT(DISTINCT m.user_id) FROM identity_memberships m WHERE m.group_id = g.id) AS members FROM identity_groups g WHERE g.id > ? ORDER BY g.id LIMIT 51');
         $query->execute([$after ?? '']); return $this->page($query->fetchAll());
     }
+    public function userChoices(string $actorId):array
+    {
+        $this->guard($actorId,'identity.users.read',null);
+        $rows=$this->pdo->query('SELECT id,display_name,status FROM identity_users ORDER BY display_name,id LIMIT 1001')->fetchAll();
+        if(count($rows)>1000){throw new \LengthException('User selection limit.');}
+        return $rows;
+    }
     private function guard(string $actorId, string $action, ?string $after): void
     {
         if ($this->authorization->decide(new AuthorizationRequest($actorId, $action, Scope::Global))->decision !== Decision::Permit) { throw new AccessDenied(); }

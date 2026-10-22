@@ -30,6 +30,27 @@ final readonly class PdoRoleRepository implements RoleRepository
         }
         return $result;
     }
+    public function contextAssignments(string $group,?string $space):array
+    {
+        $scope=$space===null?Scope::Global:Scope::Space;
+        $q=$this->pdo->prepare('SELECT role_id FROM rbac_assignments WHERE group_id=? AND scope=? AND space_id=? ORDER BY role_id LIMIT 101');
+        $q->execute([$group,$scope->value,$space??'']);$ids=$q->fetchAll(\PDO::FETCH_COLUMN);
+        if(count($ids)>100){throw new \LengthException('Too many assignments in one context.');}
+        return array_map(static fn(string $id):RoleAssignment=>new RoleAssignment($group,$id,$scope,$space),$ids);
+    }
+    public function isAssigned(RoleAssignment $assignment): bool
+    {
+        $query=$this->pdo->prepare('SELECT 1 FROM rbac_assignments WHERE group_id=? AND role_id=? AND scope=? AND space_id=?');
+        $query->execute([$assignment->groupId,$assignment->roleId,$assignment->scope->value,$assignment->spaceId??'']);
+        return $query->fetchColumn()!==false;
+    }
+    public function removeSpaceInsideTransaction(string $space):void
+    {
+        if(!$this->pdo->inTransaction()){throw new \LogicException('An audited transaction is required.');}
+        self::id($space);
+        $q=$this->pdo->prepare("DELETE FROM rbac_assignments WHERE scope='space' AND space_id=?");$q->execute([$space]);
+        $q=$this->pdo->prepare('DELETE FROM rbac_delegations WHERE space_id=?');$q->execute([$space]);
+    }
     public function save(Role $role, PermissionRegistry $registry): void
     {
         $this->transaction(fn() => $this->saveInsideTransaction($role, $registry));

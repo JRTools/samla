@@ -150,6 +150,41 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,body,_=req('/groups');assert status==200
                     assert req('/groups/create',{'csrf':csrf(body),'name':'OIDC created group'})[0]==303
                     assert 'OIDC created group' in req('/groups')[1]
+                    # Browser administration: named dropdowns, current profile state and empty-space lifecycle.
+                    status,management,_=req('/administration/spaces');assert status==200
+                    status,_,headers=req('/administration/spaces/create',{'csrf':csrf(management),'name':'HTTP UI Bereich','quota':'100000000000'})
+                    assert status==303
+                    ui_space=urllib.parse.parse_qs(urllib.parse.urlsplit(headers['Location']).query)['space'][0]
+                    assert 'HTTP UI Bereich' not in req('/files')[1], 'Catalog administration must not grant content access'
+                    status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':ui_space}))
+                    assert status==200 and '<select id="permission-group"' in permissions and 'HTTP UI Bereich</option>' in permissions
+                    def profile_selection(body,role):
+                        for encoded in re.findall(r'<option value="([^\"]+)"',body):
+                            value=html.unescape(encoded)
+                            if value.startswith('['):
+                                selected=json.loads(value)
+                                if selected[0]==role:return value
+                        raise AssertionError('Missing profile choice: '+role)
+                    fields={'csrf':csrf(permissions),'group':'samla.administrators','space':ui_space,'selection':profile_selection(permissions,'samla.files.read'),'operation':'grant','confirm':'1'}
+                    assert req('/permissions/change',dict(fields,csrf='invalid'))[0]==403
+                    assert req('/permissions/change',fields)[0]==303
+                    assert req('/permissions/change',fields)[0]==409
+                    assert 'HTTP UI Bereich' in req('/files')[1]
+                    status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':ui_space}))
+                    fields.update(csrf=csrf(permissions),selection=profile_selection(permissions,'samla.files.read'),operation='revoke')
+                    assert req('/permissions/change',fields)[0]==303
+                    assert 'HTTP UI Bereich' not in req('/files')[1]
+                    status,management,_=req('/administration/spaces?space='+ui_space);assert status==200
+                    expected=re.search(r'name="expected" value="([a-f0-9]{64})"',management).group(1)
+                    update={'csrf':csrf(management),'space':ui_space,'expected':expected,'name':'HTTP UI umbenannt','quota':'110000000000'}
+                    assert req('/administration/spaces/update',update)[0]==303
+                    assert req('/administration/spaces/update',update)[0]==409
+                    status,management,_=req('/administration/spaces?space='+ui_space)
+                    expected=re.search(r'name="expected" value="([a-f0-9]{64})"',management).group(1)
+                    delete={'csrf':csrf(management),'space':ui_space,'expected':expected,'confirm':'1'}
+                    assert req('/administration/spaces/delete',dict(delete,confirm='0'))[0]==400
+                    assert req('/administration/spaces/delete',delete)[0]==303
+                    assert 'HTTP UI umbenannt' not in req('/administration/spaces')[1]
                     # Real multipart upload through PHP's uploaded-file validation, plus streamed attachment.
                     result=subprocess.run(php+['bin/storage-space-create.php',user,'samla.administrators','HTTP files','1048576'],cwd=project,env=bootstrap,capture_output=True,text=True)
                     assert result.returncode==0,result.stdout+result.stderr
@@ -411,7 +446,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

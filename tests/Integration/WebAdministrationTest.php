@@ -68,6 +68,9 @@ final class WebAdministrationTest extends TestCase
         $groups = $this->controller()->handle(new Request('GET', '/groups'), 'admin', $this->csrf);
         self::assertStringNotContainsString('<script>', $users->body);
         self::assertStringContainsString('&lt;script&gt;', $users->body);
+        self::assertStringContainsString('<select id="member-user-', $groups->body);
+        self::assertStringContainsString('value="bob">&lt;script&gt;', $groups->body);
+        self::assertStringNotContainsString('placeholder="Benutzerkennung"', $groups->body);
         self::assertStringNotContainsString('<img src=x', $groups->body);
         self::assertStringContainsString('&lt;img src=x onerror=&quot;x&quot;&gt;', $groups->body);
     }

@@ -4,6 +4,7 @@ $e = PageRenderer::escape(...);
 $titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen', 'error' => 'Zugriff', 'login' => 'Anmelden', 'account' => 'Mein Zugang', 'spaces' => 'Speicherbereiche', 'files' => 'Dateien'];
 $caps = $data['caps'];
 $titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb', 'app-passwords' => 'App-Passwörter'];
+$titles['permissions']='Berechtigungen';$titles['space-administration']='Bereichsverwaltung';
 $titles['versions'] = 'Dateiversionen';
 $titles['text-editor'] = 'Text bearbeiten';
 $titles['file-search'] = 'Dateien suchen';
@@ -12,7 +13,7 @@ $titles['media-gallery']='Medien';$titles['media-detail']='Medium';$titles['medi
 ?>
 <!doctype html>
 <html lang="de">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?= $e($titles[$page]) ?> · Samla</title><link rel="stylesheet" href="/assets/samla.css?v=32"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?= $e($titles[$page]) ?> · Samla</title><link rel="stylesheet" href="/assets/samla.css?v=33"></head>
 <body><a class="skip" href="#main">Zum Inhalt</a>
 <div class="shell"><aside class="sidebar" aria-label="Hauptnavigation"><a class="brand" href="/"><span class="brand-icon" aria-hidden="true">S</span>Samla<span class="brand-dot">.</span></a><p class="brand-sub">JRTools · Dateien und Medien</p>
 <p class="nav-heading">ARBEITSPLATZ</p><nav>
@@ -22,6 +23,7 @@ $titles['media-gallery']='Medien';$titles['media-detail']='Medium';$titles['medi
 <?php if ($caps['identity.users.read'] ?? false): ?><a href="/users" <?= $page === 'users' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">◎</span> Benutzer</a><?php endif ?>
 <?php if ($caps['identity.groups.read'] ?? false): ?><a href="/groups" <?= $page === 'groups' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">▦</span> Gruppen</a><?php endif ?>
 <?php if ($caps['operations.worker.read'] ?? false): ?><a href="/operations/worker" <?= $page === 'worker' ? 'aria-current="page"' : '' ?>>Hintergrundaufgaben</a><?php endif ?>
+<?php if($caps['access.profiles.manage']??false): ?><a href="/permissions" <?= $page==='permissions'?'aria-current="page"':'' ?>>Berechtigungen</a><a href="/administration/spaces" <?= $page==='space-administration'?'aria-current="page"':'' ?>>Bereiche verwalten</a><?php endif ?>
 </nav><div class="sidebar-bottom"><span class="small-mark" aria-hidden="true">S</span><div>Ein Tool von JRTools.<small>Samla · Gemeinsam organisiert.</small></div></div></aside>
 <div class="workspace"><header class="topbar"><span>JRTools <span class="crumb">/ <?= $e($titles[$page]) ?></span></span><?php if ($data['actor'] !== null): ?><span class="actor"><span class="avatar" aria-hidden="true">S</span><?= $e($data['actor']) ?></span><?php endif ?></header>
 <?php if ($data['actor'] !== null && !($data['oidc'] ?? false)): ?><div class="dev-notice"><span class="status-dot" aria-hidden="true"></span> Lokaler Entwicklungszugang <span>Nur auf dem lokalen Entwicklungsrechner.</span></div><?php endif ?>

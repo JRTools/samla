@@ -150,3 +150,8 @@ Iteration 29 ergänzt platform.media:0002_reference_indexes für sichere referen
 
 
 Iteration 30 ergänzt den Metadatenprovider ohne neue Migration oder Laufzeitkomponente. Vorhandene DOM-/IPTC-Fähigkeiten werden in diagnose.php mit geprüft. Nach Codeupdate die Medienanalyse seitenweise neu aufbauen. Das optionale Profil media-sensitive vergibt gesonderte Metadaten-/Promptleserechte; bisherige Rollen erhalten sie nicht automatisch. Details: [embedded-metadata.md](embedded-metadata.md).
+
+
+## Bereichs- und Rechteverwaltung im Browser (Iteration 33)
+
+Keine neue Migration oder Abhängigkeit für diese Phase. Nach dem Codeupdate kann der bereits eingerichtete Standardadministrator **Bereiche verwalten** und **Berechtigungen** verwenden. Name/Quote, bestätigte Leerbereichslöschung und feste Gruppenprofile benötigen im normalen Betrieb keine CLI und keinen Wartungsmodus mehr. Neuanlage verleiht niemandem automatische Dateirechte. [Bedienung und Sicherheitsumfang](access-administration.md). Bestehende Betriebs-/Bootstrap-CLI bleibt verfügbar.

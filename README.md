@@ -6,7 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 32 (JRTools-Gestaltung)
+## Entwicklungsstand: Iteration 33 (Bereiche und Berechtigungen im UI)
+
+Gruppenrechte für Datei-/Medienbereiche und Hintergrundaufgaben lassen sich unter **Berechtigungen** zuweisen und entziehen. **Bereiche verwalten** bietet Anlage, Name-/Quotenänderung und bestätigtes Löschen vollständig leerer Bereiche. Dropdowns zeigen Gruppen-, Benutzer-, Bereichs- und Profilnamen. Der bestehende Standardadministrator kann diese Funktionen ohne zusätzlichen Konsolenschritt verwenden. [Bedienung, feste Profile und Grenzen](docs/access-administration.md).
 
 Die gemeinsame Oberfläche folgt dem JRTools-Design: dunkle schieferblaue Navigation und Kopfzeile, hellgraue Flächen, grüne Akzente, kompakte Karten und Systemschriften. Die Startseite öffnet die vorhandenen Datei- und Medienfunktionen; alle Seiten verwenden die gemeinsame lokale CSS-Datei. [Gestaltungsumfang und Prüfgrenzen](docs/design.md).
 

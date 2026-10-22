@@ -22,6 +22,8 @@ final readonly class MutationContext
         public ?OutboxRetryChange $outboxRetry = null,
         public ?MediaRefreshChange $mediaRefresh=null,
         public ?MediaBatchRefreshChange $mediaBatchRefresh=null,
+        public ?AccessProfileChange $accessProfile=null,
+        public ?StorageSpaceChange $storageSpace=null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -40,6 +42,18 @@ final readonly class MutationContext
                 || ($targets['subscriber']??null)!==hash('sha256',$outboxRetry->subscriberId)))) {throw new \InvalidArgumentException('Retry proposal must match its targets.');}
         if(($operation==='media.asset.refresh')!==($mediaRefresh!==null)||($mediaRefresh!==null&&($scope!==Scope::Space||($targets['entry']??null)!==$mediaRefresh->entryId))){throw new \InvalidArgumentException('Media refresh proposal must match its target.');}
         if(($operation==='media.batch.refresh')!==($mediaBatchRefresh!==null)||($mediaBatchRefresh!==null&&($scope!==Scope::Space||($targets['batch']??null)!==$mediaBatchRefresh->signature()))){throw new \InvalidArgumentException('Media batch must match its exact proposal.');}
+        $spaceOperation=in_array($operation,['storage.space.catalog.create','storage.space.catalog.update','storage.space.catalog.delete'],true);
+        if($spaceOperation!==($storageSpace!==null)||($spaceOperation&&($scope!==Scope::Space||$spaceId!==$storageSpace->spaceId
+            ||$targets!==['space'=>$storageSpace->spaceId]||$operation!=='storage.space.catalog.'.$storageSpace->operation))){
+            throw new \InvalidArgumentException('Space change must match its exact proposal.');
+        }
+        $profileOperation=in_array($operation,['rbac.profile.grant','rbac.profile.revoke'],true);
+        if ($profileOperation!==($accessProfile!==null)
+            || ($profileOperation&&($scope!==$accessProfile->profile->scope||$spaceId!==$accessProfile->spaceId
+                ||$targets!==['group'=>$accessProfile->groupId,'role'=>$accessProfile->profile->id]
+                ||($operation==='rbac.profile.grant')!==$accessProfile->grant))) {
+            throw new \InvalidArgumentException('Access profile must match its exact proposal.');
+        }
         $groupOperation = in_array($operation, ['identity.group.create', 'identity.group.rename'], true);
         $lockOperation = in_array($operation, ['storage.lock.acquire','storage.lock.renew','storage.lock.release','storage.file.create_locked'], true);
         if ($lockOperation !== ($storageLock !== null) || ($lockOperation && ($scope !== Scope::Space || !isset($targets['lock'])

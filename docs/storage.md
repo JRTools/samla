@@ -164,3 +164,8 @@ TextEditorService verwendet unveränderliche Downloads mit erwarteter Revision u
 ## Namenssuche
 
 FileService.search benötigt files.list im exakten Bereich. Ein einmalig begrenzter Katalogscan sucht wörtlich und Unicode-groß-/kleinschreibungsunabhängig über sichtbare Namen, prüft Elternketten und liefert Cursorseiten bis 100 Treffer. Details, Grenzen und separate Downloadrechte stehen in [file-search.md](file-search.md). Es wird kein neuer Inhaltsindex angelegt.
+
+
+## Onlineverwaltung von Bereichen und Profilen
+
+Seit Iteration 33 stehen Bereichsanlage, Name-/Quotenänderung, bestätigte Löschung vollständig leerer Bereiche sowie die festen Gruppenprofile im Browser bereit. Die zuvor dokumentierten Wartungs-CLI-Befehle bleiben als Betreiberwerkzeuge erhalten. Namensbasierte Dropdowns und Schutz vor veralteten Formularen ersetzen das Abtippen von Kennungen. Bereichsanlage vergibt keine Inhaltsrechte. Papierkorb und Historien zählen weiter zur Quote; ein gefüllter Bereich kann nicht über den Verwaltungsknopf kaskadierend gelöscht werden. [Bedienung, Autorisierung und Grenzen](access-administration.md).

@@ -1,17 +1,21 @@
-# Prüfung Iteration 32
+# Prüfung Iteration 33
 
-JRTools-Gestaltung: gemeinsame PHP-Templates und lokale CSS-Datei, keine neue Runtime und keine Migration. Die vorhandene Inhaltsprüfung der Startseite wurde an die aktualisierte Überschrift angepasst. Der erste Integrationslauf fand noch den alten erwarteten Text; nach Aktualisierung dieser Erwartung wurden beide vollständigen Datenbankläufe erneut ausgeführt.
+Bereichs- und feste Profilverwaltung mit benannten Dropdowns: PHP 8.4.5/8.5.4 × MySQL 8.0.46/MariaDB 11.8.6 in allen vier Kombinationen erfolgreich. Jeweils **493 Tests / 2620 Assertions**: 200 Unit-/Architekturtests mit 1137 Assertions und 293 Integrationstests mit 1483 Assertions. Syntax aller 247 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Keine neue Migration oder Abhängigkeit. git diff --check erfolgreich.
 
-PHP 8.4.5/8.5.4 × MySQL 8.0.46/MariaDB 11.8.6: alle vier Kombinationen erfolgreich, jeweils 477 Tests / 2489 Assertions (197 Unit-/Architekturtests, 1106 Assertions; 280 Integrationstests, 1383 Assertions). Syntax aller 233 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Tatsächlicher synthetischer HTTP-/HTTPS-Durchlauf erfolgreich: PHP 8.4/8.5 development HTTP und PHP 8.4 production HTTPS. Erwartete PDOException-Zeilen sind absichtliche DAV-Rollbackfixtures.
+Die neuen öffentlichen Vertragsprüfungen behandeln unveränderliche explizite Profilrechte und genaue Bindung von Profil-/Bereichsvorschlägen an Operation, Ziel und Scope. Die Integrationsfälle prüfen benannte/escaped Dropdowns, fehlende Rechte, gesperrte Konten, CSRF, Bestätigung, manipulierte Ziele/JSON/Scopes, veraltete Formulare, additive Profile, sofortigen Entzug, getrennte sensible Rechte, globale Workerprofile ohne Datei-/Identitätsadministration und abweichende reservierte Rollen.
 
-Die JRTools-Referenz wurde im Browser betrachtet und ihre öffentliche CSS-Datei gelesen. Die lokale Samla-Vorschau war im Cloud-Browser nicht erreichbar; dessen Sperre für Datei-URLs wurde respektiert. Keine visuelle Browserabnahme der geänderten Samla-Seiten, native Geräteprüfung, vollständige Barrierefreiheits- oder Offlineabnahme behauptet. Designumfang und Kontrastvarianten: design.md.
+Zusätzlich geprüft: echte Vorschläge an Pluginvalidatoren, Veto und zwischen den Guardprüfungen entzogene Administratorrechte mit vollständigem Rollback; Bereichsanlage ohne implizite Dateirechte; Namen/Quoten mit Zustandsprüfung; Verbrauch einschließlich Historie und Papierkorb; nicht kaskadierende Ablehnung gefüllter Bereichslöschung; aktive Sperren; atomare Bereinigung von Zuweisungen/Delegationen mit Rücknahme bei Lifecyclefehler; Fortbestand anderer Bereiche und Rollen; bestehende CLI-Bereichszuweisungen im benannten Profilmenü sowie weiterhin geschützte administrative/eigene Rollen. Benutzer-Dropdowns mit tatsächlich escaped Anzeigenamen sind im vorhandenen Verwaltungsintegrationstest ergänzt.
 
-Keine zusätzliche CSS-Testbibliothek installiert. Ein versuchter optionaler lokaler CSS-Parser war nicht vorhanden; daraus wird kein erfolgreicher Parserlauf abgeleitet. git diff --check erfolgreich. ZIP ist inzwischen freigegeben, bleibt aber noch nicht implementiert; frühere anderslautende Freigabehinweise im historischen Prüfprotokoll sind überholt. GitHub-CI folgt auf die Veröffentlichung.
+Der tatsächliche synthetische OIDC-Durchlauf prüft die neuen HTTP-Endpunkte einschließlich Bereichsanlage, fehlender automatischer Freigabe, namensbasierten Auswahlen, Zuweisen, Entziehen, stale 409, Name/Quote, expliziter Löschbestätigung und erfolgreicher Leerbereichslöschung. PHP 8.4/8.5 development HTTP sowie PHP 8.4 production HTTPS erfolgreich. Bestehende DAV-, Medien-, Versions-, Worker-, Sperren- und Kontoprüfungen bleiben erfolgreich.
+
+Während der Entwicklung wurden zwei Fehler in den neuen Testfixtures korrigiert (Spaltenname trashed_at und fehlendes Statusverwaltungsrecht des synthetischen Administrators). Ein vorübergehender MySQL-Teststart scheiterte an einer fehlenden Redodatei im temporären Fixture; die isolierte Datenbank wurde neu unter /tmp initialisiert und danach erfolgreich geprüft. Keine Betreiber- oder Produktivdatenbank war betroffen. Erwartete PDOException-Zeilen im erfolgreichen Lauf stammen aus bestehenden absichtlichen DAV-Rollbacktests.
+
+Die vorherige GitHub-Matrix der Designphase ist mit gelesenen Joblogs vollständig erfolgreich in verification-iteration-32.md dokumentiert. Die neue GitHub-CI folgt auf die Veröffentlichung dieser Phase. Keine visuelle Browser-/native Geräteabnahme behauptet; deren Einschränkung ist in design.md dokumentiert. Freie Rollenbearbeitung, allgemeine administrative Zuweisungen, Delegations-/IdP-Mapping-UI, automatische persönliche Bereiche, Retention und Offline-Synchronisierung bleiben eigene offene Umfänge. Details: access-administration.md.
 
 ### locked-matrix-results.txt
 
 ```text
-PHP 8.4, lint 233 files
+PHP 8.4, lint 247 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -19,14 +23,14 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 197 ( 31%)
-............................................................... 126 / 197 ( 63%)
-............................................................... 189 / 197 ( 95%)
-........                                                        197 / 197 (100%)
+...............................................................  63 / 200 ( 31%)
+............................................................... 126 / 200 ( 63%)
+............................................................... 189 / 200 ( 94%)
+...........                                                     200 / 200 (100%)
 
-Time: 00:04.050, Memory: 26.00 MB
+Time: 00:03.719, Memory: 26.00 MB
 
-[30;42mOK (197 tests, 1106 assertions)[0m
+[30;42mOK (200 tests, 1137 assertions)[0m
 
 
 8.4 / phpunit.integration.xml
@@ -35,15 +39,15 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 280 ( 22%)
-............................................................... 126 / 280 ( 45%)
-............................................................... 189 / 280 ( 67%)
-............................................................... 252 / 280 ( 90%)
-............................                                    280 / 280 (100%)
+...............................................................  63 / 293 ( 21%)
+............................................................... 126 / 293 ( 43%)
+............................................................... 189 / 293 ( 64%)
+............................................................... 252 / 293 ( 86%)
+.........................................                       293 / 293 (100%)
 
-Time: 00:56.959, Memory: 38.00 MB
+Time: 00:57.159, Memory: 38.00 MB
 
-[30;42mOK (280 tests, 1383 assertions)[0m
+[30;42mOK (293 tests, 1483 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
@@ -51,7 +55,7 @@ Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 233 files
+PHP 8.5, lint 247 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -59,14 +63,14 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 197 ( 31%)
-............................................................... 126 / 197 ( 63%)
-............................................................... 189 / 197 ( 95%)
-........                                                        197 / 197 (100%)
+...............................................................  63 / 200 ( 31%)
+............................................................... 126 / 200 ( 63%)
+............................................................... 189 / 200 ( 94%)
+...........                                                     200 / 200 (100%)
 
-Time: 00:04.002, Memory: 26.00 MB
+Time: 00:04.136, Memory: 26.00 MB
 
-[30;42mOK (197 tests, 1106 assertions)[0m
+[30;42mOK (200 tests, 1137 assertions)[0m
 
 
 8.5 / phpunit.integration.xml
@@ -75,15 +79,15 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 280 ( 22%)
-............................................................... 126 / 280 ( 45%)
-............................................................... 189 / 280 ( 67%)
-............................................................... 252 / 280 ( 90%)
-............................                                    280 / 280 (100%)
+...............................................................  63 / 293 ( 21%)
+............................................................... 126 / 293 ( 43%)
+............................................................... 189 / 293 ( 64%)
+............................................................... 252 / 293 ( 86%)
+.........................................                       293 / 293 (100%)
 
-Time: 00:56.454, Memory: 38.00 MB
+Time: 00:56.980, Memory: 38.00 MB
 
-[30;42mOK (280 tests, 1383 assertions)[0m
+[30;42mOK (293 tests, 1483 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
@@ -95,7 +99,7 @@ Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation
 ### mariadb-matrix-results.txt
 
 ```text
-PHP 8.4, lint 233 files
+PHP 8.4, lint 247 files
 
 8.4 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -103,14 +107,14 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 197 ( 31%)
-............................................................... 126 / 197 ( 63%)
-............................................................... 189 / 197 ( 95%)
-........                                                        197 / 197 (100%)
+...............................................................  63 / 200 ( 31%)
+............................................................... 126 / 200 ( 63%)
+............................................................... 189 / 200 ( 94%)
+...........                                                     200 / 200 (100%)
 
-Time: 00:03.751, Memory: 26.00 MB
+Time: 00:03.739, Memory: 26.00 MB
 
-[30;42mOK (197 tests, 1106 assertions)[0m
+[30;42mOK (200 tests, 1137 assertions)[0m
 
 
 8.4 / phpunit.integration.xml
@@ -119,15 +123,15 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.5
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 280 ( 22%)
-............................................................... 126 / 280 ( 45%)
-............................................................... 189 / 280 ( 67%)
-............................................................... 252 / 280 ( 90%)
-............................                                    280 / 280 (100%)
+...............................................................  63 / 293 ( 21%)
+............................................................... 126 / 293 ( 43%)
+............................................................... 189 / 293 ( 64%)
+............................................................... 252 / 293 ( 86%)
+.........................................                       293 / 293 (100%)
 
-Time: 00:50.586, Memory: 38.00 MB
+Time: 00:50.088, Memory: 36.00 MB
 
-[30;42mOK (280 tests, 1383 assertions)[0m
+[30;42mOK (293 tests, 1483 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
@@ -135,7 +139,7 @@ Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation
 8.4 / migrate CLI: Schema is current.
 
 
-PHP 8.5, lint 233 files
+PHP 8.5, lint 247 files
 
 8.5 / phpunit.xml
 PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
@@ -143,14 +147,14 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 
-...............................................................  63 / 197 ( 31%)
-............................................................... 126 / 197 ( 63%)
-............................................................... 189 / 197 ( 95%)
-........                                                        197 / 197 (100%)
+...............................................................  63 / 200 ( 31%)
+............................................................... 126 / 200 ( 63%)
+............................................................... 189 / 200 ( 94%)
+...........                                                     200 / 200 (100%)
 
-Time: 00:03.781, Memory: 26.00 MB
+Time: 00:03.959, Memory: 26.00 MB
 
-[30;42mOK (197 tests, 1106 assertions)[0m
+[30;42mOK (200 tests, 1137 assertions)[0m
 
 
 8.5 / phpunit.integration.xml
@@ -159,15 +163,15 @@ PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.5.4
 Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integration.xml
 
-...............................................................  63 / 280 ( 22%)
-............................................................... 126 / 280 ( 45%)
-............................................................... 189 / 280 ( 67%)
-............................................................... 252 / 280 ( 90%)
-............................                                    280 / 280 (100%)
+...............................................................  63 / 293 ( 21%)
+............................................................... 126 / 293 ( 43%)
+............................................................... 189 / 293 ( 64%)
+............................................................... 252 / 293 ( 86%)
+.........................................                       293 / 293 (100%)
 
-Time: 00:50.581, Memory: 38.00 MB
+Time: 00:49.466, Memory: 38.00 MB
 
-[30;42mOK (280 tests, 1383 assertions)[0m
+[30;42mOK (293 tests, 1483 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
@@ -179,8 +183,8 @@ Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation
 ### oidc-web-results.txt
 
 ```text
-8.4 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
-8.5 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
-8.4 production HTTPS: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+8.4 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+8.5 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+8.4 production HTTPS: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
 
 ```

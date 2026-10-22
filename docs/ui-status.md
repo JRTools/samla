@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, Funktionsphasen bis 31. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 22. Oktober 2026, Funktionsphasen bis 33. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -12,10 +12,12 @@ Stand: 22. Oktober 2026, Funktionsphasen bis 31. Codeveröffentlichung ist keine
 | Textansicht und Editor | Eintrag verwalten → Text öffnen | Für unterstützte UTF-8-Dateien bis 64 KiB vorhanden; ohne update nur lesbar |
 | Konfliktentwurf sichern | Editor nach 409/423/Quotenfehler → Entwurf herunterladen | Formular und Attachment vorhanden; Entwürfe werden nicht automatisch serverseitig gespeichert |
 | App-Passwörter anlegen und widerrufen | Mein Zugang → App-Passwörter verwalten | Weboberfläche vorhanden |
-| Benutzer-/Gruppenverzeichnisse, Status und manuelle Mitgliedschaften | Benutzer beziehungsweise Gruppen | Bisher beschriebene Verwaltungsoberflächen vorhanden |
+| Benutzer-/Gruppenverzeichnisse, Status und manuelle Mitgliedschaften | Benutzer beziehungsweise Gruppen | Verwaltungsoberflächen vorhanden; manuelle Mitgliedschaften verwenden Benutzernamen im Dropdown |
 | WebDAV-Dateioperationen und LOCK/UNLOCK | Externer WebDAV-Client über /dav/ | Protokolladapter vorhanden; keine eigene browserseitige Sperrenverwaltung oder native Clientabnahme |
-| Rollenbearbeitung, Zuweisungen, Gruppenmapping und Delegationsverwaltung | Noch kein umfassender UI-Einstieg | Bestehende Backendverträge/geschützte Teilfunktionen und Wartungs-CLI ersetzen keine vollständige Verwaltungsoberfläche |
-| Bereichsanlage, initiale Administration, Konsistenzcheck und Objekt-GC | Dokumentierte CLI-Befehle | Noch keine vollständigen Webformulare |
+| Feste Rechteprofile für Gruppen | Berechtigungen unter /permissions | Namensbasierte Dropdowns für Gruppe, Bereich und Profil; Zuweisen/Entziehen, Bestätigung und Schutz vor veraltetem Formular; Datei-, Medien-, sensible Metadaten- und Workerprofile sowie bekannte alte CLI-Bereichszuweisungen |
+| Beliebige Rollen, administrative Zuweisungen, Gruppenmapping und Delegationsverwaltung | Noch kein umfassender UI-Einstieg | Weiterhin offen; die festen Profile sind keine allgemeine Rollenbearbeitung |
+| Bereichsanlage, Name/Quote und Löschen | Bereiche verwalten unter /administration/spaces | Webformulare und Dropdowns; bestätigte Löschung nur vollständig leerer Bereiche einschließlich atomarer Rechtebereinigung |
+| Initiale Administration, Konsistenzcheck und Objekt-GC | Dokumentierte CLI-Befehle | Weiterhin kontrollierte Betreiberabläufe außerhalb der neuen Bereichsoberfläche |
 | Outbox-Worker, Zustellstatus und Retry | Hintergrundaufgaben unter /operations/worker; Ausführung über CLI oder authentifizierten POST /tasks/run | Browseransicht mit getrennten Rechten, Filter/Pagination und revisionsgebundenem Retry; Betreiberkonfiguration des Maschinen-Tokens bleibt außerhalb des UI |
 | Medienraster, Vorschauen und ausgewählte EXIF-Felder | Medien unter /media mit Ordnern und Detailseite | Rechtegeschützte PNG-Vorschau, getrennte Metadatenrechte, Quelle/Originalwert, einzelne Analysevormerkung und bereichsweiter seitenweiser Neuaufbau; GD/EXIF und Worker erforderlich |
 | Ausgewählte IPTC-/XMP-/PNG-Textangaben und strukturierte KI-Deklaration | Medien-Detailansicht | Quelle/Normalisierung und Auslesestatus; separate Rechte auf Prompt-/Autorfelder; C2PA nicht untersucht oder validiert |

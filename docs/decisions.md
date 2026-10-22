@@ -96,3 +96,8 @@ Dauerhafte exklusive Sperren werden über stabile Eintragskennungen geführt. Ei
 Sperranlage verlangt files.update im konkreten Bereich, sichtbares Ziel und keine überlappende aktive Sperre. Verlängerung/Freigabe verlangen zusätzlich Eigentümer, aktuelles Token und dieselbe erwartete Sperrkennung. Ein Token einer fremden Identität gewährt auch bei sonst gültigen Dateirechten keinen Schreibzugriff. Ablauf ist begrenzt, kein unbegrenztes Holding.
 
 Physische Uploadübertragung bleibt vor der kurzen SQL-Mutation. Die Sperrprüfung erfolgt vor der Übertragung und nochmals bei der abschließenden Transaktion. Tritt dazwischen eine Sperre hinzu, wird keine sichtbare Datei publiziert; ein bereits fertiges physisches Objekt kann bis zur kontrollierten GC erhalten bleiben. Browserfehler 423 ist bewusst sichtbar, kein stiller Sperrenbypass. API 0.7 ergänzt den typisierten Lock-Vorschlag.
+
+
+## Iteration 33: Alltagstaugliche Bereichs- und Profilverwaltung
+
+Der Betreiber wünscht Bereichs-CRUD und Rechteverwaltung im UI mit Dropdowns und Anzeigenamen. Umsetzung: feste Datei-/Medien-/Workerprofile und bekannte alte CLI-Bereichszuweisungen, geschützte Bereichskatalogverwaltung und Benutzer-Dropdown bei Mitgliedschaften. Bestehende Standardadministration funktioniert ohne neuen Konsolenschritt. Berechtigung für den festen Onlineumfang verlangt die drei aktuellen globalen Verzeichnis-/Mitgliedschaftsrechte gemeinsam. Keine beliebige administrative Rollenbearbeitung und keine impliziten Dateirechte. Bereichslöschung zunächst ausschließlich leer und ausdrücklich bestätigt; keine automatische Inhaltslöschung oder erfundene Aufbewahrungsfrist. Details: access-administration.md.

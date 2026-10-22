@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.36
+Version: 1.37
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 32, gemeinsame Gestaltung nach JRTools, siehe Abschnitt 44. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 33, Bereichs- und feste Berechtigungsverwaltung im Browser, siehe Abschnitt 45. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1062,3 +1062,22 @@ Die JRTools-Referenz wurde visuell im Browser geprüft. Die lokale Samla-Vorscha
 Während dieser Phase wünscht der Betreiber zusätzlich eine Berechtigungsverwaltung im UI. Sie wird als folgende eigene Phase umgesetzt, damit alltägliche Gruppen-/Bereichs- und Workerzuweisungen keine Konsolenarbeit mehr verlangen. Danach bleibt der bereits freigegebene ZIP-Export vorgesehen. Keine erneute Freigabe der bekannten Komponenten nötig.
 
 Version 1.36: JRTools-Gestaltung; Offlinebearbeitung und übliche Dateigröße konkretisiert.
+
+
+## 45. Iteration 33: Bereiche und feste Berechtigungsprofile im UI
+
+Die vom Betreiber gewünschte Onlineverwaltung ist ergänzt: Bereiche mit Namen und Quote anlegen/bearbeiten, vollständig leere Bereiche ausdrücklich bestätigt löschen und Gruppenrechte global oder pro Bereich zuweisen/entziehen. Die Oberfläche verwendet Dropdowns und Anzeigenamen für Gruppen, Bereiche, Berechtigungsprofile und Benutzer bei manuellen Mitgliedschaften. Keine Freitextkennung zum Auswählen referenzierter Entitäten. Verwaltungslisten bleiben begrenzt; Überschreitungen werden ausdrücklich gemeldet und nicht still abgeschnitten.
+
+Die festen Profile entsprechen den bisherigen Datei-/Medien-/Worker-CLI-Profilen. Bekannte alte CLI-Bereichsanlagezuweisungen mit exakt ursprünglichem Rechteumfang werden zusätzlich verständlich bezeichnet und können entzogen werden. Abweichende reservierte Definitionen werden nicht automatisch umgeschrieben. Andere eigene oder administrative Rollen und allgemeine Delegations-/IdP-Mappingverwaltung bleiben separate offene Oberflächen. Die Profilansicht ist keine vollständige Erklärung aller effektiven Rechte.
+
+Die vorhandene Standardadministration kann die neue Oberfläche ohne zusätzlichen Bootstrap verwenden. Gemeinsame Voraussetzung sind aktuelle globale Verzeichnislese- und Mitgliedschaftsverwaltungsrechte gemäß access-administration.md. Feste normale Profilgruppen lassen sich damit auch bezüglich manueller Mitglieder verwalten; administrative/unbekannte Rollen behalten ihren Schutz. Die Anlage eines Bereichs sowie globale Administration verleihen keine automatischen Dateirechte.
+
+Bereichsquoten berücksichtigen Originale, Versionen und Papierkorb. Senken unter den aktuellen Verbrauch wird verhindert. Gefüllte Bereiche können nicht über den Bereichsknopf gelöscht werden; hierfür sind zunächst die bestehenden expliziten Inhalts-/Purge-Abläufe nötig. Aktive Sperren verhindern die Leerbereichslöschung. Bereichskatalog, RBAC-Zuweisungen/Delegationen, Audit und Outbox werden beim Löschen gemeinsam transaktional behandelt; andere Bereiche und Rollen bleiben bestehen. Die Löschung eines leeren Bereichs ist endgültig und verlangt eine ausdrückliche Bestätigung.
+
+Neue öffentliche Verträge AccessProfile, AccessProfileAdministration, AccessProfileChange, StorageSpaceChange und SpaceAccessCleanup trennen Kern und RBAC-Speicherung. Vorschläge sind unveränderlich und exakt an MutationContext gebunden. Aktuelle Rechte- und Zustandsprüfungen vor/nach Pluginvalidierung, CSRF, POST und beobachtete Zustandsfingerprints schützen die Endpunkte. Der Lifecycle-Cleanup ist ein vertrauenswürdiger Transaktionshook; kein direkter unprotokollierter Webendpunkt. Keine neue Migration, Laufzeitkomponente oder automatische Rechteerweiterung bestehender Rollen.
+
+Prüfung: Unit-/Architekturverträge, Integrationsfälle für Rechteentzug, sensible Felder, Konflikte, manipulierte Formulare, Pluginveto, Quoten inklusive Historie/Papierkorb und atomare Löschung sowie echter OIDC-HTTP-/HTTPS-Durchlauf. Ergebnis und Prüfgrenzen stehen in verification.md. Eine visuelle/native Browserabnahme bleibt offen. Bedienung und genaue Grenzen sind in access-administration.md dokumentiert.
+
+Weitere Konzeptarbeit bleibt offen, insbesondere freie Rollen-/Delegationsverwaltung, IdP-Mapping-UI, automatische persönliche Bereiche, konfigurierbare Retention, geprüfte Offline-Synchronisierung und der bereits freigegebene portable ZIP-Export. Für diese Punkte wird kein Abschluss behauptet und keine neue pauschale Freigabe verlangt.
+
+Version 1.37: Bereichs- und feste Berechtigungsverwaltung, benannte Dropdowns und Schutz leerer Bereichslöschungen.

@@ -10,7 +10,7 @@ final readonly class RbacGroupMembershipPolicy implements GroupMembershipPolicy
 {
     public function __construct(private PdoRoleRepository $roles, private IdentityReader $identities,
         private AuthorizationChecker $authorization, private PermissionRegistry $permissions,
-        private ResourceDirectory $resources) {}
+        private ResourceDirectory $resources,private ?ProfileAccessAdministration $profiles=null) {}
 
     public function allows(string $actorId, string $userId, string $groupId, bool $grant): bool
     { return $this->allowsGroup($actorId, $groupId, $grant); }
@@ -18,6 +18,7 @@ final readonly class RbacGroupMembershipPolicy implements GroupMembershipPolicy
     /** Internal shared rule for all memberships conveyed by a group, including future mapping matches. */
     public function allowsGroup(string $actorId, string $groupId, bool $grant): bool
     {
+        if($this->profiles?->allowsProfileMembership($actorId,$groupId)===true){return true;}
         $groups = $this->identities->groupIds($actorId);
         foreach ($this->roles->assignmentsFor([$groupId]) as $assignment) {
             // Global and administration-bearing groups remain outside this first delegation contract.
