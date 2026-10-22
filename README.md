@@ -173,3 +173,9 @@ Iteration 15: App-Passwörter sind über den OIDC-Kontobereich verwaltbar; ein a
 Die vorhandenen Upload-/Listen-/Baumgrenzen sind vorläufige technische Schutzgrenzen. Vor der nächsten WebDAV-Schreib-/Lastabnahme werden gemäß Konzept 8.2 Bestandsgröße, maximale Dateigröße, parallele Nutzung und konkrete Referenzclients mit dem Betreiber festgelegt.
 
 Iteration 16: Betriebsziel sind etwa 1000 Dateien und fünf gleichzeitig aktive Benutzer, mit iOS, Android, Windows und macOS als Zielplattformen. Ein 1000-Dateien-Katalog und fünf gleichzeitig gestartete PHP-Uploadprozesse sind in der Datenbankmatrix geprüft. Das ist keine native Geräteclientabnahme und kein vollständiger Lastnachweis. APP_MAX_UPLOAD_BYTES macht die vorläufige 16-MiB-Schutzgrenze konfigurierbar; konkrete größere Datei-/Volumenziele sind noch nicht vereinbart. WebDAV-Schreibsperren und Protokollanbindung werden weiter umgesetzt.
+
+## Nächste Betriebsentscheidung
+
+Für die zuverlässige Outbox-Verarbeitung und folgende Medienaufgaben liegt ein [konkreter Vorschlag für PHP-CLI per Cron](docs/background-processing-decision.md) vor: geplanter Aufruf pro Minute, begrenzte Batches, Überlappungsschutz und idempotente Zustellung mit Wiederholungen. Der Worker und der Host-Cronjob sind noch nicht implementiert beziehungsweise eingerichtet. Das Konzept verlangt die ausdrückliche Abstimmung dieser zusätzlichen Betriebsanforderung.
+
+Eine Übersicht über vorhandene UI-Einstiege, CLI-Funktionen und noch offene Verwaltungsoberflächen steht in [ui-status.md](docs/ui-status.md). Auf GitHub veröffentlichter Code ist nicht automatisch auf einem Betreiberhost installiert.

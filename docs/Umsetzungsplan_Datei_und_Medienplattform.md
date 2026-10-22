@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.26
+Version: 1.27
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 25, siehe Abschnitt 35. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 25 und vorbereitete Betriebsentscheidung, siehe Abschnitte 35 und 36. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -907,3 +907,16 @@ Neue Integrationsfälle prüfen Unicode, wörtliche Prozent-/Unterstrichzeichen,
 Weitere Medien-, Datei-, Verwaltungs- und Betriebsfunktionen werden ohne erneutes allgemeines Go fortgesetzt. Neue Runtime-/Betriebskomponenten bleiben vor Einsatz abzustimmen.
 
 Version 1.26: Bereichsweite Namenssuche mit Sichtbarkeitsprüfung, Typfilter und begrenzter Pagination.
+
+
+## 36. Nächste Etappe: Zustellung der Outbox und Medienaufgaben
+
+Die vorher ausdrücklich offene Entscheidung zur Hintergrundverarbeitung wird vor Einführung einer neuen Betriebsanforderung eingeholt. docs/background-processing-decision.md beschreibt den konkreten Vorschlag: vorhandenes PHP-CLI, geplanter Aufruf pro Minute als Subscription-Benutzer, höchstens 50 Zustellungen, kooperatives 45-Sekunden-Budget, eigener Überlappungsschutz, persistente Empfänger-/Ereigniszustände, begrenzte Leases und idempotente Wiederholungen bis zum sichtbaren Fehlerstatus. Es werden keine automatische GC oder zusätzliche Aufbewahrungsregeln eingeschaltet.
+
+Nach Zustimmung folgen öffentliche Empfängerverträge, Migration, Dispatcher, Diagnose und Referenzempfänger einschließlich echter Parallelitäts-/Fehlerprüfungen gegen beide Datenbanken. Medienhandler binden Ergebnisse anschließend an konkrete Inhaltsversionen. Hosteinrichtung ist eine eigene Betreiberabnahme nach fertiger CLI. Der noch nicht vorhandene Worker wird nicht als implementiert oder als zugestellt ausgewiesen.
+
+Benötigte Entscheidung: Darf und kann auf dem Plesk-Host ein PHP-CLI-Aufruf pro Minute unter dem Subscription-Benutzer als geplante Aufgabe laufen? Das Konzept hält PHP-CLI/Cron ausdrücklich für einen Vorschlag und verlangt bei fehlendem Cron eine abgestimmte Alternative. Die bisherigen Umsetzungen sind veröffentlicht; es ist kein allgemeines Fortsetzungs-Go erforderlich, sondern diese konkrete Betriebsentscheidung.
+
+Version 1.27: Reviewbare Entscheidungsvorlage für die nächste Hintergrundverarbeitungsphase.
+
+UI-Abdeckung zu den veröffentlichten Funktionen und verbleibenden CLI-/Backendlücken ist in docs/ui-status.md dokumentiert. Veröffentlichung und Betreiberdeployment werden getrennt ausgewiesen.
