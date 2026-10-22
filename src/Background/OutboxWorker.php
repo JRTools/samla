@@ -24,6 +24,11 @@ final readonly class OutboxWorker
         if ((int) $lock->fetchColumn() !== 1) { return array_replace($result, ['busy' => true]); }
         $deadline = hrtime(true) + $seconds * 1000000000;
         try {
+            foreach($this->runtime->workerTasks()as$task){
+                if(hrtime(true)>=$deadline){break;}
+                try{($task->run)();if($this->pdo->inTransaction()){throw new \LogicException('Worker task left a transaction open.');}}
+                catch(\Throwable){if($this->pdo->inTransaction()){$this->pdo->rollBack();}++$result['errors'];}
+            }
             $this->discover();
             $ids = array_keys($this->runtime->subscribers());
             // Persisted fair order also works with one-event batches and fixed cron intervals.

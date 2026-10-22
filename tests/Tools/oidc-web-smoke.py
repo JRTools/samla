@@ -1,6 +1,6 @@
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import base64, datetime, hashlib, html, http.cookiejar, http.client, ipaddress, json, os, re, ssl, subprocess, tempfile, threading, time, urllib.parse, urllib.request, urllib.error
+import base64, datetime, hashlib, html, io, zipfile, http.cookiejar, http.client, ipaddress, json, os, re, ssl, subprocess, tempfile, threading, time, urllib.parse, urllib.request, urllib.error
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -215,6 +215,34 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,content,headers=req('/files/download?space='+space+'&entry='+entry)
                     assert status==200 and content=='<?php echo 123;'
                     assert headers['Content-Type']=='application/octet-stream' and headers['Content-Disposition'].startswith('attachment;')
+                    # Authorized browser export -> actual CLI worker -> binary ZIP -> current-rights revocation.
+                    status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':space}))
+                    export_fields={'csrf':csrf(permissions),'group':'samla.administrators','space':space,'selection':profile_selection(permissions,'samla.files.export'),'operation':'grant','confirm':'1'}
+                    assert req('/permissions/change',export_fields)[0]==303
+                    status,files,_=req('/files?'+urllib.parse.urlencode({'space':space,'parent':parent}));assert 'ZIP-Export beauftragen' in files
+                    post=urllib.parse.urlencode([('csrf',csrf(files)),('space',space),('entries[]',entry+':1')]).encode()
+                    assert req('/exports/create',post)[0]==303
+                    status,exports,_=req('/exports');assert status==200 and 'Vorgemerkt' in exports
+                    export_job=re.search(r'name="export" value="([a-f0-9]{32})"',exports).group(1)
+                    processed=subprocess.run(php+['bin/worker.php'],cwd=project,env=env,capture_output=True,text=True)
+                    assert processed.returncode==0,processed.stdout+processed.stderr
+                    status,exports,_=req('/exports');assert status==200 and 'ZIP herunterladen' in exports
+                    downloaded=opener.open(urllib.request.Request(app_url+'/exports/download?export='+export_job),timeout=20)
+                    assert downloaded.status==200 and downloaded.headers['Content-Type']=='application/zip' and downloaded.headers['Cache-Control']=='no-store'
+                    assert downloaded.headers['Content-Disposition'].startswith('attachment;')
+                    archive_bytes=downloaded.read()
+                    with zipfile.ZipFile(io.BytesIO(archive_bytes)) as package:
+                        manifest=json.loads(package.read('manifest.json'))
+                        assert manifest['format']=='samla-export' and manifest['version']==1 and len(manifest['files'])==1
+                        assert manifest['files'][0]['entry_id']==entry and manifest['files'][0]['original_name']=='test.php'
+                        assert package.read(manifest['files'][0]['archive_path'])==b'<?php echo 123;'
+                    status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':space}))
+                    export_fields.update(csrf=csrf(permissions),selection=profile_selection(permissions,'samla.files.export'),operation='revoke')
+                    assert req('/permissions/change',export_fields)[0]==303
+                    assert req('/exports/download?export='+export_job)[0]==403
+                    status,exports,_=req('/exports');revision=re.search(r'name="revision" value="([0-9]+)"',exports).group(1)
+                    assert req('/exports/remove',{'csrf':csrf(exports),'export':export_job,'revision':revision,'confirm':'1'})[0]==303
+                    assert export_job not in req('/exports')[1]
                     # DAV is independent of browser cookies and accepts only an active app password.
                     status,credentials,_=req('/account/app-passwords')
                     status,created,_=req('/account/app-passwords/create',{'csrf':csrf(credentials),'label':'DAV HTTP','days':'30'})
@@ -446,7 +474,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

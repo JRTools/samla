@@ -139,6 +139,13 @@ final class ZipArchiveStore
         if(is_file($path)&&!unlink($path)){throw new StorageUnavailable('Export cleanup failed.');}
         $this->cleanWork($this->root.'/'.$id.'.work');
     }
+    /** Call only after the immutable job row has been removed; IDs are never reused. */
+    public function retire(string $id):void
+    {
+        $this->requireLock($id);
+        if(file_exists($this->root.'/'.$id.'.zip')||file_exists($this->root.'/'.$id.'.work')){throw new \LogicException('Export artifacts must be discarded first.');}
+        $path=$this->root.'/'.$id.'.lock';if(is_link($path)||!unlink($path)){throw new StorageUnavailable('Export lock cleanup failed.');}
+    }
     /** Read only an authenticated job's expected immutable derived bytes. @return resource */
     public function open(string $id,int $size)
     {

@@ -21,6 +21,7 @@ final class PluginRuntime implements PermissionRegistry
     private array $validators = [];
     /** @var array<string, \Samla\PluginApi\OutboxSubscription> */
     private array $subscribers = [];
+    private array $workerTasks=[];
     private array $exportProviders=[];
     private array $mediaFields=[];
     private array $mediaProviders=[];
@@ -60,6 +61,8 @@ final class PluginRuntime implements PermissionRegistry
                 public function outboxSubscriber(\Samla\PluginApi\OutboxSubscription $subscription): void {
                     $this->check(); $this->runtime->addSubscriber($this->owner, $subscription);
                 }
+                public function workerTask(\Samla\PluginApi\WorkerTask $task):void
+                {$this->check();$this->runtime->addWorkerTask($this->owner,$task);}
                 public function exportProvider(\Samla\PluginApi\ExportMetadataProvider $provider):void
                 {$this->check();$this->runtime->addExportProvider($this->owner,$provider);}
                 public function mediaField(\Samla\PluginApi\MediaField $field):void
@@ -77,6 +80,7 @@ final class PluginRuntime implements PermissionRegistry
             if($permission===null||!in_array(\Samla\PluginApi\Scope::Space,$permission->scopes,true)
                 ||($permission->ownerPlugin!==$entry['owner']&&($field->sensitive||$field->readPermission!=='media.metadata.read'))){throw new \LogicException('Invalid field permission.');}}
         uasort($runtime->mediaProviders,static fn(array $a,array $b):int=>($b['priority']<=>$a['priority'])?:strcmp($a['provider']->id(),$b['provider']->id()));
+        ksort($runtime->workerTasks,SORT_STRING);
         ksort($runtime->exportProviders,SORT_STRING);
         $runtime->sealed = true;
         return $runtime;
@@ -119,6 +123,13 @@ final class PluginRuntime implements PermissionRegistry
     }
     /** @return array<string, \Samla\PluginApi\OutboxSubscription> */
     public function subscribers(): array { return $this->subscribers; }
+    public function addWorkerTask(string $owner,\Samla\PluginApi\WorkerTask $task):void
+    {
+        if($this->sealed||!isset($this->active[$owner])||!str_starts_with($task->id,$owner.'.')||isset($this->workerTasks[$task->id])||count($this->workerTasks)>=8){throw new \LogicException('Invalid worker task registration.');}
+        $this->workerTasks[$task->id]=$task;
+    }
+    /** @return list<\Samla\PluginApi\WorkerTask> */
+    public function workerTasks():array{return array_values($this->workerTasks);}
     public function addExportProvider(string $owner,\Samla\PluginApi\ExportMetadataProvider $provider):void
     {
         $id=$provider->id();$version=$provider->version();

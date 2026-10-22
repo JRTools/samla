@@ -18,5 +18,6 @@ $checks = [
     'fileinfo' => extension_loaded('fileinfo'),
 ];
 foreach ($checks as $name => $ok) { echo ($ok ? '[OK] ' : '[MISSING] ') . $name . PHP_EOL; }
+echo (class_exists('ZipArchive') && method_exists('ZipArchive','registerCancelCallback') ? '[OK] ' : '[OPTIONAL MISSING] ') . 'zip_export_with_cancellation' . PHP_EOL;
 echo 'Connectivity, OIDC registration, storage permissions and background processing need separate verification.' . PHP_EOL;
 exit(in_array(false, $checks, true) ? 1 : 0);

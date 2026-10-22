@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, Funktionsphasen bis 33. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 22. Oktober 2026, Funktionsphasen bis 35. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -21,6 +21,7 @@ Stand: 22. Oktober 2026, Funktionsphasen bis 33. Codeveröffentlichung ist keine
 | Outbox-Worker, Zustellstatus und Retry | Hintergrundaufgaben unter /operations/worker; Ausführung über CLI oder authentifizierten POST /tasks/run | Browseransicht mit getrennten Rechten, Filter/Pagination und revisionsgebundenem Retry; Betreiberkonfiguration des Maschinen-Tokens bleibt außerhalb des UI |
 | Medienraster, Vorschauen und ausgewählte EXIF-Felder | Medien unter /media mit Ordnern und Detailseite | Rechtegeschützte PNG-Vorschau, getrennte Metadatenrechte, Quelle/Originalwert, einzelne Analysevormerkung und bereichsweiter seitenweiser Neuaufbau; GD/EXIF und Worker erforderlich |
 | Ausgewählte IPTC-/XMP-/PNG-Textangaben und strukturierte KI-Deklaration | Medien-Detailansicht | Quelle/Normalisierung und Auslesestatus; separate Rechte auf Prompt-/Autorfelder; C2PA nicht untersucht oder validiert |
+| Private ZIP-Exporte aktueller Dateien | Dateiauswahl unter Dateien; Meine Exporte unter /exports | Eigene Aufträge, Status/Ablauf, geschützter Download, Retry und Entfernen; separates Exportprofil und ZIP-fähiger Worker erforderlich |
 | Tags, Sammlungen, C2PA, manuelle Metadaten | Noch offen | Noch nicht als im UI vorhanden ausgewiesen |
 
 Die bloße Sichtbarkeit eines Buttons gewährt keine Berechtigung. Jeder tatsächliche Dienstaufruf prüft seine Rechte erneut. Fehlende Rechte blenden passende Aktionen aus oder verhindern direkte Aufrufe. Dateisperren schützen Browseränderungen auch ohne zusätzliche Browser-Sperrenschaltfläche.

@@ -24,6 +24,7 @@ final readonly class MutationContext
         public ?MediaBatchRefreshChange $mediaBatchRefresh=null,
         public ?AccessProfileChange $accessProfile=null,
         public ?StorageSpaceChange $storageSpace=null,
+        public ?ExportChange $exportChange=null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -42,6 +43,11 @@ final readonly class MutationContext
                 || ($targets['subscriber']??null)!==hash('sha256',$outboxRetry->subscriberId)))) {throw new \InvalidArgumentException('Retry proposal must match its targets.');}
         if(($operation==='media.asset.refresh')!==($mediaRefresh!==null)||($mediaRefresh!==null&&($scope!==Scope::Space||($targets['entry']??null)!==$mediaRefresh->entryId))){throw new \InvalidArgumentException('Media refresh proposal must match its target.');}
         if(($operation==='media.batch.refresh')!==($mediaBatchRefresh!==null)||($mediaBatchRefresh!==null&&($scope!==Scope::Space||($targets['batch']??null)!==$mediaBatchRefresh->signature()))){throw new \InvalidArgumentException('Media batch must match its exact proposal.');}
+        $exportOperation=in_array($operation,['exports.request','exports.retry','exports.remove'],true);
+        if($exportOperation!==($exportChange!==null)||($exportOperation&&($scope!==Scope::Space
+            ||$spaceId!==$exportChange->spaceId||$targets!==['export'=>$exportChange->jobId]||$operation!=='exports.'.$exportChange->operation))){
+            throw new \InvalidArgumentException('Export change must match its exact proposal.');
+        }
         $spaceOperation=in_array($operation,['storage.space.catalog.create','storage.space.catalog.update','storage.space.catalog.delete'],true);
         if($spaceOperation!==($storageSpace!==null)||($spaceOperation&&($scope!==Scope::Space||$spaceId!==$storageSpace->spaceId
             ||$targets!==['space'=>$storageSpace->spaceId]||$operation!=='storage.space.catalog.'.$storageSpace->operation))){

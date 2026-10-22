@@ -82,3 +82,8 @@ APP_MAINTENANCE=1 php bin/worker-access.php ACTOR_ID samla.administrators manage
 ```
 
 read enthält nur das Leserecht, manage Lese- und Retryrecht. Profile sind getrennte Zuweisungen; Entzug von read entfernt kein parallel vorhandenes manage. Die reservierten Rollen samla.worker.read/manage müssen exakt dem Profil entsprechen. Der Helfer ist eine lokale Betreiberfunktion und kein ungeschützter Webendpunkt. Aktuelle Gruppenfrische und lokale Kontosperren gelten für Webansicht und Retry. Gruppen mit globalen Rollen bleiben von den bestehenden Delegationsgrenzen der normalen Mitgliedschafts-/Mappingdienste geschützt. Eine allgemeine Rollenpflege im Browser bleibt ein eigenes offenes Arbeitspaket.
+
+
+## Technische Aufgaben und Exportpakete
+
+Iteration 35 ergänzt öffentliche WorkerTask-Registrierungen für begrenzte vertrauenswürdige technische Aufgaben. Sie laufen nach Überlappungsschutz vor der Ereignisentdeckung, soweit Laufzeitbudget bleibt. Fehler und offen gelassene SQL-Transaktionen werden isoliert/zurückgerollt und erhöhen errors; processed/delivered bleiben Zustellzähler. Der Exportempfänger verarbeitet Auftragsereignisse idempotent; eine zusätzliche technische Aufgabe bereinigt bis zu 50 abgelaufene/abgebrochene Pakete auch ohne neue Ereignisse. Fachliche Paketfehler sind am eigenen Exportauftrag sichtbar und werden dort gezielt wiederholt; sie sind keine endlos wiederholte technische Zustellstörung. Einrichtung: [portable-export.md](portable-export.md).

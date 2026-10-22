@@ -6,9 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 34 (Portabler Exportkern)
+## Entwicklungsstand: Iteration 35 (Private ZIP-Exporte im UI)
 
-Der geprüfte interne ZIP-Kern erhält Originalbytes, Manifest und explizit exportierbare Metadaten. Aufträge, Workeranbindung und Browserexport folgen unmittelbar; noch keine fertige Exportoberfläche. [Umfang und Grenzen](docs/portable-export.md).
+Dateien lassen sich mit dem gesonderten Bereichsprofil **Originale exportieren** auswählen und als privater ZIP-Auftrag vormerken. **Meine Exporte** zeigt Status, Ablauf, Retry und Entfernen. Der vorhandene CLI-/HTTPS-Worker erzeugt Originale mit JSON-Manifest; Downloads prüfen Besitzer, aktuelle Rechte, Quellen, Providerpolicy und Paketprüfsumme erneut. Temporäre Pakete werden begrenzt reserviert und beim Workeraufruf nach Ablauf bereinigt. **Neue Migration erforderlich; ext-zip mit Abbruchcallback in FPM und Worker aktivieren.** [Einrichtung, Grenzen und Bedienung](docs/portable-export.md).
 
 Gruppenrechte für Datei-/Medienbereiche und Hintergrundaufgaben lassen sich unter **Berechtigungen** zuweisen und entziehen. **Bereiche verwalten** bietet Anlage, Name-/Quotenänderung und bestätigtes Löschen vollständig leerer Bereiche. Dropdowns zeigen Gruppen-, Benutzer-, Bereichs- und Profilnamen. Der bestehende Standardadministrator kann diese Funktionen ohne zusätzlichen Konsolenschritt verwenden. [Bedienung, feste Profile und Grenzen](docs/access-administration.md).
 
@@ -198,11 +198,11 @@ PHP-CLI per Cron und der zusätzliche Webtrigger sind vom Betreiber freigegeben 
 
 Eine Übersicht über vorhandene UI-Einstiege, CLI-Funktionen und offene Verwaltungsoberflächen steht in [ui-status.md](docs/ui-status.md). Veröffentlichtes GitHub-Repository und Betreiberdeployment sind getrennte Schritte.
 
-Für die folgende Medienphase liegt eine [konkrete Entscheidungsvorlage zu ext-exif](docs/exif-library-decision.md) vor. Die zusätzliche PHP-Erweiterung ist bislang nicht als Samla-Komponente eingebunden oder freigegeben.
+Die native EXIF-Erweiterung ist freigegeben und für die Medienanalyse eingebunden; [Entscheidungsgrundlage](docs/exif-library-decision.md).
 
 
 Die aktuelle Übersicht der noch offenen Betreiberentscheidungen steht in [offene-entscheidungen.md](docs/offene-entscheidungen.md). Bereits erteilte Freigaben werden dort nicht erneut angefragt.
 
-Native ZIP-Paketierung mit ext-zip/ZipArchive und libzip ist vom Betreiber freigegeben. Der vorgesehene Exportumfang und die noch ausstehende Implementierung sind in [zip-library-decision.md](docs/zip-library-decision.md) dokumentiert.
+Native ZIP-Paketierung mit ext-zip/ZipArchive und libzip ist vom Betreiber freigegeben. Entscheidung und Abhängigkeit sind in [zip-library-decision.md](docs/zip-library-decision.md) dokumentiert; der aktuelle Umfang steht in [portable-export.md](docs/portable-export.md).
 
 Bestätigte Ausbauvorgaben: voraussichtlich bis 100 GB Gesamtbestand, persönliche und gemeinsame Speicherbereiche, Gruppenverwaltung in Samla mit optionalem IdP-Gruppenmapping und konfigurierbare Löschfristen. Offlinebearbeitung mit späterer Synchronisierung ist gewünscht; Referenzclients und Konfliktverhalten bleiben festzulegen. Diese Vorgaben sind keine Zusage bereits vollständig implementierter Funktionen.

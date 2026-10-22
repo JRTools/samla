@@ -1,63 +1,9 @@
-# Prüfung Iteration 34: portabler Exportkern
+# Prüfung Iteration 35: Exportaufträge, Worker und Oberfläche
 
-PHP 8.4.5 und 8.5.4: jeweils 208 Unit-/Architekturtests mit 1202 Assertions erfolgreich, einschließlich acht neuen Exportfällen. Syntax aller eigenen PHP-Dateien und composer validate --no-check-publish erfolgreich. Keine neue Datenbankmigration. Native ext-zip/libzip ist die ausdrücklich freigegebene Komponente; Composer führt ext-zip als optionale Exportfähigkeit auf. CI installiert das Modul für die nativen Tests.
+Vier isolierte lokale Kombinationen PHP 8.4.5/8.5.4 mit MySQL 8.0 und MariaDB 11.8 erfolgreich: jeweils 210 Unit-/Architekturtests mit 1223 Assertions und 303 Integrationstests mit 1546 Assertions. Syntaxprüfung aller 265 eigenen PHP-Dateien erfolgreich. Neue Migration platform.exports:0001_jobs auf beiden Datenbanken erfolgreich; anschließender Migrationsaufruf meldet Schema is current.
 
-Geprüft sind Originalbytes und SHA-256, versionsgebundenes JSON-Manifest, portable relative Archivnamen, Metadaten ohne automatische Exportfreigabe, zusätzliche sensible Exportrechte, begrenzte Providerregistrierung, Dateianzahl/Größe/Zeit, fehlerhafte Quelle, native Abschlussabbrechung, private Dateien und Stagingbereinigung. Ein 128-MiB-Video wird gestreamt; der Test prüft einen zusätzlichen PHP-Spitzenspeicher unter 8 MiB, die ZIP-Inhaltsprüfsumme und die Archivgröße. Eine harte Betriebssystem-Zeitunterbrechung oder Lastabnahme wird daraus nicht abgeleitet.
+Zehn neue Integrationstests prüfen echte private ZIP-Pakete durch den Outbox-Worker, wiederholte Zustellung, aktuelle Rechte und Identität, fremde Besitzer, geänderte Quellen, Metadaten-/Providerpolicy, gesondertes sensibles Exportrecht, atomare Reservierung und Auftragsgrenzen, Pluginveto, revisionsgebundenen Retry, beschädigte Archive, Ablauf und Bereinigung einschließlich Sperrdateien, CSRF/Formularvalidierung und Binärantworten. Fehlerhafte technische Workeraufgaben mit offen gelassener Transaktion werden zurückgerollt und isoliert; normale Zustellungen laufen weiter.
 
-Die native Abschlussabbrechung wurde mit einer injizierten monotonen Uhr tatsächlich ausgelöst und hinterließ kein veröffentlichtes oder gestagtes ZIP. Der vorherige Error-Handler wird nach nativen Aufrufen wiederhergestellt. Archivierung speichert Originale ohne Kompression; keine Bild-/Videokonvertierung. Datenbank-/Browser-Exportaufträge, Rechteprüfung des späteren Downloads, Ablaufbereinigung und UI werden im direkt folgenden Arbeitspaket angeschlossen und sind hier noch nicht fertig.
+Der vollständige synthetische OIDC-/Browser-/WebDAV-Durchlauf ist über Entwicklungs-HTTP mit PHP 8.4 und 8.5 sowie Produktions-HTTPS mit PHP 8.4 erfolgreich. Neu geprüft: Exportprofil über Namens-Dropdown zuweisen, Dateiauswahl, Auftrag anlegen, tatsächlichen CLI-Worker ausführen, fertiges ZIP per Cookie-Sitzung herunterladen und mit Python-Standardbibliothek entpacken, Manifest/Originalbytes prüfen, Exportrecht entziehen und Download verweigern, Auftrag entfernen. Vorhandene DAV-/Medien-/Administrationsabläufe ebenfalls erfolgreich. Keine echten Betreiberzugangsdaten benutzt.
 
-Die zuvor veröffentlichte Bereichs-/Berechtigungsphase ist in allen vier GitHub-Kombinationen einschließlich HTTP/HTTPS erfolgreich; gelesene Logs: verification-iteration-33.md. Die Datenbankintegration wurde für dieses zunächst interne Exportkernpaket lokal nicht erneut ausgeführt; dessen aktuelle GitHub-CI folgt nach Veröffentlichung. Die öffentlichen Providerregistrierungen werden durch Unit-/Architekturtests geprüft. Native Referenzclients, visuelle Abnahme und Offline-Synchronisierung bleiben offen.
-
-Temporäre Testmodule: verifizierte PHP-8.4.5-/8.5.4-ZIP-Pakete und libzip 1.11.3/1.11.4 aus den bereits verwendeten Ubuntu-Snapshot-Metadaten. Nur in die isolierten Testruntimes extrahiert, keine Installation auf dem Betreiberhost. Keine zusätzlichen Programme oder Composer-Pakete.
-
-```text
-PHP 8.4: lint 255 files
-
-PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
-
-Runtime:       PHP 8.4.5
-Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
-
-...............................................................  63 / 208 ( 30%)
-............................................................... 126 / 208 ( 60%)
-............................................................... 189 / 208 ( 90%)
-...................                                             208 / 208 (100%)
-
-Time: 00:04.885, Memory: 26.00 MB
-
-[30;42mOK (208 tests, 1202 assertions)[0m
-
-
-./composer.json is valid, but with a few warnings
-See https://getcomposer.org/doc/04-schema.md for details on the schema
-# General warnings
-- No license specified, it is recommended to do so. For closed-source software you may use "proprietary" as license.
-- require.facile-it/php-openid-client : exact version constraints (1.0.0) should be avoided if the package follows semantic versioning
-- require.sabre/dav : exact version constraints (4.7.1) should be avoided if the package follows semantic versioning
-
-
-PHP 8.5: lint 255 files
-
-PHPUnit 13.4.3 by Sebastian Bergmann and contributors.
-
-Runtime:       PHP 8.5.4
-Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
-
-...............................................................  63 / 208 ( 30%)
-............................................................... 126 / 208 ( 60%)
-............................................................... 189 / 208 ( 90%)
-...................                                             208 / 208 (100%)
-
-Time: 00:04.841, Memory: 26.00 MB
-
-[30;42mOK (208 tests, 1202 assertions)[0m
-
-
-./composer.json is valid, but with a few warnings
-See https://getcomposer.org/doc/04-schema.md for details on the schema
-# General warnings
-- No license specified, it is recommended to do so. For closed-source software you may use "proprietary" as license.
-- require.facile-it/php-openid-client : exact version constraints (1.0.0) should be avoided if the package follows semantic versioning
-- require.sabre/dav : exact version constraints (4.7.1) should be avoided if the package follows semantic versioning
-
-```
+Die in Negativfällen protokollierten DAV-PDOExceptions sind erwartete injizierte Fehler; sämtliche Testläufe enden erfolgreich. GitHub-CI für Paket 34 ist vollständig erfolgreich und in verification-iteration-34.md archiviert. CI für Paket 35 wird nach Veröffentlichung geprüft. Keine native Geräte-, visuelle Browser-, Hosting- oder vollständige Lastabnahme behauptet. Native ZIP-Zeitbegrenzung ist kooperativ; ein bereits ausgelieferter Datenstrom kann nicht nachträglich zurückgerufen werden. Keine neuen Laufzeitkomponenten außerhalb der bereits erteilten ZIP-Freigabe.

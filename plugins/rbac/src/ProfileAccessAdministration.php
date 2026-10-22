@@ -110,6 +110,8 @@ final readonly class ProfileAccessAdministration implements AccessProfileAdminis
             ['samla.files.read','Lesen','Dateien und Ordner anzeigen und Originale herunterladen.',Scope::Space,['files.list','files.read']],
             ['samla.files.contribute','Hochladen','Lesen und neue Dateien oder Ordner anlegen.',Scope::Space,['files.list','files.read','files.create']],
             ['samla.files.manage','Dateien verwalten','Lesen, hochladen, ändern, in den Papierkorb legen und wiederherstellen. Endgültiges Löschen und Historienlesen sind separat.',Scope::Space,['files.list','files.read','files.create','files.update','files.delete','files.restore']],
+            ['samla.files.export','Originale exportieren','Dateien auflisten, Originale lesen und private ZIP-Exporte beauftragen.',Scope::Space,['files.list','files.read','files.export']],
+            ['samla.files.export-sensitive','Sensible Metadaten exportieren','Zusätzlich ausdrücklich exportierbare sensible Manifestfelder ausgeben. Feldleserecht und normaler Exportzugriff bleiben zusätzlich nötig.',Scope::Space,['files.export.sensitive']],
             ['samla.files.history','Versionen lesen','Frühere Dateiversionen lesen. Bereichs- und Dateizugriff werden zusätzlich geprüft.',Scope::Space,['files.versions.read']],
             ['samla.files.purge','Endgültig löschen','Papierkorbinhalte endgültig löschen. Die jeweilige Löschung erfordert weiterhin eine gesonderte Bestätigung.',Scope::Space,['files.purge']],
             ['samla.files.media','Medien verwenden','Vorschauen und allgemeine Metadaten anzeigen sowie Medienanalyse beauftragen. Bereichsliste ist zusätzlich nötig.',Scope::Space,['media.previews.read','media.metadata.read','media.process']],

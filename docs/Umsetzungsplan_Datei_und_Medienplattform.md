@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.38
+Version: 1.39
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 34, geprüfter interner ZIP-Exportkern, siehe Abschnitt 46. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 35, private ZIP-Aufträge mit Worker und Oberfläche, siehe Abschnitt 47. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1092,3 +1092,17 @@ Der interne ZIP-Speicher erstellt Pakete mit JSON-Manifest und unveränderten Or
 Dieses Paket allein veröffentlicht noch keine Fachfunktion im Web. Es folgt ohne neue Go-Abfrage die persistente Auftragsebene mit aktuellen Rechten, reserviertem Platz, Worker, Status, Ablauf/Bereinigung und geschütztem UI-Download. Technische Voreinstellungen sind konfigurierbar und ersetzen weder 100 GB geplanten Gesamtbestand noch die noch unbestimmte Obergrenze größerer Videos. Primärquellen und Grenzen: portable-export.md. Tests: verification.md.
 
 Version 1.38: geprüfter Paketkern und öffentliche Exportbeiträge; native ext-zip/libzip innerhalb der erteilten Freigabe.
+
+## 47. Iteration 35: Exportaufträge, Worker und Oberfläche
+
+Dateiauswahl, eigene Auftragsliste, Status/Ablauf, geschützter Binärdownload, bestätigtes Entfernen und revisionsgebundener Retry sind im UI verfügbar. Das neue feste Bereichsprofil Originale exportieren enthält explizite Lese-/Exportrechte; sensible Exportbeiträge haben ein gesondertes Zusatzprofil. Kein bestehendes Inhaltsprofil wird still erweitert. ZIP bleibt optional, native ZIP-Fähigkeit ist in FPM und Worker erforderlich.
+
+Die neue Migration platform.exports:0001_jobs speichert Besitzer, exakte aktuelle Quellen, Providerpolicy, begrenzte Platzreservierung und Zustand. Erstellung läuft idempotent über den vorhandenen Outbox-Worker. Besitzer, Identitätsfrische, Quellenrevisionen und tatsächlich exportierte Feldrechte werden bei Erstellung und Download erneut geprüft; Hashprüfung schützt das private Archiv. Ein öffentlich typisierter ExportChange ermöglicht Pluginveto. Terminale Paketergebnisse erhalten eigene transaktionale Ereignisse ohne Dateinamen oder Pfade.
+
+Öffentliche WorkerTask-Beiträge ergänzen technische Aufgaben ohne neue Ereignisse. Eine begrenzte Ablaufbereinigung entfernt nur temporäre Ableitungen und Aufträge unter Sperre, auch bei ansonsten leerer Warteschlange. Konfigurierbare Startgrenzen: 100 Dateien/1 GiB/20 Sekunden/24 Stunden, globale Reservierung 5 GiB; maximal fünf gespeicherte Aufträge je Nutzer. Die Paketlebensdauer ist keine fachliche Papierkorb-/Versionen-/Auditfrist. Originale und ihre eingebetteten Angaben bleiben unverändert; die eingebauten Medienfelder erhalten keine automatische Metadatenexportfreigabe.
+
+Vier lokale PHP-/Datenbankkombinationen mit jeweils 513 Tests/2769 Assertions und erweiterte echte HTTP-/HTTPS-Abläufe sind erfolgreich. GitHub-CI für Paket 34 ist vollständig erfolgreich; Paket 35 folgt nach Veröffentlichung. Einzelheiten: verification.md und portable-export.md. Betreiberdeployment, native Geräte-/Offlineabnahme und visuelle Abnahme bleiben offen.
+
+Nächste unabhängige Arbeiten: persönliche Bereiche, weitere Katalogpflege und Rechteoberflächen. Automatische persönliche Bereitstellung und fachliche Aufbewahrungsfristen benötigen weiterhin die in offene-entscheidungen.md bezeichneten konkreten Vorgaben; sie blockieren unabhängige Implementierung nicht. Weitere Arbeitspakete werden ohne Go-Abfrage umgesetzt und einzeln veröffentlicht.
+
+Version 1.39: kompletter begrenzter Exportdurchstich, technische Workeraufgaben und UI statt rein internem Paketkern.
