@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.28
+Version: 1.29
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 26, siehe Abschnitt 37. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 27 und konkrete EXIF-Entscheidungsvorlage, siehe Abschnitte 38 und 39. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -941,3 +941,24 @@ Unitprüfungen decken öffentliche DTO-/Registrierungsgrenzen und Referenzkopien
 Vor Nutzung ist die neue Migration im Wartungsmodus erforderlich. docs/background-worker.md beschreibt Plesk-Aufgabe, Webtrigger, Tokenrotation, Status und Grenzen. Eine visuelle Adminoberfläche für Zustellung/Retry, fachliche Medienhandler, weitere Konzeptfunktionen sowie Host-/Geräte-/Last-/Restore-Abnahme bleiben offen. Die durchgehende Umsetzung ist weiter autorisiert; zusätzliche Komponenten wie C2PA-Validatoren bleiben vor Einsatz abzustimmen.
 
 Version 1.28: Gemeinsamer Outbox-Worker per freigegebenem CLI-Cron und authentifiziertem HTTPS-POST mit dauerhaften Zustellzuständen.
+
+
+## 38. Iteration 27: Workerzustellungen im Browser verwalten
+
+### 38.1 Ansicht und explizite Rechte
+
+Die Navigation ergänzt Hintergrundaufgaben mit globalem operations.worker.read. Zähler, Zustellstatusfilter, bis 100 Zeilen pro Cursorseite und technische Empfänger-/Ereigniskennungen werden ohne Payloads, Tokens oder Dateiinhalte dargestellt. operations.worker.retry erlaubt zusätzlich das erneute Vormerken endgültiger Fehler aktiver Empfänger. Neue Rechte werden nicht automatisch vergeben. Ein lokaler Wartungshelfer vergibt beziehungsweise entzieht ausdrücklich read/manage-Profile an interne Gruppen und prüft frischen aktiven Administrator und unveränderte reservierte Rollen.
+
+### 38.2 Revisionsschutz, Hooks und Transaktion
+
+Migration platform.administration:0003_delivery_revision ergänzt eine Zustellrevision. Claim, Quittierung, finales Leaseende und manuelles Retry erhöhen sie. Ein altes Formular kann daher auch nach einem weiteren Fehlerzyklus keinen neuen Versuch unbemerkt zurücksetzen. API 0.11 ergänzt OutboxRetryChange im exakten globalen MutationContext. Rechte, failed-Zustand, aktive Empfänger und erwartete Revision werden vor/nach Pluginvalidatoren geprüft. Pending-/Processing-/Delivered-Zustände und deaktivierte Empfänger sind ausgeschlossen. Reset, Audit und Outbox-Abschlussereignis committen gemeinsam. Das Formular benötigt POST und CSRF; es führt keinen Handler unmittelbar aus.
+
+### 38.3 Prüfung und Fortsetzung
+
+Neue Integrationstests decken separate Rechte und lokale Sperre, Nur-Lesen ohne Payloads, deaktivierte Empfänger, korrektes und veraltetes Retry einschließlich ABA-Folge, Rechteentzug im Validator, Auditfehlerrollback, tatsächliche Webzusammensetzung/Navigation, Filter, CSRF, Methode, doppelte Formulare sowie vollständige Pagination und Escaping ab. Öffentliche DTO-Kontexte prüfen genaue Ziele und Scope. Der echte HTTPS-Prüfer verweigert unberechtigte Ansichten und Wartungshelfer ohne Wartung, vergibt/entzieht Profile und prüft das Browser-Retry samt anschließendem gemeinsamen Worker. Ergebnisse stehen in verification.md; die erfolgreiche vorige CI in verification-iteration-26.md.
+
+## 39. Folgende Medienphase: gesonderte EXIF-Entscheidung
+
+Für korrekt orientierte Handyfoto-Ableitungen und ausgewählte EXIF-Felder wird die native PHP-Erweiterung ext-exif vorgeschlagen. Die konkrete Vorlage docs/exif-library-decision.md beschreibt Umfang, Stream-/Größen-/Datenschutzgrenzen und Fallback ohne Modul. Eine isolierte Evaluation außerhalb der Anwendung hat unter PHP 8.4.5/8.5.4 ein künstliches JPEG mit Orientierung 6 korrekt aus einem Stream gelesen und eine ungültige Datei kategorisiert; Originalprüfsummen blieben unverändert. Die Komponente ist noch nicht in Samla integriert. Gemäß Konzept und AGENTS wird vor der Einbindung die ausdrückliche Freigabe eingeholt. ExifTool und C2PA-Werkzeuge bleiben separate offene Entscheidungen.
+
+Version 1.29: Berechtigte Worker-Verwaltungsansicht mit atomarem, revisionsgebundenem Retry und vorbereiteter EXIF-Komponentenentscheidung.

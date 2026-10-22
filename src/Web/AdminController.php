@@ -10,13 +10,13 @@ final readonly class AdminController
 {
     public function __construct(private AdministrationQueryService $directory, private AuthorizationChecker $authorization,
         private UserStatusService $users, private GroupDetailsService $groups, private GroupMembershipService $memberships,
-        private PageRenderer $renderer = new PageRenderer(), private ?FileController $files = null) {}
+        private PageRenderer $renderer = new PageRenderer(), private ?FileController $files = null,private ?WorkerAdministrationController $worker=null) {}
 
     /** actorId and session token come only from the trusted entry point, never request fields. */
     public function capabilities(string $actorId): array
     {
         $caps = [];
-        foreach (['identity.users.read','identity.groups.read','identity.users.status.manage','identity.groups.details.manage','identity.groups.memberships.manage'] as $action) {
+        foreach (['identity.users.read','identity.groups.read','identity.users.status.manage','identity.groups.details.manage','identity.groups.memberships.manage','operations.worker.read','operations.worker.retry'] as $action) {
             $caps[$action] = $this->authorization->decide(new AuthorizationRequest($actorId, $action, Scope::Global))->decision === Decision::Permit;
         }
         return $caps;
@@ -26,6 +26,7 @@ final readonly class AdminController
         $caps = $this->capabilities($actorId);
         $data = ['actor' => $actorId, 'csrf' => $csrf, 'caps' => $caps, 'flash' => $flash, 'oidc' => $oidc];
         if (str_starts_with($request->path, '/files') && $this->files !== null) { return $this->files->handle($request, $actorId, $csrf, $data); }
+        if (str_starts_with($request->path, '/operations/worker') && $this->worker!==null) {return $this->worker->handle($request,$actorId,$csrf,$data);}
         try {
             $posts = ['/users/status','/groups/create','/groups/rename','/memberships/change'];
             if (in_array($request->path, $posts, true)) {

@@ -137,3 +137,5 @@ Die neue Sperrtabelle ist vor Schreibzugriffen zu migrieren. Der vorhandene Wart
 ## Worker und geplante Aufgaben
 
 Iteration 26 ergänzt die Migration platform.administration:0002_outbox_delivery und den freigegebenen CLI-/HTTPS-Worker. Vor dem Start migrieren. Cronaufruf oder HTTPS-POST-Scheduler sind anschließend gemäß [background-worker.md](background-worker.md) einzurichten. Ein leerer APP_WORKER_HTTP_TOKEN_SHA256 deaktiviert den Webtrigger. Die Codeinstallation richtet noch keine geplante Aufgabe ein.
+
+Iteration 27 ergänzt zusätzlich platform.administration:0003_delivery_revision für sichere manuelle Zustellwiederholungen. Die Browseransicht Hintergrundaufgaben benötigt ausdrücklich vergebene operations.worker.read beziehungsweise operations.worker.retry; der Wartungshelfer und die Profile sind in background-worker.md dokumentiert.

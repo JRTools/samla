@@ -4,7 +4,7 @@ Der Betreiber hat PHP-CLI per Cron und einen zusätzlichen Webtrigger freigegebe
 
 ## Update und Migration
 
-Geplante Workeraufrufe für das Update pausieren. Im Wartungsmodus Code und Composer-Abhängigkeiten aktualisieren und php bin/migrate.php mit dem passenden PHP-Interpreter ausführen. Neu ist platform.administration:0002_outbox_delivery. Sie ergänzt eine Ereignissequenz und Zustell-/Empfänger-/Referenzquittungstabellen. Eine konsistente Sicherung gehört wie bei anderen Migrationen zum Update. Erst danach Wartungsmodus deaktivieren und geplante Aufgaben wieder einschalten. Die neue Migration verändert keine Dateiinhalte und löscht keine bestehenden Ereignisse.
+Geplante Workeraufrufe für das Update pausieren. Im Wartungsmodus Code und Composer-Abhängigkeiten aktualisieren und php bin/migrate.php mit dem passenden PHP-Interpreter ausführen. Neu sind platform.administration:0002_outbox_delivery und 0003_delivery_revision. Sie ergänzt eine Ereignissequenz und Zustell-/Empfänger-/Referenzquittungstabellen. Eine konsistente Sicherung gehört wie bei anderen Migrationen zum Update. Erst danach Wartungsmodus deaktivieren und geplante Aufgaben wieder einschalten. Die neue Migration verändert keine Dateiinhalte und löscht keine bestehenden Ereignisse.
 
 ## CLI-Cron
 
@@ -46,7 +46,7 @@ Ein falscher oder bereits ersetzter Authorization-Header hat Vorrang vor einem e
 
 Leerer Hash deaktiviert den Endpunkt (404). GET liefert bei aktiviertem und korrekt adressiertem Endpunkt 405, fehlendes/falsches Token 401, URL-Parameter 400, mehr als 4096 Requestbytes 413, Wartung beziehungsweise Betriebsfehler 503. Der normale erfolgreiche Lauf liefert 200 mit begrenzten JSON-Zählern. 409 mit busy=true bedeutet, dass bereits ein Worker arbeitet. Einzelne Handlerfehler stehen im Feld errors; 200 ist keine Zusage, dass alle Ereignisse erfolgreich oder bereits zugestellt sind. queue.failed benennt endgültig fehlgeschlagene Zustellungen. Antworten sind no-store und enthalten weder Token noch Ereignisinhalte.
 
-Rotation: Neues Token/Hash erzeugen, Hash in der tatsächlichen .env beziehungsweise vorrangigen Prozesskonfiguration ersetzen und Scheduler auf das neue Originaltoken umstellen. Der alte Wert wird bei folgenden Anfragen nicht mehr akzeptiert. Leerer Hash deaktiviert nur den Webtrigger; CLI bleibt nutzbar. Es gibt noch kein Webformular zum Ändern dieser Betreiberkonfiguration.
+Rotation: Neues Token/Hash erzeugen, Hash in der tatsächlichen .env beziehungsweise vorrangigen Prozesskonfiguration ersetzen und Scheduler auf das neue Originaltoken umstellen. Der alte Wert wird bei folgenden Anfragen nicht mehr akzeptiert. Leerer Hash deaktiviert nur den Webtrigger; CLI bleibt nutzbar. Es gibt kein Webformular zum Ändern dieser Betreiberkonfiguration. Zustellstatus und Retry sind davon getrennte Verwaltungsfunktionen.
 
 ## Begrenzung, Parallelität und Zustellung
 
@@ -56,7 +56,7 @@ Ein separater Datenbanklock verhindert parallele CLI-/Webläufe derselben Instal
 
 Je aktivem registriertem Empfänger werden höchstens 100 passende neue Ereignisse pro Lauf vorgemerkt; höchstens 32 Empfänger und 16 exakte Ereignistypen je Empfänger sind zulässig. Die tatsächlichen Zustellversuche bleiben zusammen auf 50 begrenzt. Eine dauerhaft gespeicherte Bedienreihenfolge verhindert, dass kleine Batches spätere Empfänger immer verdrängen. Die Reihenfolge ist kein globales Ereignis-Ordnungsversprechen: fehlgeschlagene ältere Aufgaben warten auf ihren Retry, während andere fällige Aufgaben verarbeitet werden können.
 
-Zustellung ist mindestens einmal. Handler deduplizieren Wirkungen nach Empfängerkennung und Ereigniskennung. Nach einem Absturz zwischen Wirkung und Quittierung kann dasselbe Ereignis erneut ankommen. Der Referenzempfänger speichert Kennungen atomar mit einem eindeutigen Schlüssel; er kopiert weder Dateiinhalte noch Tokens. Fehler werden nach 5, 10, 20 und entsprechend weiter steigenden Sekunden erneut fällig, maximal acht Zustellversuche. Ein abgebrochener achter Versuch wird nach Leaseablauf ebenfalls endgültig failed. Meldungen speichern nur feste Fehlerkategorien. Ein administrativer Retry-/Diagnosebildschirm ist noch offen; fehlerhafte Zustellungen werden nicht automatisch unbegrenzt wiederholt.
+Zustellung ist mindestens einmal. Handler deduplizieren Wirkungen nach Empfängerkennung und Ereigniskennung. Nach einem Absturz zwischen Wirkung und Quittierung kann dasselbe Ereignis erneut ankommen. Der Referenzempfänger speichert Kennungen atomar mit einem eindeutigen Schlüssel; er kopiert weder Dateiinhalte noch Tokens. Fehler werden nach 5, 10, 20 und entsprechend weiter steigenden Sekunden erneut fällig, maximal acht Zustellversuche. Ein abgebrochener achter Versuch wird nach Leaseablauf ebenfalls endgültig failed. Meldungen speichern nur feste Fehlerkategorien. Ein ausdrücklich berechtigtes Retry ist über die Verwaltungsansicht möglich; fehlerhafte Zustellungen werden nicht automatisch unbegrenzt wiederholt.
 
 Die ursprüngliche Spalte outbox_events.status ist für die neue empfängerbezogene Zustellung nicht maßgeblich. Maßgeblich ist outbox_deliveries je aktivem Empfänger. Nicht abonnierte Ereignisse werden nicht fälschlich als an alle möglichen zukünftigen Plugins zugestellt bezeichnet. Alte Daten und deaktivierte Empfänger werden nicht automatisch gelöscht.
 
@@ -65,3 +65,20 @@ Die ursprüngliche Spalte outbox_events.status ist für die neue empfängerbezog
 platform.receipts.storage_v1 empfängt Datei-Upload, Ersetzung, Versionswiederherstellung, endgültiges Purge und Ordneranlage. Er darf auch vorhandene passende Ereignisse in begrenzten Batches übernehmen und legt eine eindeutige technische Quittung ab. Das beweist den Zustellweg und die Idempotenz, erzeugt aber noch keine Vorschaubilder oder extrahierte Metadaten. Es werden keine Objekt-GC, endgültigen Löschungen oder neuen Aufbewahrungsregeln automatisch gestartet.
 
 Weitere Empfänger werden über OutboxSubscription und PluginRegistrar registriert. Ohne ausdrückliches replayExisting startet ein neuer Empfänger erst am aktuellen Wasserstand seines ersten Workeraufrufs. Änderung der Ereignistypen oder Replaypolitik verlangt eine neue Empfängerkennung. Ereignisse sind keine aktuellen Rechte: Benutzeraufträge prüfen ihre Rechte erneut; technische Medienergebnisse müssen an feste Inhaltsversionen gebunden werden. Diese Fachhandler folgen gesondert.
+
+
+## Verwaltungsansicht und Rechte
+
+Die Navigation zeigt „Hintergrundaufgaben“ mit dem gesonderten globalen Recht operations.worker.read. GET /operations/worker zeigt Zähler, Empfänger-/Ereigniskennungen, Typ, Status, Versuche, Retry-/Leasezeit, feste Fehlerkategorie und Revision. Ereignispayloads, Dateiinhalte, Tokens und Actor-Claims werden nicht angezeigt. Die Liste umfasst bis 100 Zustellungen pro Cursorseite, mit Statusfilter. Ihre Zähler umfassen auch derzeit deaktivierte Empfänger, während der Maschinenstatus ausschließlich aktive Empfänger zählt. Noch nicht entdeckte Ereignisse stehen in keiner dieser Zustelllisten.
+
+operations.worker.retry erlaubt zusätzlich zum Leserecht das explizite erneute Vormerken eines endgültig failed gewordenen Eintrags eines aktuell registrierten Empfängers. POST /operations/worker/retry verlangt Session-CSRF und exakt die angezeigte Revision. Es führt den Handler nicht sofort aus, sondern setzt die Zustellung für den nächsten Workeraufruf auf pending zurück. Rechte und Zustand werden vor und nach Pluginvalidatoren unter der Mutationstransaktion erneut geprüft. Reset, Revisionsänderung, Audit und Abschlussereignis sind atomar. Alte Formulare bleiben auch dann ungültig, wenn nach einer früheren manuellen Wiederholung erneut acht Fehler auftraten. Processing-, pending-, zugestellte oder deaktivierte Empfänger können nicht auf diese Weise wiederholt werden.
+
+Neue Rechte werden nicht automatisch bestehenden Administratorrollen hinzugefügt. Der vertrauenswürdige Wartungshelfer kann sie ausdrücklich an eine interne Gruppe vergeben oder entziehen. ACTOR_ID ist die Kennung eines frischen, aktiven Administrators mit den bereits vorhandenen Benutzerlese- und Mitgliedschaftsverwaltungsrechten:
+
+```sh
+APP_MAINTENANCE=1 php bin/worker-access.php ACTOR_ID samla.administrators read grant
+APP_MAINTENANCE=1 php bin/worker-access.php ACTOR_ID samla.administrators read revoke
+APP_MAINTENANCE=1 php bin/worker-access.php ACTOR_ID samla.administrators manage grant
+```
+
+read enthält nur das Leserecht, manage Lese- und Retryrecht. Profile sind getrennte Zuweisungen; Entzug von read entfernt kein parallel vorhandenes manage. Die reservierten Rollen samla.worker.read/manage müssen exakt dem Profil entsprechen. Der Helfer ist eine lokale Betreiberfunktion und kein ungeschützter Webendpunkt. Aktuelle Gruppenfrische und lokale Kontosperren gelten für Webansicht und Retry. Gruppen mit globalen Rollen bleiben von den bestehenden Delegationsgrenzen der normalen Mitgliedschafts-/Mappingdienste geschützt. Eine allgemeine Rollenpflege im Browser bleibt ein eigenes offenes Arbeitspaket.

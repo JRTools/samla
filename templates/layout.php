@@ -7,6 +7,7 @@ $titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb', 'app-pa
 $titles['versions'] = 'Dateiversionen';
 $titles['text-editor'] = 'Text bearbeiten';
 $titles['file-search'] = 'Dateien suchen';
+$titles['worker']='Hintergrundaufgaben';
 ?>
 <!doctype html>
 <html lang="de">
@@ -19,6 +20,7 @@ $titles['file-search'] = 'Dateien suchen';
 <?php if (($data['oidc'] ?? false) && $data['actor'] !== null): ?><a href="/account">Mein Zugang</a><form class="logout" method="post" action="/auth/logout"><input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>"><button class="button button-outline" type="submit">Bei Samla abmelden</button></form><?php endif ?>
 <?php if ($caps['identity.users.read'] ?? false): ?><a href="/users" <?= $page === 'users' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">◎</span> Benutzer</a><?php endif ?>
 <?php if ($caps['identity.groups.read'] ?? false): ?><a href="/groups" <?= $page === 'groups' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">▦</span> Gruppen</a><?php endif ?>
+<?php if ($caps['operations.worker.read'] ?? false): ?><a href="/operations/worker" <?= $page === 'worker' ? 'aria-current="page"' : '' ?>>Hintergrundaufgaben</a><?php endif ?>
 </nav><div class="sidebar-bottom"><span class="small-mark" aria-hidden="true">S</span><div>Eine gemeinsame Basis.<small>Samla · Datei- und Medienplattform</small></div></div></aside>
 <div class="workspace"><header class="topbar"><span>Deine Organisation <span class="crumb">/ <?= $e($titles[$page]) ?></span></span><?php if ($data['actor'] !== null): ?><span class="actor"><span class="avatar" aria-hidden="true">S</span><?= $e($data['actor']) ?></span><?php endif ?></header>
 <?php if ($data['actor'] !== null && !($data['oidc'] ?? false)): ?><div class="dev-notice"><span class="status-dot" aria-hidden="true"></span> Lokaler Entwicklungszugang <span>Nur auf dem lokalen Entwicklungsrechner.</span></div><?php endif ?>

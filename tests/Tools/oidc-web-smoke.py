@@ -315,11 +315,26 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                         assert trigger({})[0]==401 and trigger({'token':'wrong'})[0]==401
                         assert trigger({},'Bearer '+worker_token,path='/tasks/run?forbidden=1')[0]==400
                         assert trigger(b'x'*4097,'Bearer '+worker_token)[0]==413
+                        assert req('/operations/worker')[0]==403
+                        denied_access=subprocess.run(php+['bin/worker-access.php',user,'samla.administrators','read','grant'],cwd=project,env=env,capture_output=True,text=True)
+                        assert denied_access.returncode==1
+                        for profile,operation,expected in [('read','grant',200),('read','revoke',403),('manage','grant',200)]:
+                            access=subprocess.run(php+['bin/worker-access.php',user,'samla.administrators',profile,operation],cwd=project,env=bootstrap,capture_output=True,text=True)
+                            assert access.returncode==0,access.stdout+access.stderr
+                            assert req('/operations/worker')[0]==expected
                         cli=subprocess.run(php+['bin/worker.php','--max-events=1'],cwd=project,env=env,capture_output=True,text=True)
                         assert cli.returncode==0 and json.loads(cli.stdout)['processed']==1,cli.stdout+cli.stderr
                         status,worker_body,worker_headers=trigger({},'Bearer '+worker_token)
                         assert status==200 and json.loads(worker_body)['queue']['delivered']>0,(status,worker_body)
                         assert 'Set-Cookie' not in worker_headers and worker_token not in worker_body
+                        assert trigger({'token':worker_token})[0]==200
+                        fail_delivery="require 'vendor/autoload.php';$c=Samla\\Core\\Configuration\\AppConfig::fromGlobals();if(!str_starts_with($c->database->database,'media_platform_test_')){exit(1);}$p=(new Samla\\Core\\Database\\ConnectionFactory())->connect($c->database);$p->exec(\"UPDATE outbox_deliveries SET status='failed',attempts=8,revision=revision+1 LIMIT 1\");"
+                        fixture=subprocess.run(php+['-r',fail_delivery],cwd=project,env=env,capture_output=True,text=True);assert fixture.returncode==0,fixture.stderr
+                        status,worker_page,_=req('/operations/worker?status=failed');assert status==200
+                        retry_form={'csrf':csrf(worker_page),'subscriber':re.search(r'name="subscriber" value="([a-z0-9_.]+)"',worker_page).group(1),'event':re.search(r'name="event" value="([a-f0-9]{32})"',worker_page).group(1),'revision':re.search(r'name="revision" value="([0-9]+)"',worker_page).group(1)}
+                        assert req('/operations/worker/retry',{**retry_form,'csrf':'bad'})[0]==403
+                        assert req('/operations/worker/retry',retry_form)[0]==303
+                        assert req('/operations/worker/retry',retry_form)[0]==409
                         assert trigger({'token':worker_token})[0]==200
                         cli=subprocess.run(php+['bin/worker.php','--status'],cwd=project,env=env,capture_output=True,text=True)
                         assert cli.returncode==0 and json.loads(cli.stdout)['queue']['pending']==0,cli.stdout+cli.stderr
@@ -344,7 +359,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

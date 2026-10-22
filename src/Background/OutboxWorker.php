@@ -82,11 +82,11 @@ final readonly class OutboxWorker
     {
         return Transaction::run($this->pdo,function () use ($subscriber): ?array {
             $now=$this->now();
-            $this->pdo->prepare("UPDATE outbox_deliveries SET status='failed',lease_token=NULL,error_class='InterruptedDelivery' WHERE subscriber_id=? AND status='processing' AND lease_until<=? AND attempts>=8")->execute([$subscriber,$now]);
+            $this->pdo->prepare("UPDATE outbox_deliveries SET status='failed',lease_token=NULL,error_class='InterruptedDelivery',revision=revision+1 WHERE subscriber_id=? AND status='processing' AND lease_until<=? AND attempts>=8")->execute([$subscriber,$now]);
             $q=$this->pdo->prepare("SELECT d.*,e.event_type,e.payload,e.occurred_at FROM outbox_deliveries d JOIN outbox_events e ON e.id=d.event_id WHERE subscriber_id=? AND attempts<8 AND ((d.status='pending' AND available_at<=?) OR (d.status='processing' AND lease_until<=?)) ORDER BY e.sequence_id LIMIT 1 FOR UPDATE");
             $q->execute([$subscriber,$now,$now]);$row=$q->fetch();if($row===false){return null;}
             $row['lease_token']=bin2hex(random_bytes(16));++$row['attempts'];
-            $this->pdo->prepare("UPDATE outbox_deliveries SET status='processing',attempts=?,lease_token=?,lease_until=? WHERE subscriber_id=? AND event_id=?")->execute([$row['attempts'],$row['lease_token'],$now+120,$subscriber,$row['event_id']]);
+            $this->pdo->prepare("UPDATE outbox_deliveries SET status='processing',attempts=?,lease_token=?,lease_until=?,revision=revision+1 WHERE subscriber_id=? AND event_id=?")->execute([$row['attempts'],$row['lease_token'],$now+120,$subscriber,$row['event_id']]);
             $order=(int)$this->pdo->query('SELECT COALESCE(MAX(last_served_order),0)+1 FROM outbox_subscribers')->fetchColumn();
             $this->pdo->prepare('UPDATE outbox_subscribers SET last_served_order=? WHERE id=?')->execute([$order,$subscriber]);
             return $row;
@@ -95,7 +95,7 @@ final readonly class OutboxWorker
     private function finish(array $delivery, bool $success, ?string $error = null): void
     {
         $status=$success?'delivered':((int)$delivery['attempts']>=8?'failed':'pending');
-        $q=$this->pdo->prepare('UPDATE outbox_deliveries SET status=?,lease_token=NULL,lease_until=0,available_at=?,error_class=? WHERE subscriber_id=? AND event_id=? AND status=\'processing\' AND lease_token=?');
+        $q=$this->pdo->prepare('UPDATE outbox_deliveries SET status=?,lease_token=NULL,lease_until=0,available_at=?,error_class=?,revision=revision+1 WHERE subscriber_id=? AND event_id=? AND status=\'processing\' AND lease_token=?');
         $q->execute([$status,$success?0:$this->now()+min(3600,5*(2**((int)$delivery['attempts']-1))),$error,$delivery['subscriber_id'],$delivery['event_id'],$delivery['lease_token']]);
         if ($q->rowCount() !== 1) { throw new \RuntimeException('Delivery lease lost.'); }
     }

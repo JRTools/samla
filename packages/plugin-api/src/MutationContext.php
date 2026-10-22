@@ -19,6 +19,7 @@ final readonly class MutationContext
         public ?StorageChange $storageChange = null,
         public ?StorageLockChange $storageLock = null,
         public ?StoragePurgeChange $storagePurge = null,
+        public ?OutboxRetryChange $outboxRetry = null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -32,6 +33,9 @@ final readonly class MutationContext
                 throw new \InvalidArgumentException('Mutation targets must be bounded identifiers.');
             }
         }
+        if (($operation==='operations.delivery.retry')!==($outboxRetry!==null)
+            || ($outboxRetry!==null && ($scope!==Scope::Global || ($targets['event']??null)!==$outboxRetry->eventId
+                || ($targets['subscriber']??null)!==hash('sha256',$outboxRetry->subscriberId)))) {throw new \InvalidArgumentException('Retry proposal must match its targets.');}
         $groupOperation = in_array($operation, ['identity.group.create', 'identity.group.rename'], true);
         $lockOperation = in_array($operation, ['storage.lock.acquire','storage.lock.renew','storage.lock.release','storage.file.create_locked'], true);
         if ($lockOperation !== ($storageLock !== null) || ($lockOperation && ($scope !== Scope::Space || !isset($targets['lock'])

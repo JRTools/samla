@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 26 (Outbox-Worker per CLI und HTTPS)
+## Entwicklungsstand: Iteration 27 (Worker-Verwaltung im Browser)
 
 Vorhanden sind:
+
+- Rechtegeschützte Worker-Verwaltung unter Hintergrundaufgaben: Zustellzähler, Statusfilter, Seitenwechsel und erneutes Vormerken endgültig fehlgeschlagener Aufgaben. Separate globale Lese-/Retryrechte, Revisionsschutz, Pluginvalidierung und transaktionales Audit. Bestehende Rollen werden nicht automatisch erweitert. [Einrichtung](docs/background-worker.md).
 
 - Gemeinsamer begrenzter Outbox-Worker für CLI-Cron und authentifizierte HTTPS-POST-Aufrufe, mit deaktiviertem Webtrigger als Standard, Tokenhash in .env, Header-/Formularauthentifizierung, Überlappungsschutz, Zustellleases, begrenzten Wiederholungen und idempotentem Referenzempfänger. [Einrichtung und Grenzen](docs/background-worker.md). Neue Migration erforderlich.
 
@@ -48,7 +50,7 @@ Vorhanden sind:
 
 Die Weboberfläche kann mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. Erweiterte Dateioperationen und konkrete native Clientabnahme bleiben offen. Der Betreiber bestätigt erfolgreichen ZITADEL-Login und initiale Administration auf seinem Plesk-Host; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
 
-Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox kann registrierte Empfänger nun über den ausdrücklich gestarteten Worker beliefern; Medienhandler und eine administrative Zustelloberfläche fehlen noch.
+Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox kann registrierte Empfänger nun über den ausdrücklich gestarteten Worker beliefern; Medienhandler fehlen noch; Status und berechtigtes Retry sind im Browser verfügbar.
 
 ## Voraussetzungen
 
@@ -181,3 +183,5 @@ Iteration 16: Betriebsziel sind etwa 1000 Dateien und fünf gleichzeitig aktive 
 PHP-CLI per Cron und der zusätzliche Webtrigger sind vom Betreiber freigegeben und implementiert. Einrichten und prüfen lässt sich beides nach [background-worker.md](docs/background-worker.md). Es wurde noch kein Cronjob auf dem Betreiberhost installiert. Der ursprüngliche Betriebsrahmen bleibt in [background-processing-decision.md](docs/background-processing-decision.md) dokumentiert.
 
 Eine Übersicht über vorhandene UI-Einstiege, CLI-Funktionen und offene Verwaltungsoberflächen steht in [ui-status.md](docs/ui-status.md). Veröffentlichtes GitHub-Repository und Betreiberdeployment sind getrennte Schritte.
+
+Für die folgende Medienphase liegt eine [konkrete Entscheidungsvorlage zu ext-exif](docs/exif-library-decision.md) vor. Die zusätzliche PHP-Erweiterung ist bislang nicht als Samla-Komponente eingebunden oder freigegeben.
