@@ -102,3 +102,7 @@ Bei extern bereitgestellten Testwerkzeugen muss deren node_modules-Verzeichnis f
 ## Textansicht und Editor
 
 GET /files/edit öffnet unterstützten UTF-8-Quelltext. POST /files/edit/save speichert mit CSRF und erwarteter Revision über denselben FileService wie Upload/WebDAV. POST /files/edit/draft liefert ausschließlich den übermittelten eigenen Text als Attachment; es liest keine gespeicherte Datei. Die Editorformulare haben eine begrenzte HTTP-Hülle für URL-Encoding und Browser-CRLF. Details und Grenzen stehen in [text-editor.md](text-editor.md).
+
+## Namenssuche
+
+GET /files/search nutzt denselben listgeschützten Bereichskatalog wie die Ablage. Suchtext, Dateityp und Cursor werden begrenzt validiert. Alle Treffer- und Ordnernamen bleiben escaped. Die reine GET-Suche verändert keine Daten; andere Methoden liefern 405. [Verhalten und Grenzen](file-search.md).

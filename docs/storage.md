@@ -160,3 +160,7 @@ WebDAV DELETE bleibt eine Papierkorboperation. Es gibt keine implizite endgülti
 ## Texteditor
 
 TextEditorService verwendet unveränderliche Downloads mit erwarteter Revision und FileService.replace(requireRead: true). Beim Speichern prüft der transaktionale Guard files.read zusätzlich zu list/update vor und nach Plugin-Validatoren. Frühere Inhalte, Sperren, Quoten, Audit und Outbox folgen demselben Versionspfad. Der Editor kann keine fremden DAV-Leases übergehen. [Formate und Konfliktbedienung](text-editor.md).
+
+## Namenssuche
+
+FileService.search benötigt files.list im exakten Bereich. Ein einmalig begrenzter Katalogscan sucht wörtlich und Unicode-groß-/kleinschreibungsunabhängig über sichtbare Namen, prüft Elternketten und liefert Cursorseiten bis 100 Treffer. Details, Grenzen und separate Downloadrechte stehen in [file-search.md](file-search.md). Es wird kein neuer Inhaltsindex angelegt.

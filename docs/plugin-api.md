@@ -118,3 +118,7 @@ Physische Objekte werden durch diesen Vorgang nicht entfernt. Die separat berech
 ## Textbearbeitung
 
 Der eingebaute Texteditor nutzt unverändert storage.file.replace mit StorageChange, ChangeValidator sowie Autorisierungs-/Einschränkungsverträgen und storage.file.replace.completed. Name, Elternkennung, neue Größe und SHA-256 stehen im Vorschlag; Quelltext wird nicht in Audit oder Outbox übernommen. Die Guards prüfen list/read/update sowie Revision und Sperren vor und nach Validatoren. Ein Validatorveto verwirft die neue Referenz und Historienänderung. Der zusätzliche Leseguard ist für Editoraufrufe verbindlich; gewöhnliches Ersetzen eines Uploads verlangt weiterhin kein Leserecht. Es gibt noch keine öffentliche Auswahl zusätzlicher Editor-/Viewerprovider, Syntaxhervorhebung oder Markdown-Renderer. Der experimentelle API-Major bleibt 0.
+
+## Namenssuche
+
+Die eingebaute bereichsweite Namenssuche verwendet files.list und die vorhandenen AuthorizationProvider-/AccessRestriction-Verträge. Ein zusätzliches Restriktionsplugin kann sie trotz positiver RBAC-Zuweisung verweigern. Die Funktion schreibt nichts und erzeugt keine Abschlussereignisse. Treffer enthalten ausschließlich sichtbare logische Verzeichnismetadaten; Dateiinhalte werden über den bestehenden separaten Lesepfad geschützt. Zusätzliche Suchprovider und pluginregistrierte Feldfilter sind noch nicht veröffentlicht.

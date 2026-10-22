@@ -47,9 +47,15 @@ final readonly class FileController
                 }
                 return new Response(303, headers: ['Location' => '/files?' . http_build_query(['space' => $space, 'parent' => $parent])], flash: 'Die Dateiablage wurde aktualisiert.');
             }
-            if (!in_array($request->path, ['/files', '/files/download', '/files/detail', '/files/trash', '/files/versions', '/files/version/download'], true)) { return new Response(404); }
+            if (!in_array($request->path, ['/files', '/files/search', '/files/download', '/files/detail', '/files/trash', '/files/versions', '/files/version/download'], true)) { return new Response(404); }
             if ($request->method !== 'GET') { return new Response(405, headers: ['Allow' => 'GET']); }
             $space = $this->query($request, 'space', 64);
+            if ($request->path === '/files/search') {
+                $text = $request->query['q'] ?? ''; $kind = $request->query['kind'] ?? 'all';
+                if (!is_string($text) || !is_string($kind)) { throw new \InvalidArgumentException(); }
+                $data += $this->files->search($actor, $space, $text, $kind, $request->after());
+                return new Response(200, $this->renderer->render('file-search', $data));
+            }
             if ($request->path === '/files/versions') {
                 $data += $this->files->versions($actor, $space, $this->query($request, 'entry', 32), $request->after());
                 $data['space_id'] = $space; $data['can_update'] = $this->files->allowed($actor, 'files.update', $space);

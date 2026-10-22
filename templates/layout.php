@@ -6,6 +6,7 @@ $caps = $data['caps'];
 $titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb', 'app-passwords' => 'App-Passwörter'];
 $titles['versions'] = 'Dateiversionen';
 $titles['text-editor'] = 'Text bearbeiten';
+$titles['file-search'] = 'Dateien suchen';
 ?>
 <!doctype html>
 <html lang="de">

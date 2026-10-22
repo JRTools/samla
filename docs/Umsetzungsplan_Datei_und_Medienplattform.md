@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.25
+Version: 1.26
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 24, siehe Abschnitt 34. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 25, siehe Abschnitt 35. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -888,3 +888,22 @@ Neue Integrationstests prüfen Quelltext-Escaping, Nur-Lesen, fehlende Rechte un
 Die endgültigen Ergebnisse stehen in verification.md. Die erfolgreiche vorherige GitHub-Matrix ist in verification-iteration-23.md dokumentiert. Keine neue Migration oder Laufzeitkomponente. Medienbibliothek und Metadaten, öffentliche Viewer-/Editorprovider, verbleibende Datei- und Verwaltungsfunktionen, Zustellung der Outbox sowie Betriebs- und echte Clientabnahme bleiben offen. Weitere Umsetzung ist autorisiert; notwendige Komponentenentscheidungen bleiben ausdrücklich abzustimmen.
 
 Version 1.25: Begrenzter UTF-8-Editor mit gemeinsamer Versionierung, erneutem Leseguard und sicherbarer Konfliktfassung.
+
+
+## 35. Iteration 25: Sichtbare Namen über einen Speicherbereich suchen
+
+### 35.1 Suchumfang und Bedienung
+
+Die Weboberfläche ergänzt eine bereichsweite Suche über Dateinamen und Ordnernamen mit Datei-/Ordnerfilter, logischem Elternpfad und Cursorseiten bis 100 Treffern. Die Unicode-Groß-/Kleinschreibung wird ignoriert, Sonderzeichen werden wörtlich gesucht. Leere Suche zeigt sichtbare Einträge. Suchtext und Typ bleiben beim Seitenwechsel erhalten. Es werden weder Dateiinhalte noch Papierkorb oder Fremdbereiche durchsucht.
+
+### 35.2 Sichtbarkeit und öffentlicher Vertrag
+
+FileService.search verwendet das bestehende Bereichsrecht files.list und die öffentlichen Autorisierungs-/Einschränkungsverträge. Aktive Identität und Gruppenfrische bleiben verpflichtend. Treffer unter gelöschten, fehlenden, zyklischen oder unzulässigen Eltern sind ausgeschlossen. Download verlangt weiterhin sein eigenes Leserecht. Der Katalogscan bleibt auf 10000 Einträge einschließlich gelöschter Einträge begrenzt und verweigert darüber unvollständige Ergebnisse. Kein externer Suchdienst, keine Schreiboperation, keine Migration oder Laufzeitabhängigkeit. Zusätzliche Suchprovider und Metadaten-/Tagsuche bleiben offen.
+
+### 35.3 Prüfung und Fortsetzung
+
+Neue Integrationsfälle prüfen Unicode, wörtliche Prozent-/Unterstrichzeichen, fehlende Inhaltsindizierung, Dateitypfilter und Ordnerpfad; Papierkorbeltern, beschädigte Elternketten; list ohne read, fremde Benutzer/Bereiche, lokale Sperre und Pluginrestriktion; Escaping und ungültige Eingaben; vollständige duplikatfreie 1000-Einträge-Pagination und Verweigerung ab 10001 Katalogeinträgen. Der echte HTTP-/HTTPS-Prüfer ergänzt Suche über verschachtelte Namen und Filterfehler. Endgültige Matrixergebnisse stehen in verification.md; die erfolgreiche vorige GitHub-Matrix in verification-iteration-24.md.
+
+Weitere Medien-, Datei-, Verwaltungs- und Betriebsfunktionen werden ohne erneutes allgemeines Go fortgesetzt. Neue Runtime-/Betriebskomponenten bleiben vor Einsatz abzustimmen.
+
+Version 1.26: Bereichsweite Namenssuche mit Sichtbarkeitsprüfung, Typfilter und begrenzter Pagination.

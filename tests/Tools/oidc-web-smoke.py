@@ -281,6 +281,9 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert req('/files/purge',purge_form)[0]==400
                     assert req('/files/purge',{**purge_form,'confirm':'delete'})[0]==303
                     assert 'to-purge.txt' not in req('/files/trash?space='+space)[1]
+                    status,search_page,_=req('/files/search?'+urllib.parse.urlencode({'space':space,'q':'RENAMED','kind':'file'}));assert status==200 and 'renamed.php' in search_page and 'copy.php' not in search_page
+                    assert req('/files/search?'+urllib.parse.urlencode({'space':space,'q':'renamed','kind':'folder'}))[0]==200
+                    assert req('/files/search?'+urllib.parse.urlencode({'space':space,'q':'renamed','kind':'bad'}))[0]==400
                     status,editor_page,_=req('/files/edit?space='+space+'&entry='+entry);assert status==200
                     edit_revision=re.search(r'name="revision" value="([0-9]+)"',editor_page).group(1)
                     edit_form={'csrf':csrf(editor_page),'space':space,'entry':entry,'revision':edit_revision,'text':'</textarea><script>draft</script>'}
@@ -317,7 +320,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

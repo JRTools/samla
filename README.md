@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 24 (Textansicht und versionierter Editor)
+## Entwicklungsstand: Iteration 25 (bereichsweite Namenssuche)
 
 Vorhanden sind:
+
+- Bereichsweite Namenssuche über alle sichtbaren Unterordner, mit Unicode-Groß-/Kleinschreibung, wörtlichen Sonderzeichen, Datei-/Ordnerfilter, Ordnerpfad und Cursorseiten bis 100 Treffer. Papierkorb und Inhalte unter gelöschten Eltern bleiben ausgeschlossen. Kein externer Suchdienst und keine Inhaltsindizierung. [Dateisuche](docs/file-search.md).
 
 - Geschützte Textansicht und einfacher Browsereditor für UTF-8-Dateien bis 64 KiB, darunter Markdown, JSON und YAML. Speichern erzeugt eine Version mit Revisionsbedingung; Konflikte, Sperren und Quotenfehler erhalten den Entwurf mit eigenem Download. Markup und Code werden ausschließlich als Text dargestellt. [Texteditor](docs/text-editor.md).
 

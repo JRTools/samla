@@ -41,6 +41,35 @@ final readonly class FileService
     }
     public function createFolder(string $actor, string $space, string $parent, string $name): string
     { return $this->create($actor, $space, $parent, $name, null); }
+    /** Bounded name search across one authorized space; never indexes file contents. */
+    public function search(string $actor, string $space, string $text = '', string $kind = 'all', ?string $after = null): array
+    {
+        $this->requireAccess($actor, 'files.list', $space);
+        $catalog = $this->space($space);
+        if (strlen($text) > 512 || !mb_check_encoding($text, 'UTF-8') || mb_strlen($text, 'UTF-8') > 128
+            || preg_match('/[\x00-\x1f\x7f]/', $text) || !in_array($kind, ['all','file','folder'], true)
+            || ($after !== null && !preg_match('/^[a-f0-9]{32}$/D', $after))) { throw new \InvalidArgumentException('Invalid file search.'); }
+        $q = $this->pdo->prepare('SELECT id,parent_id,name,kind,size_bytes,revision,trashed_at FROM storage_entries WHERE space_id = ? ORDER BY id LIMIT 10001');
+        $q->execute([$space]); $entries = $q->fetchAll();
+        if (count($entries) > 10000) { throw new \LengthException('Search catalog capacity reached.'); }
+        $nodes = array_column($entries, null, 'id'); $rows = [];
+        foreach ($entries as $row) {
+            if ($row['trashed_at'] !== null || ($after !== null && strcmp($row['id'], $after) <= 0)
+                || ($kind !== 'all' && $row['kind'] !== $kind)
+                || ($text !== '' && mb_stripos($row['name'], $text, 0, 'UTF-8') === false)) { continue; }
+            $parent = $row['parent_id']; $seen = [$row['id'] => true]; $parts = [];
+            while ($parent !== '') {
+                if (isset($seen[$parent]) || count($seen) >= 128 || !isset($nodes[$parent])
+                    || $nodes[$parent]['kind'] !== 'folder' || $nodes[$parent]['trashed_at'] !== null) { continue 2; }
+                $seen[$parent] = true; array_unshift($parts, $nodes[$parent]['name']); $parent = $nodes[$parent]['parent_id'];
+            }
+            unset($row['trashed_at']); $row['folder_path'] = implode(' / ', $parts); $rows[] = $row;
+            if (count($rows) === 101) { break; }
+        }
+        $next = null; if (count($rows) > 100) { array_pop($rows); $next = $rows[99]['id']; }
+        return ['space' => $catalog, 'rows' => $rows, 'next' => $next, 'search_text' => $text, 'search_kind' => $kind,
+            'can_read' => $this->allowed($actor, 'files.read', $space)];
+    }
     /** @param resource $source */
     public function upload(string $actor, string $space, string $parent, string $name, $source): string
     {
