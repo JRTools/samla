@@ -44,5 +44,9 @@
   "config": {
     "sort-packages": true,
     "allow-plugins": false
+  },
+  "suggest": {
+    "ext-gd": "Raster image previews in the configured worker runtime",
+    "ext-exif": "EXIF orientation and selected JPEG/TIFF metadata in the configured worker runtime"
   }
 }

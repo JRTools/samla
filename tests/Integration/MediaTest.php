@@ -1,0 +1,124 @@
+<?php
+declare(strict_types=1);
+namespace Samla\Tests\Integration;
+
+use PHPUnit\Framework\TestCase;
+use Samla\Core\Administration\PdoMutationRunner;
+use Samla\Core\Authorization\AuthorizationService;
+use Samla\Core\Configuration\AppConfig;
+use Samla\Core\Database\{ConnectionFactory,MigrationRunner};
+use Samla\Core\Identity\{IdentityPlugin,PdoIdentityRepository};
+use Samla\Core\Plugins\PluginRuntime;
+use Samla\Core\Storage\{FileService,LocalContentStore,StorageLockService,StoragePlugin,StorageWriteGuard,TextEditorService};
+use Samla\Core\Web\{FileController,Request};
+use Samla\PluginApi\{ChangeValidator,MutationContext,PluginRegistrar,Scope};
+use Samla\Plugins\Rbac\{PdoRoleRepository,RbacPlugin,Role,RoleAssignment};
+use Samla\Tests\Fixtures\Extension;
+
+final class MediaTest extends TestCase
+{
+    private \PDO $pdo;
+    private PdoIdentityRepository $identity;
+    private PdoRoleRepository $roles;
+    private PluginRuntime $runtime;
+    private string $root;
+    private string $csrf;
+    protected function setUp(): void
+    {
+        $config=AppConfig::fromGlobals(); if($config->environment!=='test'){throw new \RuntimeException();}
+        $this->pdo=(new ConnectionFactory())->connect($config->database); (new MigrationRunner($this->pdo))->migrate(require __DIR__.'/../../bootstrap/migrations.php');
+        foreach(['media_assets','outbox_deliveries','outbox_receipts','outbox_subscribers','outbox_events','audit_events','rbac_delegation_permissions','rbac_delegations','rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups','storage_spaces'] as $table){$this->pdo->exec('DELETE FROM '.$table);}
+        $this->identity=new PdoIdentityRepository($this->pdo,3600);
+        foreach(['alice','bob'] as $user){$this->identity->createUser($user,'https://id.example',$user,$user);$this->identity->replaceVerifiedGroups($user,[]);}
+        $this->identity->createGroup('editors','Editors');$this->identity->addManualMembership('alice','editors');
+        $this->roles=new PdoRoleRepository($this->pdo);$this->runtime=$this->boot();$this->rights();
+        $this->pdo->exec("INSERT INTO storage_spaces(id,name,quota_bytes) VALUES ('a','A',1048576),('b','B',1048576)");
+        $this->roles->assign(new RoleAssignment('editors','editor',Scope::Space,'a'));
+        $this->root=sys_get_temp_dir().'/samla-editor-'.bin2hex(random_bytes(8));mkdir($this->root,0700);$this->csrf=str_repeat('a',64);
+    }
+    protected function tearDown(): void
+    {foreach(new \DirectoryIterator($this->root) as $f){if(!$f->isDot()){unlink($f->getPathname());}}rmdir($this->root);}
+    private function boot(array $extra=[]): PluginRuntime
+    {return PluginRuntime::boot([new IdentityPlugin(),new StoragePlugin(),new \Samla\Core\Media\MediaPlugin(function($event):void{$this->pipeline()->handle($event);}),new RbacPlugin($this->roles,$this->identity),...$extra]);}
+    private function rights(array $permissions=['files.list','files.read','files.create','files.update','files.versions.read','files.delete','files.restore','media.previews.read','media.metadata.read','media.process']): void
+    {$this->roles->save(new Role('editor',Scope::Space,$permissions),$this->runtime);}
+    private function files(?PluginRuntime $runtime=null): FileService
+    {$runtime??=$this->runtime;return new FileService($this->pdo,new AuthorizationService($runtime,$this->identity),new PdoMutationRunner($this->pdo,$runtime),new LocalContentStore($this->root));}
+    private function upload(string $text='initial',string $name='notes.md'): string
+    {$s=fopen('php://temp','w+b');fwrite($s,$text);rewind($s);try{return $this->files()->upload('alice','a','',$name,$s);}finally{fclose($s);}}
+    private function media(?PluginRuntime $runtime=null): \Samla\Core\Media\MediaService
+    {$runtime??=$this->runtime;return new \Samla\Core\Media\MediaService($this->pdo,$this->files($runtime),new AuthorizationService($runtime,$this->identity),new PdoMutationRunner($this->pdo,$runtime),$runtime);}
+    private function pipeline(?PluginRuntime $runtime=null): \Samla\Core\Media\MediaPipeline
+    {return new \Samla\Core\Media\MediaPipeline($this->pdo,$runtime??$this->runtime,new LocalContentStore($this->root));}
+    private function page(string $path,string $id,?array $post=null,string $actor='alice'): \Samla\Core\Web\Response
+    {return (new \Samla\Core\Web\MediaController($this->media()))->handle(new Request($post===null?'GET':'POST',$path,query:['space'=>'a','entry'=>$id,'revision'=>'1'],post:$post===null?[]:$post+['space'=>'a','entry'=>$id,'revision'=>'1','csrf'=>$this->csrf]),$actor,$this->csrf,['actor'=>$actor,'csrf'=>$this->csrf,'caps'=>[],'flash'=>null]);}
+    public function testWorkerAutomaticallyBuildsPrivateVersionBoundPreviewAndPreservesOriginal():void
+    {
+        $png=\Samla\Tests\Fixtures\MediaImages::png();$id=$this->upload($png,'<photo>.jpg');self::assertSame('pending',$this->media()->details('alice','a',$id)['media_status']);
+        $worker=new \Samla\Core\Background\OutboxWorker($this->pdo,$this->runtime);self::assertSame(1,$worker->run()['delivered']);
+        $detail=$this->media()->details('alice','a',$id);self::assertSame('ready',$detail['media_status']);self::assertCount(3,$detail['metadata']);self::assertSame('image/png',$detail['metadata'][0]['normalized']);
+        $preview=$this->page('/media/preview',$id);self::assertSame(200,$preview->status);self::assertSame('image/png',$preview->headers['Content-Type']);self::assertSame("\x89PNG",substr($preview->body,0,4));
+        $download=$this->files()->download('alice','a',$id);try{self::assertSame($png,stream_get_contents($download['stream']));}finally{fclose($download['stream']);}
+        self::assertSame(200,$this->page('/media',$id)->status);$html=$this->page('/media/detail',$id);self::assertSame(200,$html->status);self::assertStringContainsString('&lt;photo&gt;.jpg',$html->body);self::assertStringNotContainsString('<photo>',$html->body);
+        $stream=fopen('php://temp','w+b');fwrite($stream,\Samla\Tests\Fixtures\MediaImages::jpeg(6));rewind($stream);try{$this->files()->replace('alice','a',$id,1,$stream);}finally{fclose($stream);}
+        self::assertSame(409,$this->page('/media/preview',$id)->status);self::assertSame('pending',$this->media()->details('alice','a',$id)['media_status']);self::assertSame(1,$worker->run()['delivered']);self::assertNotSame($preview->body,$this->media()->preview('alice','a',$id,2));self::assertSame(2,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());
+    }
+    public function testEveryReadRechecksRightsAndHiddenParentsAndOriginalAccessIsSeparate():void
+    {
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');$this->pipeline()->processEntry($id);
+        self::assertSame(403,$this->page('/media/preview',$id,actor:'bob')->status);
+        $this->rights(['files.list','media.previews.read']);$detail=$this->media()->details('alice','a',$id);self::assertSame([],$detail['metadata']);self::assertFalse($detail['can_download']);self::assertTrue($detail['has_preview']);self::assertSame(200,$this->page('/media/preview',$id)->status);self::assertStringNotContainsString('/files/download',$this->page('/media/detail',$id)->body);
+        $this->rights(['files.list','media.metadata.read']);self::assertSame(403,$this->page('/media/preview',$id)->status);self::assertCount(3,$this->media()->details('alice','a',$id)['metadata']);
+        $this->rights();$folder=$this->files()->createFolder('alice','a','','hidden');$this->files()->change('alice','a',$id,'move','photo.png','',parent:$folder);$this->files()->change('alice','a',$folder,'trash','hidden','');self::assertSame(400,$this->page('/media/preview',$id)->status);
+    }
+    public function testRefreshIsCsrfRevisionAndPermissionProtectedDeduplicatedAndDoesNotProcessInline():void
+    {
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');self::assertSame(404,$this->page('/media/preview',$id)->status);
+        self::assertSame(405,$this->page('/media/refresh',$id)->status);self::assertSame(403,$this->page('/media/refresh',$id,['csrf'=>'bad'])->status);self::assertSame(409,$this->page('/media/refresh',$id,['revision'=>'2'])->status);
+        self::assertSame(303,$this->page('/media/refresh',$id,[])->status);self::assertSame(303,$this->page('/media/refresh',$id,[])->status);self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());self::assertSame(1,(int)$this->pdo->query("SELECT COUNT(*) FROM outbox_events WHERE event_type='media.asset.refresh.completed'")->fetchColumn());
+        $this->rights(['files.list','media.previews.read']);self::assertSame(403,$this->page('/media/refresh',$id,[])->status);
+    }
+    public function testUnavailableProviderIsRetriedAndCacheIsIdempotent():void
+    {
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');$calls=0;$provider=new class($calls) implements \Samla\PluginApi\MediaProvider{
+            public function __construct(private mixed &$calls){}public function id():string{return 'test.media.provider';}public function version():string{return '1';}
+            public function extract(\Samla\PluginApi\MediaSource $s):\Samla\PluginApi\MediaResult{++$this->calls;return new \Samla\PluginApi\MediaResult($this->calls===1?'unavailable':'unsupported');}
+        };
+        $runtime=$this->boot([new Extension('test.media',static fn(PluginRegistrar $r)=>$r->mediaProvider($provider))]);
+        try{$this->pipeline($runtime)->processEntry($id);self::fail('Unavailable provider acknowledged.');}catch(\RuntimeException){self::assertSame(1,$calls);}
+        self::assertSame('partial',$this->media($runtime)->details('alice','a',$id)['media_status']);$this->pipeline($runtime)->processEntry($id);$this->pipeline($runtime)->processEntry($id);self::assertSame(2,$calls);self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());
+    }
+    public function testSensitiveFieldsUseCurrentAdditionalPermissionAndEscapedSources():void
+    {
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');
+        $runtime=$this->boot([new Extension('test.media',static function(PluginRegistrar $r):void{
+            $r->permission(new \Samla\PluginApi\Permission('test.media.private','test.media',[Scope::Space]));$r->mediaField(new \Samla\PluginApi\MediaField('test.media.secret','Private',sensitive:true,readPermission:'test.media.private'));
+            $r->mediaProvider(new class implements \Samla\PluginApi\MediaProvider{public function id():string{return 'test.media.provider';}public function version():string{return '1';}public function extract(\Samla\PluginApi\MediaSource $s):\Samla\PluginApi\MediaResult{return new \Samla\PluginApi\MediaResult('ready',[new \Samla\PluginApi\MediaValue('test.media.secret','<script>','secret','secret')]);}});
+        })]);$this->pipeline($runtime)->processEntry($id);self::assertCount(3,$this->media($runtime)->details('alice','a',$id)['metadata']);
+        $this->roles->save(new Role('editor',Scope::Space,['files.list','media.metadata.read','test.media.private']),$runtime);self::assertCount(4,$this->media($runtime)->details('alice','a',$id)['metadata']);
+        $this->pdo->exec("UPDATE identity_users SET status='blocked' WHERE id='alice'");try{$this->media($runtime)->details('alice','a',$id);self::fail('Blocked actor accessed metadata.');}catch(\Samla\PluginApi\AccessDenied){self::assertTrue(true);}
+    }
+    public function testRefreshPermissionRevokedByValidatorRollsBackRequestAuditAndEvent():void
+    {
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');$roles=$this->roles;$base=$this->runtime;
+        $runtime=$this->boot([new Extension('test.media',static function(PluginRegistrar $r)use($roles,$base):void{
+            $r->validator(new class($roles,$base)implements ChangeValidator{
+                public function __construct(private PdoRoleRepository $roles,private PluginRuntime $base){}public function priority():int{return 0;}
+                public function validate(MutationContext $c):void{if($c->operation==='media.asset.refresh'){$this->roles->saveInsideTransaction(new Role('editor',Scope::Space,['files.list','media.previews.read']),$this->base);}}
+            });
+        })]);
+        try{$this->media($runtime)->refresh('alice','a',$id,1);self::fail('Revoked process right accepted.');}catch(\Samla\PluginApi\AccessDenied){self::assertFalse($this->pdo->inTransaction());}
+        self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());self::assertSame(0,(int)$this->pdo->query("SELECT COUNT(*) FROM audit_events WHERE operation='media.asset.refresh'")->fetchColumn());self::assertTrue($this->media()->refresh('alice','a',$id,1));
+    }
+    public function testCopiesReuseProjectionAndUnreferencedSourceIsNotPersisted():void
+    {
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');$this->pipeline()->processEntry($id);$copy=$this->files()->change('alice','a',$id,'copy','photo.png','',name:'copy.png');$this->pipeline()->processEntry($copy);self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());self::assertSame('ready',$this->media()->details('alice','a',$copy)['media_status']);
+        $pdo=$this->pdo;$runtime=$this->boot([new Extension('test.media',static function(PluginRegistrar $r)use($pdo):void{
+            $r->mediaProvider(new class($pdo)implements \Samla\PluginApi\MediaProvider{
+                public function __construct(private \PDO $pdo){}public function id():string{return 'test.media.purge';}public function version():string{return '1';}
+                public function extract(\Samla\PluginApi\MediaSource $s):\Samla\PluginApi\MediaResult{$this->pdo->exec('DELETE FROM storage_entries');return new \Samla\PluginApi\MediaResult('unsupported');}
+            });
+        })]);$this->pipeline($runtime)->processEntry($id);self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());
+    }
+
+}

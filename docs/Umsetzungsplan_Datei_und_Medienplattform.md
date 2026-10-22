@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.29
+Version: 1.30
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 27 und konkrete EXIF-Entscheidungsvorlage, siehe Abschnitte 38 und 39. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 28, EXIF freigegeben und Medienbasis, siehe Abschnitte 39 und 40. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -962,3 +962,18 @@ Neue Integrationstests decken separate Rechte und lokale Sperre, Nur-Lesen ohne 
 Für korrekt orientierte Handyfoto-Ableitungen und ausgewählte EXIF-Felder wird die native PHP-Erweiterung ext-exif vorgeschlagen. Die konkrete Vorlage docs/exif-library-decision.md beschreibt Umfang, Stream-/Größen-/Datenschutzgrenzen und Fallback ohne Modul. Eine isolierte Evaluation außerhalb der Anwendung hat unter PHP 8.4.5/8.5.4 ein künstliches JPEG mit Orientierung 6 korrekt aus einem Stream gelesen und eine ungültige Datei kategorisiert; Originalprüfsummen blieben unverändert. Die Komponente ist noch nicht in Samla integriert. Gemäß Konzept und AGENTS wird vor der Einbindung die ausdrückliche Freigabe eingeholt. ExifTool und C2PA-Werkzeuge bleiben separate offene Entscheidungen.
 
 Version 1.29: Berechtigte Worker-Verwaltungsansicht mit atomarem, revisionsgebundenem Retry und vorbereiteter EXIF-Komponentenentscheidung.
+
+
+## 40. Iteration 28: Freigegebene EXIF-Basis und geschützte Medienansichten
+
+Die ausdrückliche Betreiberfreigabe „Exif erweiterung ist ok“ vom 22. Oktober 2026 erfüllt den offenen Komponentenentscheid aus Abschnitt 39. ext-exif wird für ausgewählte JPEG-/TIFF-Felder und alle acht Orientierungen verwendet. ExifTool, C2PA und weitere Parser bleiben gesondert abzustimmen.
+
+Implementiert werden namensraumgebundene öffentliche MediaField-/MediaProvider-Verträge, begrenzte unveränderliche Quellen, typisierte Werte mit Rohwert/Normalisierung/Quelle/Status sowie ein enger PNG-Vorschauvertrag ohne Text-/EXIF-Chunks. Der gemeinsame Outbox-Worker verarbeitet aktuelle Dateiinhalte; Originale bleiben unverändert. Private SQL-Ableitungen sind an Blob, SHA-256, Größe und Provider-/Feldsignatur gebunden. Neue Migration platform.media:0001_assets.
+
+Browsernavigation Medien mit Bereichs-/Ordnerseiten und Detailansicht, revisionsgebundene geschützte Vorschauroute, getrennte Bereichsrechte media.previews.read, media.metadata.read und media.process. Sensible Erweiterungsfelder verlangen eigene Rechte. Bestehende Rollen werden nicht erweitert; das ausdrückliche CLI-Profil media ergänzt die vorhandenen Dateirechte. Analysevormerkung ist CSRF-/Revisions-/Validator-geschützt, auditiert und pro Datei auf eine pro Minute begrenzt. CLI-Cron und HTTP-Trigger verwenden denselben Handler.
+
+GD unterstützt JPEG/PNG/GIF/WebP, TIFF bleibt Metadatenbasis ohne Vorschau. 16 MiB Quellen, 16.777.216 Pixel, Speicherabschätzung, 480-Pixel-Vorschau, 20.000 Cachezeilen und 256 MiB Vorschauinhalt begrenzen diesen ersten Ausbau. Keine automatische Cachelöschung oder Vollrebuild, kein harter Parserzeitabbruch. Dokumentation: media.md.
+
+Prüfung und tatsächlicher Veröffentlichungsstand: verification.md. Offen bleiben weitere Feldtypen, manuelle Katalogpflege, IPTC/XMP/KI/C2PA, Tags/Sammlungen, Export/Mediensuche, vollständiger Rebuild und Cachepflege sowie die weiteren Datei-/Verwaltungs-/Betriebs- und Geräteabnahmen. Die weitere Umsetzung ist autorisiert und erfordert kein erneutes Go je Phase.
+
+Version 1.30: Native EXIF-Erweiterung freigegeben; erster Medienprovider, privater Ableitungscache und berechtigte Medienoberfläche.

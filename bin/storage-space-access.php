@@ -10,18 +10,19 @@ use Samla\Core\Database\ConnectionFactory;
 use Samla\Core\Identity\{IdentityPlugin, PdoIdentityRepository};
 use Samla\Core\Plugins\PluginRuntime;
 use Samla\Core\Storage\StoragePlugin;
+use Samla\Core\Media\MediaPlugin;
 use Samla\PluginApi\{AccessDenied, AuthorizationRequest, Decision, MutationContext, Scope};
 use Samla\Plugins\Rbac\{PdoRoleRepository, RbacPlugin, Role, RoleAssignment};
 try {
     if (count($argv) !== 5) { throw new \InvalidArgumentException(); }
     [, $actor, $space, $group, $profile] = $argv;
     $profiles = ['read' => ['files.list','files.read'], 'contribute' => ['files.list','files.read','files.create'],
-        'manage' => ['files.list','files.read','files.create','files.update','files.delete','files.restore'], 'history' => ['files.versions.read'], 'purge' => ['files.purge']];
+        'manage' => ['files.list','files.read','files.create','files.update','files.delete','files.restore'], 'history' => ['files.versions.read'], 'purge' => ['files.purge'],'media'=>['media.previews.read','media.metadata.read','media.process']];
     if (!isset($profiles[$profile])) { throw new \InvalidArgumentException(); }
     $config = AppConfig::fromGlobals(); if (!$config->maintenance) { throw new AccessDenied(); }
     $pdo = (new ConnectionFactory())->connect($config->database);
     $identity = new PdoIdentityRepository($pdo, $config->groupMaxAgeSeconds); $roles = new PdoRoleRepository($pdo);
-    $runtime = PluginRuntime::boot([new IdentityPlugin(), new StoragePlugin(), new RbacPlugin($roles, $identity)]);
+    $runtime = PluginRuntime::boot([new IdentityPlugin(), new StoragePlugin(), new MediaPlugin(),new RbacPlugin($roles, $identity)]);
     $authorization = new AuthorizationService($runtime, $identity); $role = 'samla.files.' . $profile; $permissions = $profiles[$profile];
     $guard = static function () use ($actor, $group, $space, $authorization, $pdo, $roles, $role, $permissions): void {
         foreach (['identity.users.read','identity.groups.memberships.manage'] as $action) {
@@ -40,4 +41,4 @@ try {
             return $roles->assignInsideTransaction(new RoleAssignment($group, $role, Scope::Space, $space)) || $created;
         });
     fwrite(STDOUT, $changed ? "Explicit space access granted.\n" : "Requested assignment already exists.\n");
-} catch (\Throwable) { fwrite(STDERR, "Access setup failed. Usage: php bin/storage-space-access.php ACTOR_ID SPACE_ID GROUP_ID read|contribute|manage|history|purge\nRequire maintenance and a fresh administrator. Existing reserved roles must match exactly.\n"); exit(1); }
+} catch (\Throwable) { fwrite(STDERR, "Access setup failed. Usage: php bin/storage-space-access.php ACTOR_ID SPACE_ID GROUP_ID read|contribute|manage|history|purge|media\nRequire maintenance and a fresh administrator. Existing reserved roles must match exactly.\n"); exit(1); }

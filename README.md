@@ -1,14 +1,16 @@
 # Samla
 
-Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Eine responsive Oberfläche mit OIDC-Anmeldung, privater Dateiablage, Versionierung, einfachem Texteditor und WebDAV-Zugriff ist implementiert. Erweiterte Dateioperationen und eine Medienbibliothek mit Metadaten und nachvollziehbaren KI-Kennzeichnungen werden weiter umgesetzt. Gruppenbasierte Rechte schützen Browser und Gerätezugriffe.
+Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Eine responsive Oberfläche mit OIDC-Anmeldung, privater Dateiablage, Versionierung, einfachem Texteditor, geschützter Medienansicht und WebDAV-Zugriff ist implementiert. Erweiterte Dateioperationen, Katalogpflege und nachvollziehbare KI-Kennzeichnungen werden weiter umgesetzt. Gruppenbasierte Rechte schützen Browser und Gerätezugriffe.
 
 Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgelieferte RBAC-Pflichtplugin verwendet dieselbe Plugin-API wie zusätzliche Erweiterungen. Zuverlässige Dateioperationen, nachvollziehbare Rechte und automatisierte Tests haben Vorrang.
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 27 (Worker-Verwaltung im Browser)
+## Entwicklungsstand: Iteration 28 (Medienvorschauen und EXIF)
 
 Vorhanden sind:
+
+- Rechtegeschütztes Medienraster und Detailansicht mit privaten PNG-Vorschauen, acht EXIF-Orientierungen und ausgewählten technischen/Kameraangaben. Gemeinsamer Worker, unveränderte Originale, begrenzter SQL-Cache, getrennte Vorschau-/Metadaten-/Verarbeitungsrechte und öffentliche Provider-/Feldverträge. GD und die ausdrücklich freigegebene native EXIF-Erweiterung; neue Migration und ausdrückliche Rechtevergabe erforderlich. [Einrichtung und Grenzen](docs/media.md).
 
 - Rechtegeschützte Worker-Verwaltung unter Hintergrundaufgaben: Zustellzähler, Statusfilter, Seitenwechsel und erneutes Vormerken endgültig fehlgeschlagener Aufgaben. Separate globale Lese-/Retryrechte, Revisionsschutz, Pluginvalidierung und transaktionales Audit. Bestehende Rollen werden nicht automatisch erweitert. [Einrichtung](docs/background-worker.md).
 
@@ -50,7 +52,7 @@ Vorhanden sind:
 
 Die Weboberfläche kann mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. Erweiterte Dateioperationen und konkrete native Clientabnahme bleiben offen. Der Betreiber bestätigt erfolgreichen ZITADEL-Login und initiale Administration auf seinem Plesk-Host; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
 
-Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox kann registrierte Empfänger nun über den ausdrücklich gestarteten Worker beliefern; Medienhandler fehlen noch; Status und berechtigtes Retry sind im Browser verfügbar.
+Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox kann registrierte Empfänger nun über den ausdrücklich gestarteten Worker beliefern; ein begrenzter Raster-/EXIF-Medienhandler ist vorhanden; Status und berechtigtes Retry sind im Browser verfügbar.
 
 ## Voraussetzungen
 
@@ -58,7 +60,7 @@ Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise 
 - MySQL 8.0 oder MariaDB 11.8. Die konkrete Prüfabdeckung steht im Prüfprotokoll.
 - PHPUnit 13 als Entwicklungsabhängigkeit und dessen erforderliche PHP-Erweiterungen.
 - PHP-Sessionfunktion und ein beschreibbares, nicht öffentliches Sessionverzeichnis. HTTPS-Streams, allow_url_fopen und gültiger CA-Vertrauensspeicher für OIDC.
-- GD für die späteren Medienfunktionen.
+- GD und ext-exif für die Medienverarbeitung in der verwendeten CLI- beziehungsweise FPM-Workerlaufzeit. Ohne diese Module bleiben die bisherigen Dateifunktionen nutzbar; die Medienanalyse meldet fehlende Fähigkeiten.
 
 Ein zusätzlicher Framework-, Node.js-, Redis- oder Suchdienst ist derzeit nicht eingebaut. Der freigegebene OIDC-Client und SabreDAV 4.7.1 samt ihren transitiven Paketen sind in composer.lock festgeschrieben; Composer-Plugins bleiben gesperrt. Die Projektlizenz bleibt offen; die WebDAV-Protokollintegration wird fortgesetzt.
 

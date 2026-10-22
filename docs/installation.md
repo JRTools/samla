@@ -139,3 +139,8 @@ Die neue Sperrtabelle ist vor Schreibzugriffen zu migrieren. Der vorhandene Wart
 Iteration 26 ergänzt die Migration platform.administration:0002_outbox_delivery und den freigegebenen CLI-/HTTPS-Worker. Vor dem Start migrieren. Cronaufruf oder HTTPS-POST-Scheduler sind anschließend gemäß [background-worker.md](background-worker.md) einzurichten. Ein leerer APP_WORKER_HTTP_TOKEN_SHA256 deaktiviert den Webtrigger. Die Codeinstallation richtet noch keine geplante Aufgabe ein.
 
 Iteration 27 ergänzt zusätzlich platform.administration:0003_delivery_revision für sichere manuelle Zustellwiederholungen. Die Browseransicht Hintergrundaufgaben benötigt ausdrücklich vergebene operations.worker.read beziehungsweise operations.worker.retry; der Wartungshelfer und die Profile sind in background-worker.md dokumentiert.
+
+
+## Medienbasis ab Iteration 28
+
+Nach Sicherung die Migration platform.media:0001_assets im Wartungsmodus anwenden. GD und die freigegebene native PHP-Erweiterung EXIF müssen in der tatsächlichen Worker-Laufzeit aktiv sein. Bereichsrechte werden ausdrücklich vergeben; bisherige Dateirollen ändern sich nicht. CLI-Cron und HTTP-Scheduler bleiben nutzbar. Einrichtung, unterstützte Formate, Cachekapazität und aktuelle Grenzen: [media.md](media.md).

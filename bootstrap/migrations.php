@@ -14,5 +14,6 @@ return [
     ...require __DIR__ . '/../migrations/file-versions.php',
     ...require __DIR__ . '/../migrations/storage-locks.php',
     ...require __DIR__ . '/../migrations/storage-active-names.php',
+    ...require __DIR__ . '/../migrations/media.php',
     ...require __DIR__ . '/../plugins/rbac/migrations.php',
 ];

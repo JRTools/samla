@@ -10,4 +10,6 @@ interface PluginRegistrar
     public function validator(ChangeValidator $validator, int $priority = 0): void;
     public function restriction(AccessRestriction $restriction, int $priority = 0): void;
     public function outboxSubscriber(OutboxSubscription $subscription): void;
+    public function mediaField(MediaField $field):void;
+    public function mediaProvider(MediaProvider $provider,int $priority=0):void;
 }

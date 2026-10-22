@@ -21,6 +21,8 @@ final class PluginRuntime implements PermissionRegistry
     private array $validators = [];
     /** @var array<string, \Samla\PluginApi\OutboxSubscription> */
     private array $subscribers = [];
+    private array $mediaFields=[];
+    private array $mediaProviders=[];
 
     private function __construct() {}
 
@@ -57,6 +59,10 @@ final class PluginRuntime implements PermissionRegistry
                 public function outboxSubscriber(\Samla\PluginApi\OutboxSubscription $subscription): void {
                     $this->check(); $this->runtime->addSubscriber($this->owner, $subscription);
                 }
+                public function mediaField(\Samla\PluginApi\MediaField $field):void
+                {$this->check();$this->runtime->addMediaField($this->owner,$field);}
+                public function mediaProvider(\Samla\PluginApi\MediaProvider $provider,int $priority=0):void
+                {$this->check();$this->runtime->addMediaProvider($this->owner,$provider,$priority);}
             };
             try { $plugin->register($registrar); } finally { $registrar->close(); }
         }
@@ -64,6 +70,10 @@ final class PluginRuntime implements PermissionRegistry
             ($b['priority'] <=> $a['priority']) ?: strcmp($a['plugin'], $b['plugin']) ?: ($a['index'] <=> $b['index']));
         usort($runtime->validators, static fn(array $a, array $b): int =>
             ($b['priority'] <=> $a['priority']) ?: strcmp($a['plugin'], $b['plugin']) ?: ($a['index'] <=> $b['index']));
+        foreach($runtime->mediaFields as$entry){$field=$entry['field'];$permission=$runtime->find($field->readPermission);
+            if($permission===null||!in_array(\Samla\PluginApi\Scope::Space,$permission->scopes,true)
+                ||($permission->ownerPlugin!==$entry['owner']&&($field->sensitive||$field->readPermission!=='media.metadata.read'))){throw new \LogicException('Invalid field permission.');}}
+        uasort($runtime->mediaProviders,static fn(array $a,array $b):int=>($b['priority']<=>$a['priority'])?:strcmp($a['provider']->id(),$b['provider']->id()));
         $runtime->sealed = true;
         return $runtime;
     }
@@ -105,4 +115,20 @@ final class PluginRuntime implements PermissionRegistry
     }
     /** @return array<string, \Samla\PluginApi\OutboxSubscription> */
     public function subscribers(): array { return $this->subscribers; }
+    public function addMediaField(string $owner,\Samla\PluginApi\MediaField $field):void
+    {
+        if($this->sealed||!isset($this->active[$owner])||!str_starts_with($field->id,$owner.'.')||isset($this->mediaFields[$field->id])||count($this->mediaFields)>=64){throw new \LogicException('Invalid media field registration.');}
+        $this->mediaFields[$field->id]=['owner'=>$owner,'field'=>$field];
+    }
+    public function addMediaProvider(string $owner,\Samla\PluginApi\MediaProvider $provider,int $priority):void
+    {
+        $id=$provider->id();$version=$provider->version();
+        if($this->sealed||!isset($this->active[$owner])||!preg_match('/^[a-z][a-z0-9_.]{1,95}$/D',$id)||!str_starts_with($id,$owner.'.')||isset($this->mediaProviders[$id])||count($this->mediaProviders)>=8
+            ||!preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D',$version)||abs($priority)>1000){throw new \LogicException('Invalid media provider registration.');}
+        $this->mediaProviders[$id]=['owner'=>$owner,'provider'=>$provider,'priority'=>$priority];
+    }
+    /** @return array<string,\Samla\PluginApi\MediaField> */
+    public function mediaFields():array{return array_map(static fn(array $entry)=>$entry['field'],$this->mediaFields);}
+    /** @return list<\Samla\PluginApi\MediaProvider> */
+    public function mediaProviders():array{return array_values(array_column($this->mediaProviders,'provider'));}
 }

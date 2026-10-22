@@ -12,6 +12,7 @@ $checks = [
     'https_streams' => in_array('https', stream_get_wrappers(), true),
     'allow_url_fopen' => filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOL),
     'gd' => extension_loaded('gd'),
+    'exif' => extension_loaded('exif'),
     'fileinfo' => extension_loaded('fileinfo'),
 ];
 foreach ($checks as $name => $ok) { echo ($ok ? '[OK] ' : '[MISSING] ') . $name . PHP_EOL; }

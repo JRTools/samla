@@ -50,7 +50,7 @@ Rotation: Neues Token/Hash erzeugen, Hash in der tatsächlichen .env beziehungsw
 
 ## Begrenzung, Parallelität und Zustellung
 
-Pro Lauf höchstens 50 Zustellversuche. Nach einem kooperativen Budget von 45 Sekunden beginnt kein neuer Handler mehr. Das unterbricht keinen bereits laufenden Provider oder blockierendes I/O. Die derzeitige Referenzverarbeitung ist kurz; spätere Medienprovider brauchen eigene Zeit-/Speichergrenzen. HTTP-Hoster können ein niedrigeres Requestlimit haben; abgebrochene Claims laufen nach 120 Sekunden aus und können erneut übernommen werden.
+Pro Lauf höchstens 50 Zustellversuche. Nach einem kooperativen Budget von 45 Sekunden beginnt kein neuer Handler mehr. Das unterbricht keinen bereits laufenden Provider oder blockierendes I/O. Der Raster-/EXIF-Provider begrenzt Quellgröße, Pixel und geschätzten Speicher, hat aber keinen harten Abbruch einer laufenden nativen Parserfunktion. HTTP-Hoster können ein niedrigeres Requestlimit haben; abgebrochene Claims laufen nach 120 Sekunden aus und können erneut übernommen werden.
 
 Ein separater Datenbanklock verhindert parallele CLI-/Webläufe derselben Installation sowie rekursive Aufrufe. Handler halten nicht den globalen fachlichen Administrationslock. Nur die kurze Ermittlung neuer Zustellungen sperrt diesen Lock, damit niedrigere noch nicht abgeschlossene Ereignissequenzen nicht versehentlich übersprungen werden. Claims und Bestätigungen werden getrennt gespeichert. Ein Handler, der eine SQL-Transaktion offen lässt, wird zurückgerollt und als fehlgeschlagen behandelt.
 
@@ -64,7 +64,7 @@ Die ursprüngliche Spalte outbox_events.status ist für die neue empfängerbezog
 
 platform.receipts.storage_v1 empfängt Datei-Upload, Ersetzung, Versionswiederherstellung, endgültiges Purge und Ordneranlage. Er darf auch vorhandene passende Ereignisse in begrenzten Batches übernehmen und legt eine eindeutige technische Quittung ab. Das beweist den Zustellweg und die Idempotenz, erzeugt aber noch keine Vorschaubilder oder extrahierte Metadaten. Es werden keine Objekt-GC, endgültigen Löschungen oder neuen Aufbewahrungsregeln automatisch gestartet.
 
-Weitere Empfänger werden über OutboxSubscription und PluginRegistrar registriert. Ohne ausdrückliches replayExisting startet ein neuer Empfänger erst am aktuellen Wasserstand seines ersten Workeraufrufs. Änderung der Ereignistypen oder Replaypolitik verlangt eine neue Empfängerkennung. Ereignisse sind keine aktuellen Rechte: Benutzeraufträge prüfen ihre Rechte erneut; technische Medienergebnisse müssen an feste Inhaltsversionen gebunden werden. Diese Fachhandler folgen gesondert.
+Weitere Empfänger werden über OutboxSubscription und PluginRegistrar registriert. Ohne ausdrückliches replayExisting startet ein neuer Empfänger erst am aktuellen Wasserstand seines ersten Workeraufrufs. Änderung der Ereignistypen oder Replaypolitik verlangt eine neue Empfängerkennung. Ereignisse sind keine aktuellen Rechte: Benutzeraufträge prüfen ihre Rechte erneut; technische Medienergebnisse müssen an feste Inhaltsversionen gebunden werden. Die Raster-/EXIF-Integration mit privaten, inhaltsgebundenen Ableitungen ist in [media.md](media.md) beschrieben.
 
 
 ## Verwaltungsansicht und Rechte

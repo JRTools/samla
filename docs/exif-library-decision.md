@@ -1,6 +1,6 @@
 # Entscheidungsvorlage: native PHP-Erweiterung EXIF
 
-Stand: 22. Oktober 2026. Noch keine produktive Samla-Abhängigkeit oder Einbindung. Der Komponentenentscheid ist ausdrücklich offen.
+Stand: 22. Oktober 2026. **Freigegeben durch den Betreiber: „Exif erweiterung ist ok“.** Die Freigabe betrifft die native PHP-Erweiterung ext-exif im unten beschriebenen Rahmen. Die Medienintegration und ihre konkrete Prüfabdeckung stehen in [media.md](media.md) und [verification.md](verification.md).
 
 ## Konkreter Vorschlag
 
@@ -8,7 +8,7 @@ Zusätzlich zum bereits vorgesehenen GD soll die zur jeweiligen PHP-8.4-/8.5-Ins
 
 Die konkrete neue Betriebsanforderung ist damit die Verfügbarkeit dieses einen PHP-Moduls bei den Medienarbeitern. Ein fehlendes Modul darf die bisherige Dateiablage, OIDC, WebDAV und Downloads nicht lahmlegen. Medienprovider melden stattdessen ausdrücklich unavailable beziehungsweise unsupported; Orientierung wird bei unbekanntem Wert nicht als sicher korrekt interpretiert.
 
-## Verwendung nach Freigabe
+## Freigegebene Verwendung
 
 - EXIF-Orientierung als Grundlage korrekt gedrehter beziehungsweise gespiegelter GD-Ableitungen, insbesondere bei Handyfotos. Alle acht EXIF-Orientierungswerte müssen mit kontrollierten Fixtures geprüft werden.
 - Auswahl begrenzter technischer EXIF-Felder über den kommenden öffentlichen Medienprovider-/Feldvertrag. Keine ungeprüfte Ausgabe der vollständigen Parserstruktur.
@@ -19,12 +19,13 @@ Die konkrete neue Betriebsanforderung ist damit die Verfügbarkeit dieses einen 
 
 ## Bereits durchgeführte isolierte Evaluation
 
-Außerhalb des Repositories wurde die vorhandene Testlaufzeit mit ext-exif geladen. Unter PHP 8.4.5 und 8.5.4 hat exif_read_data einen privaten lesbaren Stream mit einem künstlichen 2×3-JPEG und Orientierung 6 korrekt gelesen. Eine Datei ohne Bildstruktur wurde als nicht lesbar behandelt; die Parserwarnung wurde lokal kategorisiert. Die Originalprüfsumme blieb in allen vier Fällen identisch. Es wurden ausschließlich synthetische Testbilder verwendet. Der produktive Samla-Code hat weder ext-exif aktiviert noch einen EXIF-Provider registriert.
+Außerhalb des Repositories wurde die vorhandene Testlaufzeit mit ext-exif geladen. Unter PHP 8.4.5 und 8.5.4 hat exif_read_data einen privaten lesbaren Stream mit einem künstlichen 2×3-JPEG und Orientierung 6 korrekt gelesen. Eine Datei ohne Bildstruktur wurde als nicht lesbar behandelt; die Parserwarnung wurde lokal kategorisiert. Die Originalprüfsumme blieb in allen vier Fällen identisch. Es wurden ausschließlich synthetische Testbilder verwendet. Diese frühere Evaluation ging der jetzt freigegebenen Integration voraus.
 
-Die offizielle PHP-Schnittstelle unterstützt resource|string für exif_read_data; damit sind keine Requestpfade nötig. Quelle: https://github.com/php/php-src/blob/PHP-8.4/ext/exif/exif.stub.php . Diese kleine Evaluation ist keine vollständige Parser-, Format-, Ressourcen- oder Sicherheitsabnahme. Die größere Fixturematrix, GD-Ableitungen, Rechte und Fachintegration folgen erst nach Komponentenfreigabe.
+Die offizielle PHP-Schnittstelle unterstützt resource|string für exif_read_data; damit sind keine Requestpfade nötig. Quelle: https://github.com/php/php-src/blob/PHP-8.4/ext/exif/exif.stub.php . Diese kleine Evaluation ist keine vollständige Parser-, Format-, Ressourcen- oder Sicherheitsabnahme. Die anschließende Fixturematrix, GD-Ableitungen, Rechte und Fachintegration werden separat im Prüfprotokoll dokumentiert.
 
-## Abgrenzung und benötigte Entscheidung
+## Abgrenzung der erteilten Freigabe
 
-Die Freigabe betrifft ausschließlich die native PHP-Erweiterung ext-exif in den unterstützten PHP-Laufzeiten. GD bleibt die bereits bestätigte Bildbasis. Zusätzliche Tools wie ExifTool, C2PA-Validatoren oder weitere native Parser sind damit nicht freigegeben. Nach Zustimmung wird die konkrete Medienintegration umgesetzt und ihre Abnahme dokumentiert.
+Die Freigabe betrifft ausschließlich die native PHP-Erweiterung ext-exif in den unterstützten PHP-Laufzeiten. GD bleibt die bereits bestätigte Bildbasis. Zusätzliche Tools wie ExifTool, C2PA-Validatoren oder weitere native Parser sind damit nicht freigegeben. Die konkrete Medienintegration wird umgesetzt und ihre Abnahme dokumentiert.
 
-Darf Samla ext-exif in diesem begrenzten Rahmen für die folgende Medienphase verwenden? Das Konzept fordert in Abschnitt 3.4 eine gesonderte Abstimmung zusätzlicher Erweiterungen; AGENTS.md verlangt ebenfalls vor zusätzlichen Laufzeitkomponenten eine Abstimmung.
+
+Die in Konzept Abschnitt 3.4 und AGENTS.md geforderte gesonderte Abstimmung ist für ext-exif erfolgt. Weitere native Parser bleiben davon unberührt.

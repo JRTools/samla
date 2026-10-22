@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, veröffentlichte Funktionsphasen bis 27. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 22. Oktober 2026, Funktionsphasen bis 28. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -17,6 +17,7 @@ Stand: 22. Oktober 2026, veröffentlichte Funktionsphasen bis 27. Codeveröffent
 | Rollenbearbeitung, Zuweisungen, Gruppenmapping und Delegationsverwaltung | Noch kein umfassender UI-Einstieg | Bestehende Backendverträge/geschützte Teilfunktionen und Wartungs-CLI ersetzen keine vollständige Verwaltungsoberfläche |
 | Bereichsanlage, initiale Administration, Konsistenzcheck und Objekt-GC | Dokumentierte CLI-Befehle | Noch keine vollständigen Webformulare |
 | Outbox-Worker, Zustellstatus und Retry | Hintergrundaufgaben unter /operations/worker; Ausführung über CLI oder authentifizierten POST /tasks/run | Browseransicht mit getrennten Rechten, Filter/Pagination und revisionsgebundenem Retry; Betreiberkonfiguration des Maschinen-Tokens bleibt außerhalb des UI |
-| Medienraster, Vorschauen, Metadaten, Tags und Sammlungen | Noch offen | Nicht als fertig implementiert oder im UI vorhanden ausgewiesen |
+| Medienraster, Vorschauen und ausgewählte EXIF-Felder | Medien unter /media mit Ordnern und Detailseite | Rechtegeschützte PNG-Vorschau, getrennte Metadatenrechte, Quelle/Originalwert und Analysevormerkung; GD/EXIF und Worker erforderlich |
+| Tags, Sammlungen, IPTC/XMP/KI/C2PA, manuelle Metadaten | Noch offen | Noch nicht als im UI vorhanden ausgewiesen |
 
 Die bloße Sichtbarkeit eines Buttons gewährt keine Berechtigung. Jeder tatsächliche Dienstaufruf prüft seine Rechte erneut. Fehlende Rechte blenden passende Aktionen aus oder verhindern direkte Aufrufe. Dateisperren schützen Browseränderungen auch ohne zusätzliche Browser-Sperrenschaltfläche.
