@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.34
+Version: 1.35
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1034,3 +1034,18 @@ Am 22. Oktober 2026 hat der Betreiber native ext-zip/ZipArchive einschließlich 
 Für die fachliche Auslegung sind als nächste Angaben Gesamtbestand in GB, größte benötigte Einzeldatei und gewünschte Paketgröße sowie Onlinezugriff gegenüber Offline-Synchronisierung hilfreich. Gruppenverwaltung, persönliche Bereiche und Aufbewahrung können bei den jeweils betroffenen Funktionen entschieden werden. Technische Umsetzung innerhalb des freigegebenen Umfangs kann fortgesetzt werden. Die vollständige Betreiberübersicht bleibt offene-entscheidungen.md.
 
 Version 1.34: ZIP-Freigabe festgehalten; keine Änderung am Anwendungscode. Dokumentationsprüfung mit git diff --check; keine erneute Anwendungstestmatrix für diese reine Dokumentationsänderung.
+
+
+### 43.2 Bestätigte Größen- und Organisationsvorgaben
+
+Der Betreiber plant aktuell voraussichtlich maximal 100 GB Gesamtbestand. Diese Angabe dient der Kapazitätsplanung und setzt keine globale harte Quote. Größte Einzeldatei und maximale Exportpaketgröße sind weiterhin unbekannt; insbesondere werden nicht 100 GB als Upload- oder ZIP-Grenze übernommen.
+
+Persönliche und gemeinsame Speicherbereiche sind gewünscht. Gruppen und Berechtigungen werden in Samla gepflegt; externe IdP-Gruppen dienen optional als Mappingquelle für lokale Samla-Gruppen. Gruppenhoheit und tatsächliche externe Mitgliedschaft bleiben getrennt; spätere IdP-Mappings benötigen konkrete Claims/Kennungen und eine Entzugsrichtlinie.
+
+Offlineverfügbarkeit ist ein gewünschtes Ziel für die bestätigten Plattformen. Nur offline lesen gegenüber Offlinebearbeitung mit bidirektionaler Synchronisierung sowie die Referenzclients sind noch zu klären. Vorhandene WebDAV-Unterstützung allein gilt nicht als geprüfte Offline-Synchronisierung. Zusätzliche Clientkomponenten werden nicht aus diesem Wunsch pauschal freigegeben.
+
+Die Löschfrist muss konfigurierbar sein. Konkrete Vorgabewerte sowie getrennte Regeln für Papierkorb, Dateiversionen und Audit werden damit noch nicht festgelegt. Es wird keine automatische Löschung mit erfundenen Fristen aktiviert.
+
+Nächster freigegebener Implementierungsschritt bleibt der geschützte ZIP-Export aktueller Originale samt Manifest über den vorhandenen Worker. Persönliche Bereiche, Offlineabnahme und konfigurierbare Aufbewahrungsabläufe folgen als eigene prüfbare Arbeitspakete. Die Betreiberübersicht und README wurden abgeglichen.
+
+Version 1.35: Betreiberantworten dokumentiert; reine Dokumentationsänderung, mit git diff --check geprüft.
