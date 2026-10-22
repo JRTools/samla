@@ -71,4 +71,26 @@ final readonly class MediaService
                 $q=$this->pdo->prepare($last===false?'INSERT INTO media_refresh_requests(requested_at,entry_id) VALUES (?,?)':'UPDATE media_refresh_requests SET requested_at=? WHERE entry_id=?');$q->execute([time(),$entry]);return true;
             });
     }
+    /** A bounded, visible file page; already-requested files retain their names but are not queued twice. */
+    public function rebuildPlan(string $actor,string $space,?string $after=null):array
+    {
+        $this->requireAccess($actor,'media.process',$space);$page=$this->files->search($actor,$space,'','file',$after);$recent=[];
+        if($page['rows']!==[]){$ids=array_column($page['rows'],'id');$q=$this->pdo->prepare('SELECT entry_id FROM media_refresh_requests WHERE requested_at>? AND entry_id IN ('.implode(',',array_fill(0,count($ids),'?')).')');$q->execute([time()-60,...$ids]);$recent=array_fill_keys($q->fetchAll(\PDO::FETCH_COLUMN),true);}
+        $plan=[];foreach($page['rows']as&$row){$row['recently_requested']=isset($recent[$row['id']]);if(!$row['recently_requested']){$plan[$row['id']]=(int)$row['revision'];}}unset($row);
+        $page['plan']=$plan;return $page;
+    }
+    public function rebuild(string $actor,string $space,\Samla\PluginApi\MediaBatchRefreshChange $proposal):void
+    {
+        $this->mutations->run(new MutationContext(bin2hex(random_bytes(16)),$actor,'media.batch.refresh',Scope::Space,$space,['batch'=>$proposal->signature()],mediaBatchRefresh:$proposal),
+            function()use($actor,$space,$proposal):void{
+                $this->requireAccess($actor,'media.process',$space);
+                foreach($proposal->entryRevisions as$id=>$revision){$row=$this->files->details($actor,$space,$id);if($row['kind']!=='file'||(int)$row['revision']!==$revision){throw new MutationConflict();}}
+            },function()use($proposal):bool{
+                $q=$this->pdo->prepare('SELECT requested_at FROM media_refresh_requests WHERE entry_id=?');$now=time();
+                foreach($proposal->entryRevisions as$id=>$revision){$q->execute([$id]);$last=$q->fetchColumn();if($last!==false&&(int)$last>$now-60){throw new MutationConflict();}
+                    $write=$this->pdo->prepare($last===false?'INSERT INTO media_refresh_requests(requested_at,entry_id) VALUES (?,?)':'UPDATE media_refresh_requests SET requested_at=? WHERE entry_id=?');$write->execute([$now,$id]);}
+                return true;
+            });
+    }
+
 }

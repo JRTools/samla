@@ -36,6 +36,16 @@ final readonly class PdoMutationRunner implements MutationRunner
                     $payload = json_encode($data, JSON_THROW_ON_ERROR);
                     $event->execute([$id, $context->operation . '.completed', $payload, $time]);
                 }
+                if($context->mediaBatchRefresh!==null){
+                    $batchIndex=0;
+                    foreach($context->mediaBatchRefresh->entryRevisions as$entry=>$revision){
+                        $id=substr(hash('sha256',$context->id.':'.$entry),0,32);
+                        $payload=json_encode(['id'=>$id,'actor_id'=>$context->actorId,'operation'=>'media.asset.refresh','scope'=>$context->scope->value,
+                            'space_id'=>$context->spaceId,'targets'=>['entry'=>$entry],'batch_id'=>$context->id,'batch_index'=>$batchIndex++,'batch_count'=>count($context->mediaBatchRefresh->entryRevisions),'requested_revision'=>$revision],JSON_THROW_ON_ERROR);
+                        $audit->execute([$id,$context->actorId,'media.asset.refresh',$context->scope->value,$context->spaceId,json_encode(['entry'=>$entry,'batch'=>$context->id],JSON_THROW_ON_ERROR),1,$time]);
+                        $event->execute([$id,'media.asset.refresh.completed',$payload,$time]);
+                    }
+                }
             }
             return $changed;
         });

@@ -39,7 +39,7 @@ final class MediaTest extends TestCase
     protected function tearDown(): void
     {foreach(new \DirectoryIterator($this->root) as $f){if(!$f->isDot()){unlink($f->getPathname());}}rmdir($this->root);}
     private function boot(array $extra=[]): PluginRuntime
-    {return PluginRuntime::boot([new IdentityPlugin(),new StoragePlugin(),new \Samla\Core\Media\MediaPlugin(function($event):void{$this->pipeline()->handle($event);}),new RbacPlugin($this->roles,$this->identity),...$extra]);}
+    {return PluginRuntime::boot([new IdentityPlugin(),new StoragePlugin(),new \Samla\Core\Media\MediaPlugin(function($event):void{$this->pipeline()->handle($event);},function():void{(new \Samla\Core\Media\MediaCacheCollector($this->pdo))->collect();}),new RbacPlugin($this->roles,$this->identity),...$extra]);}
     private function rights(array $permissions=['files.list','files.read','files.create','files.update','files.versions.read','files.delete','files.restore','media.previews.read','media.metadata.read','media.process']): void
     {$this->roles->save(new Role('editor',Scope::Space,$permissions),$this->runtime);}
     private function files(?PluginRuntime $runtime=null): FileService
@@ -119,6 +119,66 @@ final class MediaTest extends TestCase
                 public function extract(\Samla\PluginApi\MediaSource $s):\Samla\PluginApi\MediaResult{$this->pdo->exec('DELETE FROM storage_entries');return new \Samla\PluginApi\MediaResult('unsupported');}
             });
         })]);$this->pipeline($runtime)->processEntry($id);self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());
+    }
+
+    public function testRebuildPagesAreBoundedAndFanOutIntoIndividuallyProcessedIdempotentTasks():void
+    {
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'source.png');$row=$this->files()->details('alice','a',$id);
+        $q=$this->pdo->prepare("INSERT INTO storage_entries(id,space_id,parent_id,name,kind,blob_id,size_bytes,sha256,created_at) VALUES (?,'a','',?,'file',?,?,?,?)");
+        for($i=1;$i<=104;++$i){$q->execute([str_pad(dechex($i),32,'0',STR_PAD_LEFT),'copy '.$i.'.png',$row['blob_id'],$row['size_bytes'],$row['sha256'],time()]);}
+        $page=$this->media()->rebuildPlan('alice','a');self::assertCount(100,$page['plan']);self::assertNotNull($page['next']);$second=$this->media()->rebuildPlan('alice','a',$page['next']);self::assertCount(5,$second['plan']);self::assertNull($second['next']);
+        $this->media()->rebuild('alice','a',new \Samla\PluginApi\MediaBatchRefreshChange($page['plan']));self::assertSame(100,(int)$this->pdo->query("SELECT COUNT(*) FROM outbox_events WHERE event_type='media.asset.refresh.completed'")->fetchColumn());self::assertSame(100,(int)$this->pdo->query("SELECT COUNT(*) FROM audit_events WHERE operation='media.asset.refresh'")->fetchColumn());self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());self::assertSame([],$this->media()->rebuildPlan('alice','a')['plan']);
+        $worker=new \Samla\Core\Background\OutboxWorker($this->pdo,$this->runtime);self::assertSame(50,$worker->run()['delivered']);self::assertSame(50,$worker->run()['delivered']);self::assertSame(1,$worker->run()['delivered']);self::assertSame(0,$worker->run()['processed']);self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());
+        $payload=json_decode($this->pdo->query("SELECT payload FROM outbox_events WHERE event_type='media.asset.refresh.completed' LIMIT 1")->fetchColumn(),true,16,JSON_THROW_ON_ERROR);self::assertArrayHasKey('batch_id',$payload);self::assertSame(1,$payload['requested_revision']);self::assertStringNotContainsString('source.png',json_encode($payload));
+    }
+    public function testRebuildRejectsMixedConflictForeignSpaceAndRecentRequestsAtomically():void
+    {
+        $a=$this->upload('one','one.txt');$b=$this->upload('two','two.txt');$before=(int)$this->pdo->query('SELECT COUNT(*) FROM outbox_events')->fetchColumn();
+        foreach([[$a=>1,$b=>2],[$a=>1,str_repeat('e',32)=>1]]as$plan){try{$this->media()->rebuild('alice','a',new \Samla\PluginApi\MediaBatchRefreshChange($plan));self::fail('Invalid batch accepted.');}catch(\Samla\PluginApi\MutationConflict|\InvalidArgumentException){self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());}}
+        self::assertSame($before,(int)$this->pdo->query('SELECT COUNT(*) FROM outbox_events')->fetchColumn());$this->media()->refresh('alice','a',$b,1);
+        try{$this->media()->rebuild('alice','a',new \Samla\PluginApi\MediaBatchRefreshChange([$a=>1,$b=>1]));self::fail('Recent request accepted.');}catch(\Samla\PluginApi\MutationConflict){self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());}
+        $this->rights(['files.list','media.previews.read']);try{$this->media()->rebuildPlan('alice','a');self::fail('Missing processing right accepted.');}catch(\Samla\PluginApi\AccessDenied){self::assertTrue(true);}
+    }
+    public function testRebuildControllerValidatesEntireFormBeforeWritingAndEscapesNames():void
+    {
+        $id=$this->upload('data','<script>.txt');$page=$this->page('/media/rebuild',$id);self::assertSame(200,$page->status);self::assertStringContainsString('&lt;script&gt;.txt',$page->body);
+        $form=['plan'=>json_encode([$id=>1]),'after'=>''];self::assertSame(403,$this->page('/media/rebuild',$id,$form+['csrf'=>'bad'])->status);
+        foreach([['plan'=>'broken'],['after'=>'not a cursor'],['plan'=>'[]'],['plan'=>'{"bad":1}']]as$invalid){self::assertSame(400,$this->page('/media/rebuild',$id,$invalid+$form)->status);}
+        self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());self::assertSame(303,$this->page('/media/rebuild',$id,$form)->status);self::assertSame(409,$this->page('/media/rebuild',$id,$form)->status);
+    }
+    public function testPurgeWorkerRemovesOnlyUnreferencedDerivativesKeepingCopiesTrashAndHistory():void
+    {
+        $this->rights(['files.list','files.read','files.create','files.update','files.delete','files.restore','files.purge','media.previews.read','media.process']);
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');$this->pipeline()->processEntry($id);$copy=$this->files()->change('alice','a',$id,'copy','photo.png','',name:'copy.png');
+        $this->files()->change('alice','a',$id,'trash','photo.png','');self::assertSame(0,(new \Samla\Core\Media\MediaCacheCollector($this->pdo))->collect());$this->files()->purge('alice','a',$id,2);
+        $worker=new \Samla\Core\Background\OutboxWorker($this->pdo,$this->runtime);self::assertSame(0,$worker->run()['errors']);self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());
+        $stream=fopen('php://temp','w+b');fwrite($stream,'new content');rewind($stream);try{$this->files()->replace('alice','a',$copy,1,$stream);}finally{fclose($stream);}
+        self::assertSame(0,(new \Samla\Core\Media\MediaCacheCollector($this->pdo))->collect());self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_versions')->fetchColumn());
+        $this->files()->change('alice','a',$copy,'trash','copy.png','');$this->files()->purge('alice','a',$copy,3);self::assertSame(0,$worker->run()['errors']);self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_assets')->fetchColumn());self::assertSame(0,(new \Samla\Core\Media\MediaCacheCollector($this->pdo))->collect());
+    }
+
+    public function testBatchValidatorRevocationAndAuditFailureCannotLeavePartialRequests():void
+    {
+        $id=$this->upload('one','one.txt');$proposal=new \Samla\PluginApi\MediaBatchRefreshChange([$id=>1]);$roles=$this->roles;$base=$this->runtime;
+        $runtime=$this->boot([new Extension('test.media',static function(PluginRegistrar $r)use($roles,$base):void{
+            $r->validator(new class($roles,$base)implements ChangeValidator{
+                public function __construct(private PdoRoleRepository $roles,private PluginRuntime $base){}public function priority():int{return 0;}
+                public function validate(MutationContext $c):void{if($c->mediaBatchRefresh!==null){$this->roles->saveInsideTransaction(new Role('editor',Scope::Space,['files.list']),$this->base);}}
+            });
+        })]);
+        try{$this->media($runtime)->rebuild('alice','a',$proposal);self::fail('Revoked processing permission accepted.');}catch(\Samla\PluginApi\AccessDenied){self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());}
+        $this->pdo->exec("CREATE TRIGGER test_media_batch_audit BEFORE INSERT ON audit_events FOR EACH ROW SET NEW.operation=IF(NEW.operation='media.batch.refresh',NULL,NEW.operation)");
+        try{try{$this->media()->rebuild('alice','a',$proposal);self::fail('Audit failure ignored.');}catch(\PDOException){self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());self::assertSame(0,(int)$this->pdo->query("SELECT COUNT(*) FROM outbox_events WHERE event_type='media.asset.refresh.completed'")->fetchColumn());}}
+        finally{$this->pdo->exec('DROP TRIGGER test_media_batch_audit');}
+    }
+
+    public function testSecondBatchChildFailureRollsBackFirstChildAllAuditAndRequests():void
+    {
+        $a=$this->upload('a','a.txt');$b=$this->upload('b','b.txt');$audit=(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn();$events=(int)$this->pdo->query('SELECT COUNT(*) FROM outbox_events')->fetchColumn();
+        $this->pdo->exec("CREATE TRIGGER test_media_batch_child BEFORE INSERT ON outbox_events FOR EACH ROW SET NEW.payload=IF(NEW.event_type='media.asset.refresh.completed' AND JSON_EXTRACT(NEW.payload,'$.batch_index')=1,NULL,NEW.payload)");
+        try{try{$this->media()->rebuild('alice','a',new \Samla\PluginApi\MediaBatchRefreshChange([$a=>1,$b=>1]));self::fail('Partial fanout accepted.');}catch(\PDOException){self::assertFalse($this->pdo->inTransaction());}}
+        finally{$this->pdo->exec('DROP TRIGGER test_media_batch_child');}
+        self::assertSame($audit,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());self::assertSame($events,(int)$this->pdo->query('SELECT COUNT(*) FROM outbox_events')->fetchColumn());self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());
     }
 
 }

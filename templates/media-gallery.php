@@ -7,6 +7,7 @@
 <div class="page-heading"><div><p class="eyebrow">MEDIEN</p><h1><?= $e($data['folder']['name']??$data['space']['name']) ?></h1><p class="lead"><?= $e($data['space']['name']) ?> · bis zu 100 Einträge pro Seite</p></div><a href="/media">Alle Medienbereiche</a></div>
 <p><a href="<?= $e('/media?'.http_build_query(['space'=>$data['space']['id'],'parent'=>$data['parent']])) ?>">Ansicht aktualisieren</a><?php if ($data['folder']!==null): ?> · <a href="<?= $e('/media?'.http_build_query(['space'=>$data['space']['id'],'parent'=>$data['folder']['parent_id']])) ?>">Übergeordneter Ordner</a><?php endif ?> · <a href="<?= $e('/files?'.http_build_query(['space'=>$data['space']['id'],'parent'=>$data['parent']])) ?>">Zur Dateiablage</a></p>
 <p>Vorschauen entstehen durch den eingerichteten Worker. Nicht unterstützte Dateien bleiben über ihre normalen Dateirechte nutzbar.</p>
+<?php if ($data['media_caps']['process']): ?><p><a href="<?= $e('/media/rebuild?'.http_build_query(['space'=>$data['space']['id']])) ?>">Medienanalyse dieses Bereichs neu aufbauen</a></p><?php endif ?>
 <div class="media-grid">
 <?php foreach ($data['rows'] as $row): ?><article class="panel media-card">
 <?php if ($row['kind']==='folder'): ?><div class="media-placeholder" aria-hidden="true">Ordner</div><h2><a href="<?= $e('/media?'.http_build_query(['space'=>$data['space']['id'],'parent'=>$row['id']])) ?>"><?= $e($row['name']) ?></a></h2>

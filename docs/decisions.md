@@ -1,5 +1,7 @@
 # Entscheidungen und offene Angaben
 
+**Aktuelle zusammengefasste Betreiberentscheidungen:** [offene-entscheidungen.md](offene-entscheidungen.md). Die folgenden Abschnitte sind eine Entwicklungschronik; später bestätigte Entscheidungen ersetzen ältere offene Angaben.
+
 ## Umgesetzt
 
 - Modularer Monolith mit separater öffentlicher Plugin-API und eigenem RBAC-Namensraum.

@@ -4,7 +4,7 @@ namespace Samla\Core\Media;
 use Samla\PluginApi\{MediaField,OutboxEvent,OutboxHandler,OutboxSubscription,Permission,Plugin,PluginRegistrar,Scope};
 final readonly class MediaPlugin implements Plugin
 {
-    public function __construct(private ?\Closure $process=null){}
+    public function __construct(private ?\Closure $process=null,private ?\Closure $cleanup=null){}
     public function id():string{return 'platform.media';}
     public function apiMajor():int{return 0;}
     public function register(PluginRegistrar $registrar):void
@@ -21,6 +21,10 @@ final readonly class MediaPlugin implements Plugin
         ],new class($this->process)implements OutboxHandler{
             public function __construct(private ?\Closure $process){}
             public function handle(OutboxEvent $event):void{if($this->process===null){throw new \LogicException('Use worker composition.');}($this->process)($event);}
+        },replayExisting:true));
+        $registrar->outboxSubscriber(new OutboxSubscription('platform.media.purged_v1',['storage.entry.purge.completed'],new class($this->cleanup)implements OutboxHandler{
+            public function __construct(private ?\Closure $cleanup){}
+            public function handle(OutboxEvent $event):void{if($this->cleanup===null){throw new \LogicException('Use worker composition.');}($this->cleanup)();}
         },replayExisting:true));
     }
 }

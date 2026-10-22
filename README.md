@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 28 (Medienvorschauen und EXIF)
+## Entwicklungsstand: Iteration 29 (Medienanalyse neu aufbauen und Ableitungen bereinigen)
 
 Vorhanden sind:
+
+- Bereichsweiter manueller Neuaufbau der Medienanalyse mit bis zu 100 sichtbaren Dateien pro Formular und einzelnen Workeraufgaben, Revisionsschutz, eigener nachvollziehbarer Auditzeile je Datei und atomarer Vormerkung. Nach endgültiger Löschung entfernt ein technischer Empfänger nur Ableitungen ohne verbleibende aktuelle oder historische Inhaltsreferenz. Neue Indexmigration erforderlich. [Medienbetrieb](docs/media.md).
 
 - Rechtegeschütztes Medienraster und Detailansicht mit privaten PNG-Vorschauen, acht EXIF-Orientierungen und ausgewählten technischen/Kameraangaben. Gemeinsamer Worker, unveränderte Originale, begrenzter SQL-Cache, getrennte Vorschau-/Metadaten-/Verarbeitungsrechte und öffentliche Provider-/Feldverträge. GD und die ausdrücklich freigegebene native EXIF-Erweiterung; neue Migration und ausdrückliche Rechtevergabe erforderlich. [Einrichtung und Grenzen](docs/media.md).
 
@@ -187,3 +189,6 @@ PHP-CLI per Cron und der zusätzliche Webtrigger sind vom Betreiber freigegeben 
 Eine Übersicht über vorhandene UI-Einstiege, CLI-Funktionen und offene Verwaltungsoberflächen steht in [ui-status.md](docs/ui-status.md). Veröffentlichtes GitHub-Repository und Betreiberdeployment sind getrennte Schritte.
 
 Für die folgende Medienphase liegt eine [konkrete Entscheidungsvorlage zu ext-exif](docs/exif-library-decision.md) vor. Die zusätzliche PHP-Erweiterung ist bislang nicht als Samla-Komponente eingebunden oder freigegeben.
+
+
+Die aktuelle Übersicht der noch offenen Betreiberentscheidungen steht in [offene-entscheidungen.md](docs/offene-entscheidungen.md). Bereits erteilte Freigaben werden dort nicht erneut angefragt.

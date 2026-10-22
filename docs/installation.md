@@ -144,3 +144,6 @@ Iteration 27 ergänzt zusätzlich platform.administration:0003_delivery_revision
 ## Medienbasis ab Iteration 28
 
 Nach Sicherung die Migration platform.media:0001_assets im Wartungsmodus anwenden. GD und die freigegebene native PHP-Erweiterung EXIF müssen in der tatsächlichen Worker-Laufzeit aktiv sein. Bereichsrechte werden ausdrücklich vergeben; bisherige Dateirollen ändern sich nicht. CLI-Cron und HTTP-Scheduler bleiben nutzbar. Einrichtung, unterstützte Formate, Cachekapazität und aktuelle Grenzen: [media.md](media.md).
+
+
+Iteration 29 ergänzt platform.media:0002_reference_indexes für sichere referenzbasierte Ableitungsbereinigung nach endgültiger Löschung. Vor dem Workerstart im Wartungsmodus migrieren. Keine zusätzliche Laufzeitkomponente. Der seitenweise Neuaufbau verwendet das bestehende Bereichsrecht media.process und den vorhandenen CLI-/HTTPS-Worker.

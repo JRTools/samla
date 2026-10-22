@@ -1,11 +1,13 @@
 # Umsetzungsplan: Samla
 
-Version: 1.30
+Version: 1.31
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 28, EXIF freigegeben und Medienbasis, siehe Abschnitte 39 und 40. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 29, seitenweiser Neuaufbau und referenzbasierte Medienbereinigung, siehe Abschnitte 40 und 41. Repository: https://github.com/JRTools/samla
+
+Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
 ## 1. Ziel und Vorgehen
 
@@ -977,3 +979,18 @@ GD unterstützt JPEG/PNG/GIF/WebP, TIFF bleibt Metadatenbasis ohne Vorschau. 16 
 Prüfung und tatsächlicher Veröffentlichungsstand: verification.md. Offen bleiben weitere Feldtypen, manuelle Katalogpflege, IPTC/XMP/KI/C2PA, Tags/Sammlungen, Export/Mediensuche, vollständiger Rebuild und Cachepflege sowie die weiteren Datei-/Verwaltungs-/Betriebs- und Geräteabnahmen. Die weitere Umsetzung ist autorisiert und erfordert kein erneutes Go je Phase.
 
 Version 1.30: Native EXIF-Erweiterung freigegeben; erster Medienprovider, privater Ableitungscache und berechtigte Medienoberfläche.
+
+
+## 41. Iteration 29: Medienanalyse für Bestände und Ableitungsbereinigung
+
+Ein Bereich kann mit media.process seitenweise neu analysiert werden. Ein Formular umfasst höchstens 100 sichtbare Dateien einschließlich Unterordnern und bindet deren aktuelle Revisionen. MediaBatchRefreshChange und ein exakt gebundener MutationContext bilden den öffentlichen Vorschlag. Vor und nach Erweiterungsvalidatoren werden Rechte und Einträge erneut geprüft. Kürzlich vorgemerkte Dateien sind ausgenommen; konkurrierende Änderungen führen zum vollständigen Rollback der Seite. Pro Datei entstehen ein nachvollziehbarer Auditdatensatz und eine eigene Workerzustellung mit Batchbezug. Ein Fehler in späteren Kindereignissen rollt auch frühere Vormerkungen, Audit und Zustellungen zurück. Kein Parser läuft im Formularrequest.
+
+Die Browserseite erlaubt Bestätigung mit nächstem Cursor, Überspringen und erneuten Beginn. Für rund 1000 Dateien sind etwa zehn Bestätigungen erforderlich. Neue Dateien unterhalb eines bereits verwendeten Cursors werden beim nächsten Durchlauf erfasst. Der technische Worker analysiert aktuelle sichtbare Inhalte; die bestätigten Revisionen sind Auftragsnachweise und kein späterer historischer Inhaltszugang.
+
+Ein zusätzlicher technischer Outbox-Empfänger bereinigt nach ausdrücklich berechtigtem endgültigem Löschen unreferenzierte Medienableitungen. Aktuelle Dateien, Papierkorb, gemeinsam verwendete Kopien und Historien bleiben Referenzen. Gemeinsamer SQL-Lock, auf die Cachekapazität begrenzte Auswahl und Blobindizes schützen parallele Änderungen. Neue Migration platform.media:0002_reference_indexes, keine zusätzliche Komponente. Physische Original-GC und zeitbasierte Retention bleiben getrennte ausdrücklich festzulegende Betriebsregeln.
+
+Die neue Übersicht offene-entscheidungen.md fasst die noch tatsächlich notwendigen Betreiberentscheidungen zusammen, einschließlich Lizenz, Referenzclients/Offlinebedarf, Gruppenrichtlinie, Rollen/Privatbereichen/Notfall, Größen, zusätzlichen Medienkomponenten, sensiblen Metadaten, Redaktion, Export und Plugin-Vertrauen sowie Aufbewahrung, Backup und Betriebsabnahme. Datenbankziele, Plattformen, bisherige Komponentenfreigaben und insbesondere EXIF werden nicht erneut angefragt.
+
+Prüfung und Veröffentlichungsstand: verification.md. Die vorige veröffentlichte Medienphase ist in allen vier GitHub-Jobs einschließlich HTTP/HTTPS erfolgreich, dokumentiert in verification-iteration-28.md. Weitere Umsetzung bleibt autorisiert. IPTC/XMP/KI/C2PA, vollständige Katalogpflege, Tags/Sammlungen/Export, übrige Datei-/Verwaltungsfunktionen und Betriebs-/Geräteabnahmen folgen; keine pauschale Fertig- oder Produktivfreigabe.
+
+Version 1.31: Berechtigter seitenweiser Medienneuaufbau, atomare Einzelzustellungen und Bereinigung ausschließlich unreferenzierter Ableitungen; aktuelle Betreiberentscheidungen zusammengeführt.

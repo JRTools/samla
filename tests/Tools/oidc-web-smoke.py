@@ -1,6 +1,6 @@
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import base64, datetime, hashlib, http.cookiejar, http.client, ipaddress, json, os, re, ssl, subprocess, tempfile, threading, time, urllib.parse, urllib.request, urllib.error
+import base64, datetime, hashlib, html, http.cookiejar, http.client, ipaddress, json, os, re, ssl, subprocess, tempfile, threading, time, urllib.parse, urllib.request, urllib.error
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -367,6 +367,18 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert binary.status==200 and binary.headers['Content-Type']=='image/png' and png.startswith(b'\x89PNG')
                     assert 'no-store' in binary.headers['Cache-Control']
                     assert req('/media/refresh',{**refresh,'revision':'2'})[0]==409
+                    status,rebuild_page,_=req('/media/rebuild?space='+space);assert status==200
+                    plan=html.unescape(re.search(r'name="plan" value="([^"<>]+)"',rebuild_page).group(1))
+                    after=html.unescape(re.search(r'name="after" value="([^"<>]*)"',rebuild_page).group(1))
+                    batch={'csrf':csrf(rebuild_page),'space':space,'plan':plan,'after':after}
+                    assert req('/media/rebuild',{**batch,'csrf':'bad'})[0]==403
+                    assert req('/media/rebuild',{**batch,'after':'invalid cursor'})[0]==400
+                    assert req('/media/rebuild',batch)[0]==303
+                    assert req('/media/rebuild',batch)[0]==409
+                    if secure:assert trigger({'token':worker_token})[0]==200
+                    else:
+                        processed=subprocess.run(php+['bin/worker.php'],cwd=project,env=env,capture_output=True,text=True)
+                        assert processed.returncode==0,processed.stdout+processed.stderr
                     assert req('/auth/logout')[0]==405
                     assert req('/auth/logout',{'csrf':'bad'})[0]==403
                     assert req('/auth/logout',{'csrf':csrf(body)})[0]==303
@@ -386,7 +398,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()
