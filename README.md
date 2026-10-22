@@ -6,7 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 38 (Tags gemeinsam bearbeiten)
+## Entwicklungsstand: Iteration 39 (Automatische persönliche Bereiche)
+
+Bei erfolgreicher OIDC-Anmeldung entsteht einmalig ein **persönlicher Speicherbereich** mit Eigentümerrechten. Wiederholte Anmeldungen erhalten geänderte Namen und Quoten; Systemgruppen sind vor manueller Änderung geschützt. Andere Konten und globale Administratoren erhalten dadurch keine impliziten Inhaltsrechte. Automatische Anlage und vorläufige Standardquote (10 GiB) sind konfigurierbar. **Neue Migration erforderlich.** [Einrichtung und Lebenszyklus](docs/personal-spaces.md).
 
 **Tags für mehrere Dateien ändern** ergänzt die Dateiliste: bis zu 100 Dateien auswählen, einen Tag nach Namen hinzufügen oder entfernen und gemeinsam speichern. Konflikte und Kapazitätsfehler verhindern die gesamte Änderung; Beschreibungen und andere Tags bleiben erhalten. Keine neue Migration über Paket 37 hinaus. [Bedienung und Grenzen](docs/manual-catalog.md).
 

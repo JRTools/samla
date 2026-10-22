@@ -24,6 +24,7 @@ final readonly class GroupMappingService
         $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
         $protected = null;
         $guard = function () use ($actorId, $change, $continuity, &$protected): void {
+            if(str_starts_with($change->groupId,\Samla\PluginApi\PersonalSpaceChange::GROUP_PREFIX)){throw new AccessDenied();}
             if ($this->authorization->decide(new AuthorizationRequest($actorId,
                     'identity.groups.mappings.manage', Scope::Global))->decision !== Decision::Permit
                 || !$this->resources->hasGroup($change->groupId) || !$this->policy->allows($actorId, $change)) {

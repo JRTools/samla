@@ -32,7 +32,7 @@ final readonly class AdministrationQueryService
     {
         $this->guard($actorId, 'identity.groups.read', null);
         $this->guard($actorId, 'identity.groups.mappings.manage', null);
-        $rows=$this->pdo->query('SELECT id,name FROM identity_groups ORDER BY name,id LIMIT 1001')->fetchAll();
+        $rows=$this->pdo->query('SELECT id,name FROM identity_groups WHERE id NOT LIKE \'samla.personal.%\' ORDER BY name,id LIMIT 1001')->fetchAll();
         if(count($rows)>1000){throw new \LengthException('Group selection limit.');}
         return $rows;
     }

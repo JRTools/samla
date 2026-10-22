@@ -20,7 +20,7 @@ final readonly class RoleAssignmentService
     public function revoke(string $actorId, RoleAssignment $assignment): bool { return $this->change($actorId, $assignment, false); }
     private function change(string $actorId, RoleAssignment $assignment, bool $grant): bool
     {
-        if ($assignment->scope !== Scope::Space) { throw new AccessDenied(); }
+        if ($assignment->scope !== Scope::Space||str_starts_with($assignment->groupId,\Samla\PluginApi\PersonalSpaceChange::GROUP_PREFIX)||str_starts_with($assignment->roleId,\Samla\PluginApi\PersonalSpaceChange::GROUP_PREFIX)) { throw new AccessDenied(); }
         $context = new MutationContext(bin2hex(random_bytes(16)), $actorId, $grant ? 'rbac.assignment.grant' : 'rbac.assignment.revoke',
             Scope::Space, $assignment->spaceId, ['group' => $assignment->groupId, 'role' => $assignment->roleId]);
         $guard = function () use ($actorId, $assignment, $grant): void {

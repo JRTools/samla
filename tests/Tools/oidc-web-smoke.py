@@ -88,7 +88,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
             env={k:v for k,v in os.environ.items() if not k.startswith(('APP_','DB_','OIDC_')) and k.lower() not in ['http_proxy','https_proxy','all_proxy']}
             env.update(APP_ENV='development',APP_MAINTENANCE='0',APP_WEB_DEV_ACCESS='0',APP_GROUP_MAX_AGE_SECONDS='3600',DB_ENGINE=db['ENGINE'],DB_HOST=db['HOST'],DB_PORT=db['PORT'],DB_USER=db['USER'],DB_PASSWORD=db['PASSWORD'],DB_NAME=db['NAME'],OIDC_ENABLED='1',OIDC_ISSUER=issuer,OIDC_CLIENT_ID='client',OIDC_CLIENT_SECRET='synthetic-secret',OIDC_REDIRECT_URI='http://127.0.0.1:8080/auth/callback',OIDC_GROUPS_CLAIM='')
             if secure:env.update(APP_ENV='production',OIDC_REDIRECT_URI=app_url+'/auth/callback')
-            init="require 'vendor/autoload.php';$c=Samla\\Core\\Configuration\\AppConfig::fromGlobals();$p=(new Samla\\Core\\Database\\ConnectionFactory())->connect($c->database);(new Samla\\Core\\Database\\MigrationRunner($p))->migrate(require 'bootstrap/migrations.php');foreach(['outbox_events','audit_events','rbac_delegation_permissions','rbac_delegations','rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups','storage_spaces']as$t){$p->exec('DELETE FROM '.$t);}"
+            init="require 'vendor/autoload.php';$c=Samla\\Core\\Configuration\\AppConfig::fromGlobals();$p=(new Samla\\Core\\Database\\ConnectionFactory())->connect($c->database);(new Samla\\Core\\Database\\MigrationRunner($p))->migrate(require 'bootstrap/migrations.php');foreach(['personal_storage_spaces','outbox_events','audit_events','rbac_delegation_permissions','rbac_delegations','rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups','storage_spaces']as$t){$p->exec('DELETE FROM '.$t);}"
             subprocess.run(php+['-r',init],cwd=project,env=env,check=True)
             worker_token='c'*64
             env['APP_WORKER_HTTP_TOKEN_SHA256']=hashlib.sha256(worker_token.encode()).hexdigest() if secure else ''
@@ -130,6 +130,12 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,body,_=req('/account');assert status==200 and 'OIDC Test User' in body,(status,body)
                     user=re.search(r'oidc\.[a-f0-9]{59}',body).group()
                     assert req('/users')[0]==403
+                    status,personal_listing,_=req('/files');assert status==200 and 'Persönlicher Bereich' in personal_listing
+                    personal=re.search(r'space=(personal\.[a-f0-9]{32})',personal_listing).group(1)
+                    assert 'Persönlich: OIDC Test User' in personal_listing
+                    callback=login();assert req(callback)[0]==303
+                    assert personal in req('/files')[1], 'Repeated login must retain the same owner space'
+
                     status,credentials,_=req('/account/app-passwords');assert status==200
                     status,created,headers=req('/account/app-passwords/create',{'csrf':csrf(credentials),'label':'HTTP laptop','days':'30'})
                     assert status==201 and headers['Cache-Control']=='no-store'
@@ -148,6 +154,13 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                         assert result.returncode==0,result.stdout+result.stderr
                     assert req('/users')[0]==200
                     status,body,_=req('/groups');assert status==200
+                    owner_group='samla.personal.'+hashlib.sha256(user.encode()).hexdigest()[:32]
+                    assert req('/memberships/change',{'csrf':csrf(body),'user':user,'group':owner_group,'operation':'revoke'})[0]==403
+                    status,managed_personal,_=req('/administration/spaces?space='+personal)
+                    assert status==200 and 'Persönlicher Bereich von' in managed_personal
+                    owner_state=re.search(r'name="expected" value="([a-f0-9]{64})"',managed_personal).group(1)
+                    assert req('/administration/spaces/delete',{'csrf':csrf(managed_personal),'space':personal,'expected':owner_state,'confirm':'1'})[0]==409
+
                     assert req('/groups/create',{'csrf':csrf(body),'name':'OIDC created group'})[0]==303
                     assert 'OIDC created group' in req('/groups')[1]
                     # Manual-only login must not be broken by introducing a mapping without a signed groups claim.
@@ -513,7 +526,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, claim-aware IdP mapping UI, manual catalog and named tags with independent revisions, atomic tag batches and full UTF-8 form limits, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, claim-aware IdP mapping UI, automatic personal space and protected ownership, manual catalog and named tags with independent revisions, atomic tag batches and full UTF-8 form limits, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

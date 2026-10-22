@@ -28,6 +28,7 @@ final readonly class MutationContext
         public ?CatalogEntryChange $catalogEntry=null,
         public ?CatalogTagChange $catalogTag=null,
         public ?CatalogBatchChange $catalogBatch=null,
+        public ?PersonalSpaceChange $personalSpace=null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -46,6 +47,9 @@ final readonly class MutationContext
                 || ($targets['subscriber']??null)!==hash('sha256',$outboxRetry->subscriberId)))) {throw new \InvalidArgumentException('Retry proposal must match its targets.');}
         if(($operation==='media.asset.refresh')!==($mediaRefresh!==null)||($mediaRefresh!==null&&($scope!==Scope::Space||($targets['entry']??null)!==$mediaRefresh->entryId))){throw new \InvalidArgumentException('Media refresh proposal must match its target.');}
         if(($operation==='media.batch.refresh')!==($mediaBatchRefresh!==null)||($mediaBatchRefresh!==null&&($scope!==Scope::Space||($targets['batch']??null)!==$mediaBatchRefresh->signature()))){throw new \InvalidArgumentException('Media batch must match its exact proposal.');}
+        if(($operation==='storage.space.personal.provision')!==($personalSpace!==null)||($personalSpace!==null
+            &&($scope!==Scope::Space||$actorId!==$personalSpace->ownerId||$spaceId!==$personalSpace->spaceId
+            ||$targets!==['space'=>$personalSpace->spaceId,'owner'=>$personalSpace->ownerId,'group'=>$personalSpace->groupId]))){throw new \InvalidArgumentException('Personal space proposal mismatch.');}
         $catalogBatchOperation=in_array($operation,['catalog.tags.batch.add','catalog.tags.batch.remove'],true);
         if($catalogBatchOperation!==($catalogBatch!==null)||($catalogBatch!==null&&($scope!==Scope::Space
             ||$spaceId!==$catalogBatch->spaceId||$operation!=='catalog.tags.batch.'.$catalogBatch->operation

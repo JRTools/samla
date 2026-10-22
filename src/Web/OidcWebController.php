@@ -12,7 +12,7 @@ final readonly class OidcWebController
 {
     public function __construct(private OidcConfig $config, private \PDO $pdo, private PdoIdentityRepository $identities,
         private LoginProvisioner $provisioner, private AdminController $admin, private PageRenderer $renderer = new PageRenderer(),
-        private ?AppPasswordController $appPasswords = null) {}
+        private ?AppPasswordController $appPasswords = null, private ?\Closure $afterLogin = null) {}
 
     public function handle(Request $request): Response
     {
@@ -91,6 +91,7 @@ final readonly class OidcWebController
             if (($_SESSION['exchange'] ?? null) !== $ticket) { throw new LoginRejected(); }
             unset($_SESSION['exchange']);
             $id = $this->provisioner->login($login);
+            if($this->afterLogin!==null){($this->afterLogin)($id);}
             $_SESSION = [];
             if (!session_regenerate_id(true)) { throw new \RuntimeException('Session renewal failed.'); }
             $_SESSION['identity'] = ['id' => $id, 'binding' => $this->config->binding(), 'expires' => min($login->expiresAt, time() + 3600)];

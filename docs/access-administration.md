@@ -50,3 +50,6 @@ Prüfungen und verbleibende visuelle-/Gerätegrenzen: [verification.md](verifica
 
 
 IdP-Gruppen werden seit Iteration 36 über [group-mappings.md](group-mappings.md) zugeordnet. Die Zielgruppe wird nach Namen ausgewählt; Zuordnungen ersetzen keine lokale Rollenpflege. Ohne konfigurierten signierten Claim bleibt Hinzufügen gesperrt. Freie Rollen und Delegationskonfiguration bleiben weitere Arbeitspakete.
+
+
+Seit Iteration 39 werden persönliche Eigentümergruppen automatisch und geschützt verwaltet. Sie erscheinen nicht in gewöhnlichen Profil-/Mappingauswahlen. Persönliche Bereiche sind mit Eigentümernamen gekennzeichnet; Name und Quote können administrativ geändert werden, Inhalte bleiben ohne ausdrückliches Bereichsrecht gesperrt. Allgemeine leere Bereichslöschung ist für persönliche Bereiche bis zur festgelegten Austritts-/Löschrichtlinie gesperrt. [Betrieb und öffentliche Verträge](personal-spaces.md).

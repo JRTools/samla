@@ -58,7 +58,7 @@ final readonly class ProfileAccessAdministration implements AccessProfileAdminis
     }
     private function guard(string $actorId,string $groupId,?string $spaceId):void
     {
-        if (!$this->canManage($actorId)) { throw new AccessDenied(); }
+        if (!$this->canManage($actorId)||str_starts_with($groupId,\Samla\PluginApi\PersonalSpaceChange::GROUP_PREFIX)) { throw new AccessDenied(); }
         foreach (array_filter([$groupId,$spaceId],static fn($id)=>$id!==null) as $id) {
             if (!preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D',$id)) { throw new \InvalidArgumentException('Invalid target.'); }
         }

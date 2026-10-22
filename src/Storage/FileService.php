@@ -22,7 +22,7 @@ final readonly class FileService
     /** List only explicitly authorized spaces, with bounded catalog traversal. */
     public function spaces(string $actor, ?string $after = null): array
     {
-        $query = $this->pdo->prepare('SELECT id, name, quota_bytes FROM storage_spaces WHERE id > ? ORDER BY id LIMIT 101');
+        $query = $this->pdo->prepare('SELECT s.id,s.name,s.quota_bytes,p.owner_id FROM storage_spaces s LEFT JOIN personal_storage_spaces p ON p.space_id=s.id WHERE s.id > ? ORDER BY s.id LIMIT 101');
         $query->execute([$after ?? '']); $rows = $query->fetchAll(); $next = null;
         if (count($rows) > 100) { array_pop($rows); $next = $rows[99]['id']; }
         return ['rows' => array_values(array_filter($rows, fn(array $row): bool => $this->allowed($actor, 'files.list', $row['id']))), 'next' => $next];

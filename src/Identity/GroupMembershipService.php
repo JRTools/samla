@@ -24,6 +24,7 @@ final readonly class GroupMembershipService
         $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
         $protected = null;
         $guard = function () use ($actorId, $userId, $groupId, $grant, $continuity, &$protected): void {
+            if(str_starts_with($groupId,\Samla\PluginApi\PersonalSpaceChange::GROUP_PREFIX)){throw new AccessDenied();}
             if ($this->authorization->decide(new AuthorizationRequest($actorId,
                     'identity.groups.memberships.manage', Scope::Global))->decision !== Decision::Permit
                 || !$this->resources->hasGroup($groupId)

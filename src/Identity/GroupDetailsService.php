@@ -28,7 +28,8 @@ final readonly class GroupDetailsService
             ['group' => $groupId], $change);
         $continuity = new AdministrationAccessGuard($this->identities, $this->authorization);
         $protected = null;
-        $guard = function () use ($actorId, $continuity, &$protected): void {
+        $guard = function () use ($actorId, $groupId, $continuity, &$protected): void {
+            if(str_starts_with($groupId,\Samla\PluginApi\PersonalSpaceChange::GROUP_PREFIX)){throw new AccessDenied();}
             if ($this->authorization->decide(new AuthorizationRequest($actorId,
                 'identity.groups.details.manage', Scope::Global))->decision !== Decision::Permit) { throw new AccessDenied(); }
             // Capture before validators, so their changes cannot erase a pre-existing administrative capability.

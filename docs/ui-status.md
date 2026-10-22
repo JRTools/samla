@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, Funktionsphasen bis 38. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 22. Oktober 2026, Funktionsphasen bis 39. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -17,6 +17,7 @@ Stand: 22. Oktober 2026, Funktionsphasen bis 38. Codeveröffentlichung ist keine
 | Feste Rechteprofile für Gruppen | Berechtigungen unter /permissions | Namensbasierte Dropdowns für Gruppe, Bereich und Profil; Zuweisen/Entziehen, Bestätigung und Schutz vor veraltetem Formular; Datei-, Medien-, sensible Metadaten- und Workerprofile sowie bekannte alte CLI-Bereichszuweisungen |
 | IdP-Gruppenmapping | IdP-Gruppen zuordnen unter /administration/group-mappings | Lokale Gruppennamen im Dropdown; Hinzufügen für konfigurierten signierten Claim, bestätigtes Entfernen, aktuelle Delegations-/Kontinuitätsprüfung |
 | Beliebige Rollen, administrative Zuweisungen und Delegationsverwaltung | Noch kein umfassender UI-Einstieg | Weiterhin offen; die festen Profile sind keine allgemeine Rollenbearbeitung |
+| Persönliche Bereiche | Automatische Anlage nach erfolgreicher OIDC-Anmeldung; Dateien und Bereiche verwalten | Ein Bereich je Konto, Eigentümerrechte, Kennzeichnung und Eigentümername; Name/Quote administrativ änderbar, persönliche Löschung bis zur Lebenszyklusrichtlinie gesperrt |
 | Bereichsanlage, Name/Quote und Löschen | Bereiche verwalten unter /administration/spaces | Webformulare und Dropdowns; bestätigte Löschung nur vollständig leerer Bereiche einschließlich atomarer Rechtebereinigung |
 | Initiale Administration, Konsistenzcheck und Objekt-GC | Dokumentierte CLI-Befehle | Weiterhin kontrollierte Betreiberabläufe außerhalb der neuen Bereichsoberfläche |
 | Outbox-Worker, Zustellstatus und Retry | Hintergrundaufgaben unter /operations/worker; Ausführung über CLI oder authentifizierten POST /tasks/run | Browseransicht mit getrennten Rechten, Filter/Pagination und revisionsgebundenem Retry; Betreiberkonfiguration des Maschinen-Tokens bleibt außerhalb des UI |

@@ -18,6 +18,7 @@ final readonly class RbacGroupMembershipPolicy implements GroupMembershipPolicy
     /** Internal shared rule for all memberships conveyed by a group, including future mapping matches. */
     public function allowsGroup(string $actorId, string $groupId, bool $grant): bool
     {
+        if(str_starts_with($groupId,\Samla\PluginApi\PersonalSpaceChange::GROUP_PREFIX)){return false;}
         if($this->profiles?->allowsProfileMembership($actorId,$groupId)===true){return true;}
         $groups = $this->identities->groupIds($actorId);
         foreach ($this->roles->assignmentsFor([$groupId]) as $assignment) {

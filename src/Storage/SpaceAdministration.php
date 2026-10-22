@@ -40,6 +40,7 @@ final readonly class SpaceAdministration
             if(!hash_equals($this->fingerprint($row),$proposal->expectedState)){throw new MutationConflict();}
             if($proposal->operation==='update'&&StorageUsage::bytes($this->pdo,$space)>$proposal->quotaBytes){throw new MutationConflict();}
             if($proposal->operation==='delete'){
+                if($row['owner_id']!==null){throw new MutationConflict();}
                 foreach(['storage_entries','storage_locks']as$table){
                     $q=$this->pdo->prepare('SELECT 1 FROM '.$table.' WHERE space_id=?'.($table==='storage_locks'?' AND expires_at>?':'').' LIMIT 1');$q->execute($table==='storage_locks'?[$space,time()]:[$space]);
                     if($q->fetchColumn()!==false){throw new MutationConflict();}
@@ -64,9 +65,9 @@ final readonly class SpaceAdministration
     private function find(string $space):array
     {
         if(!preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D',$space)){throw new \InvalidArgumentException('Invalid space.');}
-        $q=$this->pdo->prepare('SELECT id,name,quota_bytes FROM storage_spaces WHERE id=?');$q->execute([$space]);
+        $q=$this->pdo->prepare('SELECT s.id,s.name,s.quota_bytes,p.owner_id,u.display_name AS owner_name FROM storage_spaces s LEFT JOIN personal_storage_spaces p ON p.space_id=s.id LEFT JOIN identity_users u ON u.id=p.owner_id WHERE s.id=?');$q->execute([$space]);
         return $q->fetch()?:throw new MutationConflict();
     }
     private function fingerprint(array $row):string
-    {return hash('sha256',json_encode([$row['id'],$row['name'],(int)$row['quota_bytes']],JSON_THROW_ON_ERROR));}
+    {return hash('sha256',json_encode([$row['id'],$row['name'],(int)$row['quota_bytes'],$row['owner_id']],JSON_THROW_ON_ERROR));}
 }

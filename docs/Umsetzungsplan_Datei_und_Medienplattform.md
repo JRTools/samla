@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.42
+Version: 1.43
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 38, atomare Tag-Mehrfachbearbeitung, siehe Abschnitt 50. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 39, automatische persönliche Bereiche bei OIDC-Anmeldung, siehe Abschnitt 51. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1144,3 +1144,17 @@ Die HTTP-Prüfung erweitert den realen Ablauf um Tagentzug/-erneute Zuweisung, v
 Die Tests prüfen zusätzlich mehrteilige Änderungen, erhaltene Beschreibungen/andere Tags, unveränderte Mitglieder, individuelle Ereignisse, Konflikt/Kapazität, Pluginveto und injizierten SQL-Fehler mit vollständigem Rollback. Matrix und Webprüfungen: verification.md. GitHub-CI von Paket 37 ist vollständig erfolgreich. Die persönliche Bereitstellung bei der ersten Anmeldung ist inzwischen ausdrücklich gewählt. Die noch nicht bestätigte Standardquote wird als konfigurierbarer technischer Startwert von 10 GiB vorbereitet; Austritts-/Löschregeln, Aufbewahrung und native Offline-Referenzclients bleiben konkrete Betreiberangaben; sie werden nicht aus den technischen Kataloglimits abgeleitet.
 
 Version 1.42: gemeinsamer Tagauftrag mit exaktem Revisionsplan und Einzelnachvollziehbarkeit.
+
+## 51. Iteration 39: automatische persönliche Bereiche
+
+Die Betreiberentscheidung zur Anlage bei der ersten Anmeldung ist umgesetzt. Nach bestätigter OIDC-Anmeldung entsteht je stabilem internem Konto ein persönlicher Bereich mit lokaler verwalteter Eigentümergruppe und einer festen bereichsbezogenen RBAC-Rolle. Der Kern nutzt PersonalSpaceChange und den öffentlichen PersonalSpaceAccess-Transaktionsvertrag, keine privaten RBAC-Adapter. Eine aktuelle Konto-/Frischeprüfung und die Kontinuität vorhandener Administration bleiben vorgeschaltet. Fehler, Pluginveto und Rollenkollisionen rollen die vollständige Anlage einschließlich Mitgliedschaft/Audit/Outbox zurück.
+
+Neue Migration platform.storage:0009_personal_spaces erforderlich. APP_PERSONAL_SPACE_ENABLED und APP_PERSONAL_SPACE_QUOTA_BYTES steuern ausschließlich neue Anlagen. Der vorläufige konfigurierbare Startwert 10 GiB ist weiterhin nicht als bestätigte fachliche Quote ausgegeben. Wiederholte Anmeldung ändert weder administrativ gepflegte Namen noch Quoten oder Besitz. Reservierte Rollen/-gruppen sind vor normaler Mitgliedschafts-, Mapping-, Profil- und Delegationsbearbeitung geschützt. Persönliche Bereiche und Eigentümer werden im vorhandenen Verwaltungs-UI nach Namen angezeigt; andere Konten und Administratoren erhalten keinen impliziten Dateizugriff. Zusätzliche ausdrücklich protokollierte Gruppenprofile bleiben möglich.
+
+Persönliche Bereiche werden derzeit auch leer nicht durch die allgemeine Bereichslöschung entfernt. Kontosperren gelten sofort für den aktuellen Zugriff, Daten bleiben erhalten; Ausschalten automatischer Anlage löscht keine vorhandenen Bereiche. Austritts-/Eigentumsübergabe-/Löschregeln müssen vor entsprechenden destruktiven Funktionen konkret festgelegt werden. Keine neue Laufzeitkomponente oder automatisch erfundene fachliche Retention.
+
+Unit- und Integrationsprüfungen umfassen stabile Kennungen, genaue Selbstbindung, Konfigurationsgrenzen, Eigentümerrechte ohne Fremd-/Adminzugriff, Erhalt von Name/Quote, gesperrte/veraltete Konten, verwaltete Gruppen, gesperrte persönliche Löschung, öffentliche Hooks, Plugin-/SQL-Fehler, Rollenkollisionen, Administrationskontinuität und gemeinsamen Transaktionslock. Der reale synthetische HTTP-/HTTPS-Ablauf prüft Erst- und Wiederanmeldung sowie die neuen Verwaltungsgrenzen. Einzelheiten: verification.md und personal-spaces.md. GitHub-CI für Paket 38 ist vollständig erfolgreich.
+
+Weitere unabhängige Konzeptteile bleiben Katalogsuche, Sammlungen, freie Felder, zusätzliche Verwaltungsoberflächen und abschließende Betriebs-/Geräteabnahme. Offene Lebenszyklus-, Offline- und Komponentenentscheidungen bleiben in offene-entscheidungen.md sichtbar. Umsetzung und Einzelveröffentlichung werden ohne Go-Abfragen fortgesetzt.
+
+Version 1.43: persönliche Bereitstellung mit Eigentümervertrag, atomarer Rollenanlage und Verwaltungskennzeichnung.

@@ -155,3 +155,8 @@ Iteration 30 ergänzt den Metadatenprovider ohne neue Migration oder Laufzeitkom
 ## Bereichs- und Rechteverwaltung im Browser (Iteration 33)
 
 Keine neue Migration oder Abhängigkeit für diese Phase. Nach dem Codeupdate kann der bereits eingerichtete Standardadministrator **Bereiche verwalten** und **Berechtigungen** verwenden. Name/Quote, bestätigte Leerbereichslöschung und feste Gruppenprofile benötigen im normalen Betrieb keine CLI und keinen Wartungsmodus mehr. Neuanlage verleiht niemandem automatische Dateirechte. [Bedienung und Sicherheitsumfang](access-administration.md). Bestehende Betriebs-/Bootstrap-CLI bleibt verfügbar.
+
+
+## Persönliche Bereiche nach Update
+
+Iteration 39 benötigt die neue Speichermigration für persönliche Eigentümerzuordnungen. Sie muss vor der nächsten OIDC-Anmeldung eingespielt sein. Erfolgreiche nächste Anmeldung erstellt je Konto einmalig den persönlichen Bereich, sofern APP_PERSONAL_SPACE_ENABLED=1 (Voreinstellung). APP_PERSONAL_SPACE_QUOTA_BYTES setzt die Quote neuer Bereiche; 10737418240 ist ein vorläufiger technischer Startwert. Vorhandene Quoten werden dadurch nicht ersetzt. Deaktivieren löscht keine Bestandsdaten. [Einrichtung und Schutzgrenzen](personal-spaces.md).

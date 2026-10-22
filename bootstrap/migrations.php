@@ -17,6 +17,7 @@ return [
     ...require __DIR__ . '/../migrations/media.php',
     ...require __DIR__ . '/../migrations/exports.php',
     ...require __DIR__ . '/../migrations/catalog.php',
+    ...require __DIR__ . '/../migrations/personal-spaces.php',
     ...require __DIR__ . '/../migrations/media-cache-indexes.php',
     ...require __DIR__ . '/../plugins/rbac/migrations.php',
 ];

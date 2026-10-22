@@ -13,6 +13,7 @@ final readonly class AppConfig
         public string $storageRoot,
         public int $maxUploadBytes,
         public ExportConfig $exports,
+        public PersonalSpaceConfig $personalSpaces,
     ) {}
 
     /** Trusted .env and process values only; never request headers or query parameters. */
@@ -51,6 +52,6 @@ final readonly class AppConfig
         if (!is_string($root) || !str_starts_with($root, '/') || str_contains($root, "\0")) { throw new \InvalidArgumentException('Invalid storage root.'); }
         $max = $env['APP_MAX_UPLOAD_BYTES'] ?? '16777216';
         if (!is_string($max) || !ctype_digit($max) || strlen($max) > 13 || (int) $max < 1 || (int) $max > 1099511627776) { throw new \InvalidArgumentException('Invalid upload limit.'); }
-        return new self($environment, $database, $maintenance === '1', $age === '' ? null : (int) $age, $root, (int) $max,ExportConfig::fromEnvironment($env));
+        return new self($environment, $database, $maintenance === '1', $age === '' ? null : (int) $age, $root, (int) $max,ExportConfig::fromEnvironment($env),PersonalSpaceConfig::fromEnvironment($env));
     }
 }
