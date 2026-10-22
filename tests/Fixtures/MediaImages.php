@@ -17,4 +17,13 @@ final class MediaImages
         $tiff="II".pack('vVv',42,8,2).pack('vvVv',0x112,3,1,$orientation)."\0\0".pack('vvVV',0x10f,2,6,38).pack('V',0)."Samla\0";
         $app="Exif\0\0".$tiff;return substr($jpg,0,2)."\xff\xe1".pack('n',strlen($app)+2).$app.substr($jpg,2);
     }
+    public static function pngChunk(string $type,string $data):string
+    {$body=$type.$data;return pack('N',strlen($data)).$body.hex2bin(hash('crc32b',$body));}
+    public static function pngText(string $key,string $text,bool $international=false):string
+    {$png=self::png();$data=$key."\0".($international?"\0\0\0\0":'').$text;return substr($png,0,33).self::pngChunk($international?'iTXt':'tEXt',$data).substr($png,33);}
+    public static function jpegSegment(string $data,int $marker=0xe1):string
+    {$jpg=self::jpeg();return substr($jpg,0,2)."\xff".chr($marker).pack('n',strlen($data)+2).$data.substr($jpg,2);}
+    public static function xmp(string $properties):string
+    {return '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:i="http://iptc.org/std/Iptc4xmpExt/2008-02-29/">'.$properties.'</rdf:Description></rdf:RDF></x:xmpmeta>';}
+
 }

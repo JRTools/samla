@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 29 (Medienanalyse neu aufbauen und Ableitungen bereinigen)
+## Entwicklungsstand: Iteration 30 (Eingebettete Metadaten und deklarierte KI-Angaben)
 
 Vorhanden sind:
+
+- Zusätzlicher begrenzter Medienprovider für Standard-XMP und Photoshop-IPTC in JPEG sowie unkomprimierte PNG-Textfelder. Ausgewählte Beschreibungs-/Rechteangaben, strukturierte KI-Erzeugungs-/Bearbeitungsdeklarationen und Konfliktanzeige; Prompt-/Autorinformationen erhalten ein separates Bereichsrecht. Vorhandene PHP-Schnittstellen, keine neue Laufzeitkomponente. C2PA bleibt ungeprüft. [Abdeckung, Rechte und Neuaufbau](docs/embedded-metadata.md).
 
 - Bereichsweiter manueller Neuaufbau der Medienanalyse mit bis zu 100 sichtbaren Dateien pro Formular und einzelnen Workeraufgaben, Revisionsschutz, eigener nachvollziehbarer Auditzeile je Datei und atomarer Vormerkung. Nach endgültiger Löschung entfernt ein technischer Empfänger nur Ableitungen ohne verbleibende aktuelle oder historische Inhaltsreferenz. Neue Indexmigration erforderlich. [Medienbetrieb](docs/media.md).
 

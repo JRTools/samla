@@ -9,12 +9,14 @@ final readonly class MediaPlugin implements Plugin
     public function apiMajor():int{return 0;}
     public function register(PluginRegistrar $registrar):void
     {
-        foreach(['media.previews.read','media.metadata.read','media.process']as$action){$registrar->permission(new Permission($action,$this->id(),[Scope::Space]));}
+        foreach(['media.previews.read','media.metadata.read','media.process','media.sensitive.read']as$action){$registrar->permission(new Permission($action,$this->id(),[Scope::Space]));}
         foreach(['mime'=>['Erkanntes Bildformat','text'],'width'=>['Pixelbreite des Originals','integer'],'height'=>['Pixelhöhe des Originals','integer'],
             'orientation'=>['EXIF-Orientierung','integer'],'camera_make'=>['Kamerahersteller','text'],'camera_model'=>['Kameramodell','text'],'captured_at'=>['Aufnahmezeit laut EXIF, Zeitzone ungeprüft','text']]as$id=>[$label,$type]){
             $registrar->mediaField(new MediaField($this->id().'.'.$id,$label,$type));
         }
-        $registrar->mediaProvider(new RasterProvider());
+        $registrar->mediaProvider(new RasterProvider(),100);
+        foreach(EmbeddedMetadataProvider::fields()as$field){$registrar->mediaField($field);}
+        $registrar->mediaProvider(new EmbeddedMetadataProvider());
         $registrar->outboxSubscriber(new OutboxSubscription('platform.media.assets_v1',[
             'storage.file.upload.completed','storage.file.replace.completed','storage.version.restore.completed','storage.file.copy.completed',
             'storage.file.create_locked.completed','storage.entry.restore.completed','media.asset.refresh.completed',

@@ -56,7 +56,7 @@ final class MediaTest extends TestCase
     {
         $png=\Samla\Tests\Fixtures\MediaImages::png();$id=$this->upload($png,'<photo>.jpg');self::assertSame('pending',$this->media()->details('alice','a',$id)['media_status']);
         $worker=new \Samla\Core\Background\OutboxWorker($this->pdo,$this->runtime);self::assertSame(1,$worker->run()['delivered']);
-        $detail=$this->media()->details('alice','a',$id);self::assertSame('ready',$detail['media_status']);self::assertCount(3,$detail['metadata']);self::assertSame('image/png',$detail['metadata'][0]['normalized']);
+        $detail=$this->media()->details('alice','a',$id);self::assertSame('ready',$detail['media_status']);self::assertCount(6,$detail['metadata']);self::assertSame('image/png',$detail['metadata'][0]['normalized']);
         $preview=$this->page('/media/preview',$id);self::assertSame(200,$preview->status);self::assertSame('image/png',$preview->headers['Content-Type']);self::assertSame("\x89PNG",substr($preview->body,0,4));
         $download=$this->files()->download('alice','a',$id);try{self::assertSame($png,stream_get_contents($download['stream']));}finally{fclose($download['stream']);}
         self::assertSame(200,$this->page('/media',$id)->status);$html=$this->page('/media/detail',$id);self::assertSame(200,$html->status);self::assertStringContainsString('&lt;photo&gt;.jpg',$html->body);self::assertStringNotContainsString('<photo>',$html->body);
@@ -68,7 +68,7 @@ final class MediaTest extends TestCase
         $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::png(),'photo.png');$this->pipeline()->processEntry($id);
         self::assertSame(403,$this->page('/media/preview',$id,actor:'bob')->status);
         $this->rights(['files.list','media.previews.read']);$detail=$this->media()->details('alice','a',$id);self::assertSame([],$detail['metadata']);self::assertFalse($detail['can_download']);self::assertTrue($detail['has_preview']);self::assertSame(200,$this->page('/media/preview',$id)->status);self::assertStringNotContainsString('/files/download',$this->page('/media/detail',$id)->body);
-        $this->rights(['files.list','media.metadata.read']);self::assertSame(403,$this->page('/media/preview',$id)->status);self::assertCount(3,$this->media()->details('alice','a',$id)['metadata']);
+        $this->rights(['files.list','media.metadata.read']);self::assertSame(403,$this->page('/media/preview',$id)->status);self::assertCount(6,$this->media()->details('alice','a',$id)['metadata']);
         $this->rights();$folder=$this->files()->createFolder('alice','a','','hidden');$this->files()->change('alice','a',$id,'move','photo.png','',parent:$folder);$this->files()->change('alice','a',$folder,'trash','hidden','');self::assertSame(400,$this->page('/media/preview',$id)->status);
     }
     public function testRefreshIsCsrfRevisionAndPermissionProtectedDeduplicatedAndDoesNotProcessInline():void
@@ -94,8 +94,8 @@ final class MediaTest extends TestCase
         $runtime=$this->boot([new Extension('test.media',static function(PluginRegistrar $r):void{
             $r->permission(new \Samla\PluginApi\Permission('test.media.private','test.media',[Scope::Space]));$r->mediaField(new \Samla\PluginApi\MediaField('test.media.secret','Private',sensitive:true,readPermission:'test.media.private'));
             $r->mediaProvider(new class implements \Samla\PluginApi\MediaProvider{public function id():string{return 'test.media.provider';}public function version():string{return '1';}public function extract(\Samla\PluginApi\MediaSource $s):\Samla\PluginApi\MediaResult{return new \Samla\PluginApi\MediaResult('ready',[new \Samla\PluginApi\MediaValue('test.media.secret','<script>','secret','secret')]);}});
-        })]);$this->pipeline($runtime)->processEntry($id);self::assertCount(3,$this->media($runtime)->details('alice','a',$id)['metadata']);
-        $this->roles->save(new Role('editor',Scope::Space,['files.list','media.metadata.read','test.media.private']),$runtime);self::assertCount(4,$this->media($runtime)->details('alice','a',$id)['metadata']);
+        })]);$this->pipeline($runtime)->processEntry($id);self::assertCount(6,$this->media($runtime)->details('alice','a',$id)['metadata']);
+        $this->roles->save(new Role('editor',Scope::Space,['files.list','media.metadata.read','test.media.private']),$runtime);self::assertCount(7,$this->media($runtime)->details('alice','a',$id)['metadata']);
         $this->pdo->exec("UPDATE identity_users SET status='blocked' WHERE id='alice'");try{$this->media($runtime)->details('alice','a',$id);self::fail('Blocked actor accessed metadata.');}catch(\Samla\PluginApi\AccessDenied){self::assertTrue(true);}
     }
     public function testRefreshPermissionRevokedByValidatorRollsBackRequestAuditAndEvent():void
@@ -179,6 +179,27 @@ final class MediaTest extends TestCase
         try{try{$this->media()->rebuild('alice','a',new \Samla\PluginApi\MediaBatchRefreshChange([$a=>1,$b=>1]));self::fail('Partial fanout accepted.');}catch(\PDOException){self::assertFalse($this->pdo->inTransaction());}}
         finally{$this->pdo->exec('DROP TRIGGER test_media_batch_child');}
         self::assertSame($audit,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());self::assertSame($events,(int)$this->pdo->query('SELECT COUNT(*) FROM outbox_events')->fetchColumn());self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM media_refresh_requests')->fetchColumn());
+    }
+
+    public function testEmbeddedMetadataIsEscapedAndPromptFieldsNeedAdditionalCurrentPermission():void
+    {
+        $xml=\Samla\Tests\Fixtures\MediaImages::xmp('<dc:title>&lt;script&gt;title</dc:title><i:DigitalSourceType rdf:resource="http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"/><i:AIPromptInformation>secret prompt</i:AIPromptInformation><i:AIPromptWriterName>secret writer</i:AIPromptWriterName>');
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::pngText('XML:com.adobe.xmp',$xml,true),'photo.png');$this->pipeline()->processEntry($id);$page=$this->page('/media/detail',$id);self::assertSame(200,$page->status);self::assertStringContainsString('&lt;script&gt;title',$page->body);self::assertStringNotContainsString('secret prompt',$page->body);self::assertStringNotContainsString('secret writer',$page->body);self::assertStringContainsString('Als KI-generiert gekennzeichnet',$page->body);
+        $this->rights(['files.list','media.metadata.read','media.sensitive.read']);$page=$this->page('/media/detail',$id);self::assertStringContainsString('secret prompt',$page->body);self::assertStringContainsString('secret writer',$page->body);self::assertStringNotContainsString('/media/preview?',$page->body);
+        $this->rights(['files.list','media.previews.read']);self::assertSame([],$this->media()->details('alice','a',$id)['metadata']);self::assertStringNotContainsString('secret prompt',$this->page('/media/detail',$id)->body);
+    }
+    public function testReplacingContentReextractsOriginAndDoesNotReuseOldAiMarkers():void
+    {
+        $xml=\Samla\Tests\Fixtures\MediaImages::xmp('<i:DigitalSourceType>http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia</i:DigitalSourceType>');$id=$this->upload(\Samla\Tests\Fixtures\MediaImages::pngText('XML:com.adobe.xmp',$xml,true),'photo.png');$this->pipeline()->processEntry($id);
+        $values=array_column($this->media()->details('alice','a',$id)['metadata'],null,'field');self::assertSame('Als mit KI bearbeitet gekennzeichnet',$values['platform.media.declared_origin']['normalized']);
+        $stream=fopen('php://temp','w+b');fwrite($stream,\Samla\Tests\Fixtures\MediaImages::png());rewind($stream);try{$this->files()->replace('alice','a',$id,1,$stream);}finally{fclose($stream);}$this->pipeline()->processEntry($id);
+        $values=array_column($this->media()->details('alice','a',$id)['metadata'],null,'field');self::assertArrayNotHasKey('platform.media.digital_source_type',$values);self::assertSame('Unbekannt',$values['platform.media.declared_origin']['normalized']);self::assertSame(409,$this->page('/media/preview',$id)->status);self::assertSame(1,(int)$this->pdo->query('SELECT COUNT(*) FROM storage_versions')->fetchColumn());
+    }
+    public function testOriginalKeepsEmbeddedPrivateDataWhileProtectedPreviewStripsIt():void
+    {
+        $bytes=\Samla\Tests\Fixtures\MediaImages::pngText('parameters','secret prompt');$id=$this->upload($bytes,'photo.png');$this->pipeline()->processEntry($id);$preview=$this->media()->preview('alice','a',$id,1);self::assertStringNotContainsString('secret prompt',$preview);self::assertStringNotContainsString('parameters',$preview);
+        $download=$this->files()->download('alice','a',$id);try{self::assertSame($bytes,stream_get_contents($download['stream']));}finally{fclose($download['stream']);}
+        $values=array_column($this->media()->details('alice','a',$id)['metadata'],null,'field');self::assertSame('Unbekannt',$values['platform.media.declared_origin']['normalized']);
     }
 
 }

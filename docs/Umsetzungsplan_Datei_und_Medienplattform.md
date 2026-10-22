@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.31
+Version: 1.32
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 29, seitenweiser Neuaufbau und referenzbasierte Medienbereinigung, siehe Abschnitte 40 und 41. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 30, begrenzte eingebettete Metadaten und strukturierte KI-Deklarationen, siehe Abschnitte 41 und 42. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -994,3 +994,23 @@ Die neue Übersicht offene-entscheidungen.md fasst die noch tatsächlich notwend
 Prüfung und Veröffentlichungsstand: verification.md. Die vorige veröffentlichte Medienphase ist in allen vier GitHub-Jobs einschließlich HTTP/HTTPS erfolgreich, dokumentiert in verification-iteration-28.md. Weitere Umsetzung bleibt autorisiert. IPTC/XMP/KI/C2PA, vollständige Katalogpflege, Tags/Sammlungen/Export, übrige Datei-/Verwaltungsfunktionen und Betriebs-/Geräteabnahmen folgen; keine pauschale Fertig- oder Produktivfreigabe.
 
 Version 1.31: Berechtigter seitenweiser Medienneuaufbau, atomare Einzelzustellungen und Bereinigung ausschließlich unreferenzierter Ableitungen; aktuelle Betreiberentscheidungen zusammengeführt.
+
+
+## 42. Iteration 30: Eingebettete Metadaten und deklarierte KI-Angaben
+
+EmbeddedMetadataProvider verwendet die öffentlichen Medienverträge für Standard-XMP/Photoshop-IPTC in JPEG sowie unkomprimierte PNG-Text-/XMP-Felder. Vorhandenes PHP, DOM/libxml und iptcparse genügen; keine neue Komponente oder Migration. Begrenzte Parserpfade, CRC-/Längenprüfung, keine Dekompression, abgewiesene XML-DTD/Entities, deaktivierte externe Auflösung und ein kooperatives Einsekundenbudget ergänzen die bestehenden Quell-/Pixel-/Workergrenzen. Ein laufender nativer Parser wird dadurch nicht hart unterbrochen.
+
+Ausgewählte beschreibende Felder, Herkunfts-URIs, KI-System/-version, Prompt und Promptautor bleiben mit Rohwert, Normalisierung, Quelle und Status getrennt. Alle Werte erscheinen über die registrierten Feldverträge in der bestehenden Medien-Detailansicht. Nur unterstützte strukturierte DigitalSourceType-Angaben führen zu als generativ erstellt beziehungsweise bearbeitet gekennzeichnet. Mehrere unterschiedliche Angaben erzeugen Konflikt; fehlende, unvollständig untersuchte oder nicht unterstützte Daten bleiben unbekannt. Keine Ableitung aus Dateiname, Programmname oder freiem Prompttext und kein KI-Bilddetektor. C2PA bleibt ausdrücklich nicht untersucht oder validiert.
+
+Prompt-/Autorfelder verlangen zusätzlich media.sensitive.read und sind nicht automatisch exportierbar. Bestehende Rollen ändern sich nicht; das ausdrückliche Wartungsprofil media-sensitive wird separat vergeben. Nicht berechtigte Ansichten zeigen weder diese Werte noch ihre konkreten Feldlabels. Originaldownloads behalten eingebettete Angaben, PNG-Vorschauen entfernen sie. Neue Dateiversionen erhalten neue Ableitungen; alte KI-Angaben werden nicht auf neue Quellen übertragen.
+
+Die Verarbeitungssignatur ändert sich mit den registrierten neuen Feldern/Providern. Bestehende Bestände werden über den in Iteration 29 ergänzten seitenweisen Neuaufbau aktualisiert. Unterstützte Quellen, Kodierungs-/Mengen-/Laufzeitgrenzen und Primärquellen stehen in embedded-metadata.md. Allgemeine Katalogpflege, automatische Quellenpriorität, Tags/Sammlungen, weitere Formate, Export und C2PA sowie übrige Konzept- und Betriebsabnahmen bleiben offen.
+
+Prüfung und Veröffentlichung: verification.md. Die vorherige GitHub-Matrix ist vollständig erfolgreich und mit gelesenen Logs in verification-iteration-29.md dokumentiert. Die aktuelle Betreiberentscheidungsübersicht wird fortgeführt; bereits entschiedene Punkte werden nicht erneut angefragt.
+
+Version 1.32: Begrenztes IPTC-/XMP-/PNG-Auslesen, strukturierte KI-Deklaration mit getrennter Nachweisqualität und geschützten Promptfeldern.
+
+
+### 42.1 Konkrete folgende Komponentenentscheidung für Export
+
+Die Vorlage zip-library-decision.md beschreibt native ext-zip/ZipArchive einschließlich libzip in der tatsächlichen Workerlaufzeit, den vorgesehenen ersten ZIP-/JSON-Aufbau und erforderliche Rechte-/Grenz-/Abbruchtests. Die Bibliothek ist noch nicht in Samla eingeführt. Vor der ZIP-Paketierung ist gemäß Konzept und AGENTS die konkrete Betreiberfreigabe erforderlich; bestehende Komponentenfreigaben werden nicht erweitert ausgelegt. Die übrigen offenen Betreiberentscheidungen bleiben in offene-entscheidungen.md zusammengefasst.

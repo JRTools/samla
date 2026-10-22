@@ -147,3 +147,6 @@ Nach Sicherung die Migration platform.media:0001_assets im Wartungsmodus anwende
 
 
 Iteration 29 ergänzt platform.media:0002_reference_indexes für sichere referenzbasierte Ableitungsbereinigung nach endgültiger Löschung. Vor dem Workerstart im Wartungsmodus migrieren. Keine zusätzliche Laufzeitkomponente. Der seitenweise Neuaufbau verwendet das bestehende Bereichsrecht media.process und den vorhandenen CLI-/HTTPS-Worker.
+
+
+Iteration 30 ergänzt den Metadatenprovider ohne neue Migration oder Laufzeitkomponente. Vorhandene DOM-/IPTC-Fähigkeiten werden in diagnose.php mit geprüft. Nach Codeupdate die Medienanalyse seitenweise neu aufbauen. Das optionale Profil media-sensitive vergibt gesonderte Metadaten-/Promptleserechte; bisherige Rollen erhalten sie nicht automatisch. Details: [embedded-metadata.md](embedded-metadata.md).

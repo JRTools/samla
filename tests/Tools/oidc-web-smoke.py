@@ -379,6 +379,19 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     else:
                         processed=subprocess.run(php+['bin/worker.php'],cwd=project,env=env,capture_output=True,text=True)
                         assert processed.returncode==0,processed.stdout+processed.stderr
+                    fixture=subprocess.run(php+['-r',"require 'vendor/autoload.php';require 'tests/Fixtures/MediaImages.php';$xml=Samla\\Tests\\Fixtures\\MediaImages::xmp('<i:DigitalSourceType>http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia</i:DigitalSourceType><i:AIPromptInformation>http-fixture-private-prompt</i:AIPromptInformation>');echo Samla\\Tests\\Fixtures\\MediaImages::pngText('XML:com.adobe.xmp',$xml,true);"],cwd=project,env=env,capture_output=True)
+                    assert fixture.returncode==0,fixture.stderr
+                    assert dav('PUT','/dav/'+space+'/synthetic-metadata.png',body=fixture.stdout)[0]==201
+                    if secure:assert trigger({'token':worker_token})[0]==200
+                    else:
+                        processed=subprocess.run(php+['bin/worker.php'],cwd=project,env=env,capture_output=True,text=True)
+                        assert processed.returncode==0,processed.stdout+processed.stderr
+                    status,media_page,_=req('/media?space='+space);assert status==200
+                    metadata_link=re.search(r'href="(/media/detail\?[^"<>]+)"[^>]*>synthetic-metadata.png',media_page).group(1).replace('&amp;','&')
+                    status,embedded_page,_=req(metadata_link);assert status==200 and 'Als KI-generiert gekennzeichnet' in embedded_page and 'http-fixture-private-prompt' not in embedded_page
+                    granted=subprocess.run(php+['bin/storage-space-access.php',user,space,'samla.administrators','media-sensitive'],cwd=project,env=bootstrap,capture_output=True,text=True)
+                    assert granted.returncode==0,granted.stdout+granted.stderr
+                    assert 'http-fixture-private-prompt' in req(metadata_link)[1]
                     assert req('/auth/logout')[0]==405
                     assert req('/auth/logout',{'csrf':'bad'})[0]==403
                     assert req('/auth/logout',{'csrf':csrf(body)})[0]==303
@@ -398,7 +411,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

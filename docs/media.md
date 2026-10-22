@@ -25,7 +25,7 @@ Upload, Inhaltsersetzung, Versionswiederherstellung, Einzeldateikopie, DAV-Anlag
 | TIFF | Keine GD-Vorschau | Begrenzte technische/ausgewählte EXIF-Angaben, Status teilweise verarbeitet |
 | Andere Inhalte, SVG, Videos | Keine | Ausdrücklich nicht unterstützt |
 
-Fehlende Angaben, Parserfehler, nicht unterstützte Formate, fehlende Module und Größenlimits werden unterschieden. Ungültige Orientierung erzeugt keine vermeintlich korrekt orientierte Vorschau. Originalwerte, normalisierte Werte, Provider und Quellpfad bleiben getrennt. GPS, Seriennummern und eingebettete EXIF-Thumbnails werden nicht als Felder übernommen. IPTC, XMP, KI-Kennzeichnungen und C2PA werden noch nicht untersucht. Der Status ist keine Aussage über eine Entstehung ohne KI.
+Fehlende Angaben, Parserfehler, nicht unterstützte Formate, fehlende Module und Größenlimits werden unterschieden. Ungültige Orientierung erzeugt keine vermeintlich korrekt orientierte Vorschau. Originalwerte, normalisierte Werte, Provider und Quellpfad bleiben getrennt. GPS, Seriennummern und eingebettete EXIF-Thumbnails werden nicht als Felder übernommen. Ab Iteration 30 ergänzt ein zweiter Provider ausgewählte IPTC-/XMP-/PNG-Textfelder und strukturierte KI-Deklarationen, siehe [embedded-metadata.md](embedded-metadata.md). C2PA wird weiterhin nicht untersucht oder validiert. Der Status ist keine Aussage über eine Entstehung ohne KI.
 
 ## Zugriffsrechte
 
