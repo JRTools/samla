@@ -5,6 +5,7 @@ $titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen',
 $caps = $data['caps'];
 $titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb', 'app-passwords' => 'App-Passwörter'];
 $titles['versions'] = 'Dateiversionen';
+$titles['text-editor'] = 'Text bearbeiten';
 ?>
 <!doctype html>
 <html lang="de">

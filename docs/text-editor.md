@@ -1,0 +1,13 @@
+# Textansicht und Browsereditor
+
+Über „Text öffnen“ auf der Dateidetailseite lassen sich UTF-8-Dateien bis 65536 Bytes lesen und mit files.update bearbeiten. Zusätzlich gelten files.list und files.read im jeweiligen Speicherbereich; files.versions.read ist für den Editor nicht erforderlich. Frühere Inhalte bleiben dennoch als Version erhalten und zählen zur Quote.
+
+Unterstützte Endungen: txt, md, markdown, json, yaml, yml, csv, tsv, log, ini, conf, xml, html, css, js, ts, php. Die Endung wählt ausschließlich die einfache Textansicht. Der Inhalt muss gültiges UTF-8 sein; NUL und ASCII-Steuerzeichen außer Tab/CR/LF sind ausgeschlossen. Große oder andere Dateien bleiben über den normalen Download zugänglich. Markdown wird als Quelltext angezeigt. JSON/YAML werden nicht semantisch validiert, Code wird nicht ausgeführt. Alle Quelltexte sind HTML-escaped. Es gibt keinen Markdown-Renderer, Syntaxhervorhebung oder zusätzlichen Editorbaustein.
+
+Die Textarea bewahrt führende Leerzeilen. Beim Speichern und Entwurfsdownload werden CRLF/CR zu LF vereinheitlicht. Ein vorhandenes UTF-8-BOM bleibt erhalten. Der gesamte normalisierte Text, einschließlich leerem Text, darf höchstens 64 KiB groß sein. Der HTTP-Body für die beiden POST-Routen ist auf 6 × 65536 + 4096 Bytes begrenzt; dies berücksichtigt URL-Encoding und browserseitige CRLF-Formularübertragung. PHP-/Webserverlimits können Anfragen zusätzlich begrenzen. Andere Formulare behalten ihre kleineren Grenzen.
+
+Speichern verwendet die geöffnete Revision. Eine parallele Änderung per WebDAV oder Browser führt zu 409. Der Entwurf bleibt im Formular, „Entwurf herunterladen“ liefert ihn als samla-entwurf.txt. „Aktuellen Stand in neuem Tab öffnen“ lädt die neuere Datei separat. Es gibt keine automatische Konfliktauflösung und kein bedingungsloses Überschreiben. Bei aktiver Sperre (423) oder Quoten-/Versionsgrenze (413) bleibt derselbe Entwurfsweg verfügbar. Andere Fehler, eine abgelaufene Sitzung, Navigation oder das Schließen des Tabs ersetzen keine Entwurfssicherung; die Entwürfe werden nicht automatisch auf dem Server gespeichert.
+
+Alle Schreib-/Entwurfsrouten verlangen POST und gültigen Session-CSRF. Der Entwurfsdownload liefert nur übermittelte eigene Bytes und lädt keine Datei anhand einer Kennung. Content-Type text/plain, Attachment, no-store, nosniff und bestehende CSP bleiben wirksam. Speichern nutzt FileService.replace mit zusätzlichem read-Guard vor/nach Validatoren. Die Autorisierung und der gleiche revisionsgebundene Versionspfad gelten auch bei direktem Aufruf der öffentlichen Dienste.
+
+Keine neue Migration oder Laufzeitabhängigkeit. Öffentliche zusätzliche Viewer-/Editorprovider und eine visuelle Browser-/Geräteabnahme sind noch offen.

@@ -80,7 +80,7 @@ Alle dynamischen HTML-Werte werden mit ENT_QUOTES/ENT_SUBSTITUTE escaped. Die Co
 
 Schreibabläufe nutzen dieselben Plugin-Validatoren, Delegationspolicies, Nachbedingungen, Audit- und Outboxtransaktionen wie das Backend. Lesefunktionen verwenden neue registrierte Berechtigungen und die bestehenden Autorisierungs-/Einschränkungsverträge. Die vertrauenswürdige Zusammensetzung steht in bootstrap/web.php; der Kern importiert keine RBAC-Interna. Eigene Navigation, Pluginseiten und Zeilenfilter sind noch keine öffentliche UI-Erweiterungs-API.
 
-OIDC-Anmeldung und Identitätsübernahme sind ergänzt. WebDAV, Dateiablage sowie Mapping-/Rollenoberfläche fehlen weiterhin; die vollständige Plattform ist noch nicht produktiv abgenommen. Die CSS-Ansichten sind responsiv und benötigen kein JavaScript. CSRF-/Sessionprüfungen des Entwicklungszugangs ersetzen keine spätere OIDC-Sicherheitsabnahme. Ergebnisse der PHP-/Datenbankmatrix und der tatsächlichen HTTP-/Browserprüfungen stehen in verification.md.
+OIDC-Anmeldung, Identitätsübernahme, Dateiablage, WebDAV und Texteditor sind ergänzt. Mapping-/Rollenoberflächen fehlen weiterhin; die vollständige Plattform ist noch nicht produktiv abgenommen. Die CSS-Ansichten sind responsiv und benötigen kein JavaScript. CSRF-/Sessionprüfungen des Entwicklungszugangs ersetzen keine spätere OIDC-Sicherheitsabnahme. Ergebnisse der PHP-/Datenbankmatrix und der tatsächlichen HTTP-/Browserprüfungen stehen in verification.md.
 
 
 ## Zusätzliche HTTP- und Browserprüfungen
@@ -98,3 +98,7 @@ node tests/browser-smoke.cjs http://127.0.0.1:8080
 ```
 
 Bei extern bereitgestellten Testwerkzeugen muss deren node_modules-Verzeichnis für den Node-Resolver verfügbar sein. SAMLA_BROWSER_EXECUTABLE kann einen vorhandenen Testbrowser auswählen. Browserdownloads und ausführbare Testlaufzeiten werden nicht mit dem Anwendungscode ausgeliefert.
+
+## Textansicht und Editor
+
+GET /files/edit öffnet unterstützten UTF-8-Quelltext. POST /files/edit/save speichert mit CSRF und erwarteter Revision über denselben FileService wie Upload/WebDAV. POST /files/edit/draft liefert ausschließlich den übermittelten eigenen Text als Attachment; es liest keine gespeicherte Datei. Die Editorformulare haben eine begrenzte HTTP-Hülle für URL-Encoding und Browser-CRLF. Details und Grenzen stehen in [text-editor.md](text-editor.md).

@@ -156,3 +156,7 @@ Der Dienst erfasst vorab die genaue Map aus Eintragskennungen und Revisionen. Vo
 Das endgültige Entfernen gibt logische Quote und Katalogplätze frei. Unveränderliche Dateiobjekte werden hier nicht vom Datenträger gelöscht. Die bestehende separate Objektbereinigung schützt verbleibende aktuelle/historische Referenzen und gemeinsam genutzte Inhalte. Ihre 24-Stunden-Grenze bezieht sich auf das Objektalter, nicht auf den Zeitpunkt der endgültigen Löschung. Daraus folgt keine Wiederherstellungsfrist: In Samla kann der endgültig entfernte Katalogeintrag nicht mehr wiederhergestellt werden.
 
 WebDAV DELETE bleibt eine Papierkorboperation. Es gibt keine implizite endgültige Löschung durch ein erneutes DELETE und keine automatisch eingerichtete Retentionsregel. Der WebDAV-Adapter ist inzwischen entsprechend webdav.md implementiert; native Geräte-/Crashabnahme bleibt separat offen.
+
+## Texteditor
+
+TextEditorService verwendet unveränderliche Downloads mit erwarteter Revision und FileService.replace(requireRead: true). Beim Speichern prüft der transaktionale Guard files.read zusätzlich zu list/update vor und nach Plugin-Validatoren. Frühere Inhalte, Sperren, Quoten, Audit und Outbox folgen demselben Versionspfad. Der Editor kann keine fremden DAV-Leases übergehen. [Formate und Konfliktbedienung](text-editor.md).

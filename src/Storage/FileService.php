@@ -333,13 +333,15 @@ final readonly class FileService
         $row['name'] = $entry['name']; return ['row' => $row, 'stream' => $this->content->open($row['blob_id'], (int) $row['size_bytes'])];
     }
     /** Replace content without deleting any prior current state. @param resource $source */
-    public function replace(string $actor, string $space, string $id, int $expectedRevision, $source): void
+    public function replace(string $actor, string $space, string $id, int $expectedRevision, $source, bool $requireRead = false): void
     {
-        $this->requireAccess($actor, 'files.update', $space); $row = $this->details($actor, $space, $id);
+        $this->requireAccess($actor, 'files.update', $space);
+        if ($requireRead) { $this->requireAccess($actor, 'files.read', $space); }
+        $row = $this->details($actor, $space, $id);
         if ($row['kind'] !== 'file' || (int) $row['revision'] !== $expectedRevision) { throw new MutationConflict(); }
         $this->locks()->assertWritable($actor,$space,$id,$this->proof());
         $blob = $this->content->publish($source);
-        $this->publishVersion($actor, $space, $id, $expectedRevision, $row, $blob, false);
+        $this->publishVersion($actor, $space, $id, $expectedRevision, $row, $blob, false, $requireRead);
     }
     public function restoreVersion(string $actor, string $space, string $id, string $version, int $expectedRevision): void
     {
@@ -348,13 +350,14 @@ final readonly class FileService
         $this->publishVersion($actor, $space, $id, $expectedRevision, $row,
             ['id' => $old['blob_id'], 'size' => (int) $old['size_bytes'], 'sha256' => $old['sha256']], true);
     }
-    private function publishVersion(string $actor, string $space, string $id, int $expectedRevision, array $expected, array $blob, bool $restore): void
+    private function publishVersion(string $actor, string $space, string $id, int $expectedRevision, array $expected, array $blob, bool $restore, bool $requireRead = false): void
     {
         $version = bin2hex(random_bytes(16));
         $context = new MutationContext(bin2hex(random_bytes(16)), $actor, $restore ? 'storage.version.restore' : 'storage.file.replace', Scope::Space, $space,
             ['entry' => $id, 'version' => $version], storageChange: new StorageChange($expected['name'], $expected['parent_id'], $blob['size'], $blob['sha256']));
-        $guard = function () use ($actor, $space, $id, $expectedRevision, $expected, $restore): void {
+        $guard = function () use ($actor, $space, $id, $expectedRevision, $expected, $restore, $requireRead): void {
             $this->requireAccess($actor, 'files.update', $space);
+            if ($requireRead) { $this->requireAccess($actor, 'files.read', $space); }
             if ($restore) { $this->requireAccess($actor, 'files.read', $space); $this->requireAccess($actor, 'files.versions.read', $space); }
             $row = $this->details($actor, $space, $id);
             $this->locks()->assertWritable($actor,$space,$id,$this->proof());

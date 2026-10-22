@@ -281,6 +281,19 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert req('/files/purge',purge_form)[0]==400
                     assert req('/files/purge',{**purge_form,'confirm':'delete'})[0]==303
                     assert 'to-purge.txt' not in req('/files/trash?space='+space)[1]
+                    status,editor_page,_=req('/files/edit?space='+space+'&entry='+entry);assert status==200
+                    edit_revision=re.search(r'name="revision" value="([0-9]+)"',editor_page).group(1)
+                    edit_form={'csrf':csrf(editor_page),'space':space,'entry':entry,'revision':edit_revision,'text':'</textarea><script>draft</script>'}
+                    assert req('/files/edit/save',{**edit_form,'csrf':'bad'})[0]==403
+                    assert req('/files/edit/save',edit_form)[0]==303
+                    assert req('/files/download?space='+space+'&entry='+entry)[1]==edit_form['text']
+                    status,conflict,_=req('/files/edit/save',{**edit_form,'text':'unsaved conflict'});assert status==409 and 'unsaved conflict' in conflict
+                    status,draft,draft_headers=req('/files/edit/draft',{**edit_form,'text':'unsaved conflict'});assert status==200 and draft=='unsaved conflict' and 'attachment' in draft_headers['Content-Disposition']
+                    status,editor_page,_=req('/files/edit?space='+space+'&entry='+entry);assert status==200 and '&lt;/textarea&gt;&lt;script&gt;' in editor_page
+                    edit_revision=re.search(r'name="revision" value="([0-9]+)"',editor_page).group(1)
+                    # Maximum LF text becomes CRLF in a browser form; test the real request limit too.
+                    assert req('/files/edit/save',{**edit_form,'revision':edit_revision,'text':'\r\n'*65536})[0]==303
+                    assert req('/files/download?space='+space+'&entry='+entry)[1]=='\n'*65536
                     checked=subprocess.run(php+['bin/storage-check.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
                     assert checked.returncode==2 and 'Unreferenced object:' in checked.stdout,checked.stdout+checked.stderr
                     gc=subprocess.run(php+['bin/storage-gc.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
@@ -304,7 +317,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

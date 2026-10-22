@@ -1,14 +1,16 @@
 # Samla
 
-Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Eine responsive Oberfläche mit OIDC-Anmeldung, privater Dateiablage, Versionierung und WebDAV-Zugriff ist implementiert. Erweiterte Dateioperationen und eine Medienbibliothek mit Metadaten und nachvollziehbaren KI-Kennzeichnungen werden weiter umgesetzt. Gruppenbasierte Rechte schützen Browser und Gerätezugriffe.
+Samla ist eine schlanke, selbst betriebene Datei- und Medienplattform für eine Organisation. Eine responsive Oberfläche mit OIDC-Anmeldung, privater Dateiablage, Versionierung, einfachem Texteditor und WebDAV-Zugriff ist implementiert. Erweiterte Dateioperationen und eine Medienbibliothek mit Metadaten und nachvollziehbaren KI-Kennzeichnungen werden weiter umgesetzt. Gruppenbasierte Rechte schützen Browser und Gerätezugriffe.
 
 Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgelieferte RBAC-Pflichtplugin verwendet dieselbe Plugin-API wie zusätzliche Erweiterungen. Zuverlässige Dateioperationen, nachvollziehbare Rechte und automatisierte Tests haben Vorrang.
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 23 (endgültige Papierkorbbereinigung)
+## Entwicklungsstand: Iteration 24 (Textansicht und versionierter Editor)
 
 Vorhanden sind:
+
+- Geschützte Textansicht und einfacher Browsereditor für UTF-8-Dateien bis 64 KiB, darunter Markdown, JSON und YAML. Speichern erzeugt eine Version mit Revisionsbedingung; Konflikte, Sperren und Quotenfehler erhalten den Entwurf mit eigenem Download. Markup und Code werden ausschließlich als Text dargestellt. [Texteditor](docs/text-editor.md).
 
 - Endgültige Papierkorbbereinigung mit separatem Bereichsrecht files.purge, ausdrücklicher Bestätigung und exaktem Revisionsplan des gesamten Teilbaums. Historien und Quote werden transaktional bereinigt; gemeinsam verwendete Inhalte bleiben durch die referenzbasierte Objektbereinigung geschützt. Bestehende manage-Rollen erhalten das zusätzliche Recht nicht automatisch. [Dateiablage](docs/storage.md).
 
@@ -42,7 +44,7 @@ Vorhanden sind:
 
 Die Weboberfläche kann mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. Erweiterte Dateioperationen und konkrete native Clientabnahme bleiben offen. Der Betreiber bestätigt erfolgreichen ZITADEL-Login und initiale Administration auf seinem Plesk-Host; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
 
-Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen bleiben offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse, stellt sie aber noch nicht zu.
+Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse, stellt sie aber noch nicht zu.
 
 ## Voraussetzungen
 

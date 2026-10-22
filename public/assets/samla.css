@@ -181,3 +181,5 @@ footer{padding:18px 22px}
 
 
 @media(max-width:760px){.table-scroll table{table-layout:fixed}.table-scroll th:first-child{width:49%}.table-scroll th:nth-child(2){width:23%}.table-scroll th:nth-child(3){width:28%}.table-scroll td{padding:16px 9px}.table-scroll td strong{font-size:12px}.table-scroll .button-small{padding:7px 8px;font-size:10px}}
+
+.text-editor { display: block; width: 100%; min-height: 24rem; resize: vertical; font-family: monospace; line-height: 1.5; tab-size: 4; }

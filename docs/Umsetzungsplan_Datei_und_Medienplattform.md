@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.24
+Version: 1.25
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 23, siehe Abschnitt 33. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 24, siehe Abschnitt 34. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -869,3 +869,22 @@ Vierfachmatrix PHP 8.4.5/8.5.4 mit MySQL 8.0.46/MariaDB 11.8.6: jeweils 402 Test
 Keine neue Migration oder zusätzliche Laufzeitkomponente. Native Clients, vollständige Crash-/Last-/Restore-Abnahme, Medien, verbleibende Baum-/Bereichsoperationen und administrative Restfunktionen bleiben gesondert offen. Die durchgehende Umsetzung bleibt autorisiert.
 
 Version 1.24: Explizit berechtigte endgültige Papierkorbbereinigung mit unveränderlichem Teilbaumplan und vollständig transaktionalen Outbox-Chunks.
+
+
+## 34. Iteration 24: Geschützte Textansicht und versionierter Browsereditor
+
+### 34.1 Nutzung und Grenzen
+
+Unterstützte Text-, Markdown-, JSON-, YAML- und weitere Quelltextdateien lassen sich bis 64 KiB im Browser öffnen. UTF-8 ist verpflichtend; NUL, verbotene Steuerzeichen, ungültige Kodierung und nicht unterstützte Endungen werden verworfen. Die Anzeige escaped sämtliche Inhalte; HTML, PHP und Markdown werden niemals ausgeführt oder gerendert. Nur Leseberechtigte sehen gespeicherten Inhalt. Ohne update bleibt die Textansicht schreibgeschützt. LF-Zeilenumbrüche werden beim Speichern ausdrücklich vereinheitlicht. Kein neuer Renderer, Editorbaustein, PHP-Modul oder Serverdienst.
+
+### 34.2 Konflikte und Erweiterungsverträge
+
+Speichern verlangt list/read/update und die beim Öffnen gelesene Revision. Die vorhandene FileService-Versionierung prüft read auch vor und nach Validatoren unter dem gemeinsamen SQL-Lock. Historien, Quoten, Sperren, Audit und Outbox bleiben gemeinsam geschützt. Der bestehende StorageChange-/ChangeValidator-/Abschlussereignisvertrag gilt auch für Textänderungen. Eine geänderte Datei erzeugt 409; der eigene Entwurf bleibt escaped im Formular, kann als Attachment heruntergeladen werden und wird niemals automatisch über den fremden Stand geschrieben. Dieselbe Entwurfsbehandlung gilt bei aktiver Sperre oder Quoten-/Versionsgrenze. Der Entwurfsdownload exportiert ausschließlich eigene Formulardaten mit CSRF und liest keine gespeicherten Inhalte.
+
+### 34.3 Prüfung und Fortsetzung
+
+Neue Integrationstests prüfen Quelltext-Escaping, Nur-Lesen, fehlende Rechte und fremde Benutzer, ursprüngliche Historie, erfolgreichen Versionswechsel, Konfliktsicherung und Entwurfsattachment, Format-/Kodierungs-/Größengrenzen, CSRF/Methoden, aktive Sperren, Quote und einen Leserechteentzug im Pluginvalidator vor dem zweiten Guard. Maximale 64-KiB-LF-Texte werden auch nach der CRLF-Übertragung eines Browsers korrekt verarbeitet. Der echte HTTP-/HTTPS-Prüfer ergänzt Formulargrenze, Revision, Quelltextanzeige, Speichern und Entwurfsdownload.
+
+Die endgültigen Ergebnisse stehen in verification.md. Die erfolgreiche vorherige GitHub-Matrix ist in verification-iteration-23.md dokumentiert. Keine neue Migration oder Laufzeitkomponente. Medienbibliothek und Metadaten, öffentliche Viewer-/Editorprovider, verbleibende Datei- und Verwaltungsfunktionen, Zustellung der Outbox sowie Betriebs- und echte Clientabnahme bleiben offen. Weitere Umsetzung ist autorisiert; notwendige Komponentenentscheidungen bleiben ausdrücklich abzustimmen.
+
+Version 1.25: Begrenzter UTF-8-Editor mit gemeinsamer Versionierung, erneutem Leseguard und sicherbarer Konfliktfassung.
