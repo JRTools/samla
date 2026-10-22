@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.45
+Version: 1.46
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1183,3 +1183,14 @@ Der Betreiber bestätigt ausdrücklich, dass die App Daten offline bearbeitbar h
 Die Arbeitspakete folgen Serververtragsprüfung, lokaler Clientbasis/Warteschlange, Synchronisation/Konfliktoberfläche und tatsächlicher Geräteabnahme. Diese Dokumentationsfortschreibung enthält keine neue Laufzeitfunktion, Migration oder behauptete Offlineabnahme. Die zuvor unvollständige Arbeit an Sammlungen ist nicht veröffentlicht und wird nicht als Iteration 41 abgeschlossen geführt.
 
 Version 1.45: Offlinebearbeitung und automatische Synchronisation verbindlich konkretisiert; veröffentlichter Funktionsstand bleibt Iteration 40.
+
+
+## 54. Geplante Überarbeitung von Oberfläche und Bedienung
+
+Der Betreiber bewertet die Oberfläche als funktional, aber stark unintuitiv, und beauftragt eine optische Prüfung sowie Überarbeitungsplanung. Die öffentliche Anmeldeseite wurde im Browser als DOM und Screenshot betrachtet. Die angemeldeten Seiten waren nicht zugänglich; Navigation, Dateiliste, Startseite, Berechtigungs- und Bereichsverwaltung wurden ergänzend anhand der aktuellen Templates und CSS geprüft. Eine vollständige visuelle Abnahme wird daraus nicht abgeleitet.
+
+[ui-overhaul.md](ui-overhaul.md) enthält konkrete Befunde, Zielbild und fünf Arbeitspakete: U1 Navigation/Seitenrahmen, U2 Dateiverwaltung, U3 Bereiche/Berechtigungen, U4 Medien/Katalog/Rückmeldungen und U5 Offline-/Synchronisationsoberfläche. U1 und U2 erhalten Vorrang vor weiteren umfangreichen Formularoberflächen. JRTools-Gestaltung und aktuelle Sicherheitsverträge bleiben Grundlage; kein zusätzliches Frontendframework ist beschlossen.
+
+Die Abnahme umfasst autorisierte synthetische Daten, Desktop und Mobil, reine Leser, lange Namen, leere Zustände, Tastatur und Zoom. Die angemeldeten Ausgangsansichten müssen vor Umsetzung noch tatsächlich im Browser betrachtet werden. Dieses Paket veröffentlicht ausschließlich die Analyse und Planung, keine überarbeitete Oberfläche und keine neue Migration. Die Umsetzung erfolgt weiterhin paketweise mit README, Plan, gezielten Tests und GitHub-Veröffentlichung ohne erneute Go-Abfrage.
+
+Version 1.46: UI-Überarbeitung als priorisierte Arbeitspakete eingeplant; veröffentlichter Funktionsstand bleibt Iteration 40.

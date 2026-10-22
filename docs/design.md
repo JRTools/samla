@@ -11,3 +11,8 @@ Responsive Regeln erhalten eine schmale Navigation auf kleinen Bildschirmen und 
 Die JRTools-Referenz wurde im Browser visuell betrachtet. Die lokale Samla-Vorschau war über den Cloud-Browser nicht erreichbar: Loopback ist getrennt und lokale Datei-URLs werden durch dessen URL-Richtlinie abgelehnt. Diese Sperre wurde nicht umgangen. Eine visuelle Prüfung der geänderten Samla-Seiten in echten Browsergrößen und die vollständige Barrierefreiheitsabnahme bleiben daher offen. PHP-/Datenbank- und HTTP-Prüfungen stehen in verification.md.
 
 Keine neue Migration, Laufzeitabhängigkeit oder Theme-JavaScript. Ein manueller Dark-Mode-Schalter ist nicht Teil dieser Phase.
+
+
+## Geplante Überarbeitung
+
+Die Bedienung wird nach [ui-overhaul.md](ui-overhaul.md) überarbeitet: klare Navigation, Dateien im Mittelpunkt, kontextbezogene Aktionen sowie verständliche Bereichs- und Rechteverwaltung. JRTools bleibt die optische Grundlage. Die öffentliche Anmeldeseite wurde im Browser betrachtet; die angemeldeten Ansichten bislang nur anhand ihrer Templates geprüft. Umsetzung und tatsächliche visuelle Abnahme sind offen.

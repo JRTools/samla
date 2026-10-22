@@ -12,3 +12,8 @@ GitHub-CI von Paket 39 ist vollständig erfolgreich; gelesene Logs in verificati
 ## Dokumentationsfortschreibung: verbindliche Offline-Synchronisation (22. Oktober 2026)
 
 README, Plan 1.45, Betreiberentscheidungen und native Clientabnahme verweisen auf den konkretisierten Offline-Ablauf und dessen Abnahmefälle. Dokumentationsänderung ohne Laufzeitcode oder Schemaänderung; deshalb keine neue PHP-/Datenbankmatrix ausgeführt. Vorhandene Matrixnachweise beziehen sich ausschließlich auf die dort genannten Implementierungsstände. Keine Offline-Geräteprüfung und keine produktive Installation vorgenommen.
+
+
+## UI-Analyse und Überarbeitungsplan (22. Oktober 2026)
+
+Öffentliche Anmeldeseite im Browser als DOM und Screenshot betrachtet. Ein vollständiger Screenshotversuch lief in einen Timeout; die anschließende Aufnahme des sichtbaren Bereichs war erfolgreich. Angemeldete Ansichten waren nicht zugänglich; sechs aktuelle Template-/CSS-Dateien wurden ergänzend gelesen. Analyse und Grenzen: ui-overhaul.md. Ausschließlich Dokumentationsänderung, keine neue PHP-/Datenbankmatrix ausgeführt und keine authentifizierte oder mobile visuelle Abnahme behauptet.

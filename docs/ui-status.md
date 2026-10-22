@@ -30,3 +30,8 @@ Stand: 22. Oktober 2026, Funktionsphasen bis 40. Codeveröffentlichung ist keine
 | Sammlungen, C2PA, frei konfigurierbare manuelle Felder | Noch offen | Noch nicht als im UI vorhanden ausgewiesen |
 
 Die bloße Sichtbarkeit eines Buttons gewährt keine Berechtigung. Jeder tatsächliche Dienstaufruf prüft seine Rechte erneut. Fehlende Rechte blenden passende Aktionen aus oder verhindern direkte Aufrufe. Dateisperren schützen Browseränderungen auch ohne zusätzliche Browser-Sperrenschaltfläche.
+
+
+## Geplante Überarbeitung
+
+Die Bedienung wird nach [ui-overhaul.md](ui-overhaul.md) überarbeitet: klare Navigation, Dateien im Mittelpunkt, kontextbezogene Aktionen sowie verständliche Bereichs- und Rechteverwaltung. JRTools bleibt die optische Grundlage. Die öffentliche Anmeldeseite wurde im Browser betrachtet; die angemeldeten Ansichten bislang nur anhand ihrer Templates geprüft. Umsetzung und tatsächliche visuelle Abnahme sind offen.
