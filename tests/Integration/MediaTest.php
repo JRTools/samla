@@ -202,4 +202,11 @@ final class MediaTest extends TestCase
         $values=array_column($this->media()->details('alice','a',$id)['metadata'],null,'field');self::assertSame('Unbekannt',$values['platform.media.declared_origin']['normalized']);
     }
 
+    public function testForeignSubjectAiMarkerCannotAppearAsADeclarationForTheCurrentFile():void
+    {
+        $uri='http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia';$xml=str_replace('<rdf:Description ','<rdf:Description rdf:about="urn:another-asset" ',\Samla\Tests\Fixtures\MediaImages::xmp('<i:DigitalSourceType>'.$uri.'</i:DigitalSourceType>'));
+        $id=$this->upload(\Samla\Tests\Fixtures\MediaImages::pngText('XML:com.adobe.xmp',$xml,true),'photo.png');$this->pipeline()->processEntry($id);$detail=$this->media()->details('alice','a',$id);self::assertSame('partial',$detail['media_status']);$values=array_column($detail['metadata'],null,'field');self::assertSame('Unbekannt',$values['platform.media.declared_origin']['normalized']);self::assertArrayNotHasKey('platform.media.digital_source_type',$values);
+        $page=$this->page('/media/detail',$id);self::assertSame(200,$page->status);self::assertStringNotContainsString($uri,$page->body);
+    }
+
 }

@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 30 (Eingebettete Metadaten und deklarierte KI-Angaben)
+## Entwicklungsstand: Iteration 31 (Eindeutiger Dateibezug von XMP-Angaben)
 
 Vorhanden sind:
+
+- XMP-Angaben werden ausschließlich aus dem unterstützten Hauptsubjekt des aktuellen Mediums übernommen. Verschachtelte beziehungsweise ausdrücklich fremde RDF-Ressourcen liefern keine aktuelle KI-Deklaration. Provider-Version 1.1 verwirft den Zugriff auf alte Ableitungssignaturen; Bestände können über den vorhandenen Neuaufbau aktualisiert werden.
 
 - Zusätzlicher begrenzter Medienprovider für Standard-XMP und Photoshop-IPTC in JPEG sowie unkomprimierte PNG-Textfelder. Ausgewählte Beschreibungs-/Rechteangaben, strukturierte KI-Erzeugungs-/Bearbeitungsdeklarationen und Konfliktanzeige; Prompt-/Autorinformationen erhalten ein separates Bereichsrecht. Vorhandene PHP-Schnittstellen, keine neue Laufzeitkomponente. C2PA bleibt ungeprüft. [Abdeckung, Rechte und Neuaufbau](docs/embedded-metadata.md).
 

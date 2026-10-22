@@ -13,7 +13,7 @@ final class EmbeddedMetadataProvider implements MediaProvider
     private const DC='http://purl.org/dc/elements/1.1/';
     private const IPTC='http://iptc.org/std/Iptc4xmpExt/2008-02-29/';
     public function id():string{return 'platform.media.embedded';}
-    public function version():string{return '1.0';}
+    public function version():string{return '1.1';}
     public static function fields():array
     {
         $fields=[];foreach(['embedded_title'=>'Eingebetteter Titel','embedded_description'=>'Eingebettete Beschreibung','embedded_keyword'=>'Eingebettetes Schlagwort',
@@ -95,15 +95,39 @@ final class EmbeddedMetadataProvider implements MediaProvider
         try{$doc=new \DOMDocument();$doc->resolveExternals=false;$doc->substituteEntities=false;$doc->validateOnParse=false;
             if(!$doc->loadXML($xml,LIBXML_NONET|LIBXML_NOBLANKS|LIBXML_COMPACT)||$doc->doctype!==null){throw new \InvalidArgumentException();}if($doc->getElementsByTagName('*')->length>2048){throw new \LengthException();}
             $xp=new \DOMXPath($doc);$xp->registerNamespace('rdf','http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+            $xp->registerNamespace('xm','adobe:ns:meta/');
+            if($xp->query("//@*[local-name()='base' and namespace-uri()='http://www.w3.org/XML/1998/namespace']")->length>0){throw new \InvalidArgumentException('Relative XMP subjects unsupported.');}
+            $subject="[(not(@rdf:about) or @rdf:about='') and not(@rdf:nodeID) and not(@rdf:ID)]";
+            $base='(/xm:xmpmeta/rdf:RDF/rdf:Description'.$subject.' | /xm:xapmeta/rdf:RDF/rdf:Description'.$subject.' | /rdf:RDF/rdf:Description'.$subject.')';
+            if($xp->query($base)->length===0){throw new \InvalidArgumentException('Unsupported XMP subject binding.');}
             foreach([[self::DC,'title','embedded_title'],[self::DC,'description','embedded_description'],[self::DC,'subject','embedded_keyword'],[self::DC,'creator','embedded_creator'],[self::DC,'rights','embedded_copyright'],
                 ['http://ns.adobe.com/photoshop/1.0/','Credit','embedded_credit'],['http://ns.adobe.com/photoshop/1.0/','Source','embedded_source'],['http://ns.adobe.com/xap/1.0/','CreatorTool','embedded_software'],[self::IPTC,'DigitalSourceType','digital_source_type'],[self::IPTC,'AISystemUsed','ai_system'],[self::IPTC,'AISystemVersionUsed','ai_system_version'],[self::IPTC,'AIPromptInformation','embedded_prompt'],[self::IPTC,'AIPromptWriterName','embedded_prompt_author']]as[$ns,$local,$field]){$this->checkTime($deadline);
-                $xp->registerNamespace('selected',$ns);$nodes=$xp->query('//*[namespace-uri()="http://www.w3.org/1999/02/22-rdf-syntax-ns#" and local-name()="Description"]/@selected:'.$local.' | //selected:'.$local);
+                $xp->registerNamespace('selected',$ns);$nodes=$xp->query($base.'/@selected:'.$local.' | '.$base.'/selected:'.$local);
                 foreach($nodes as$n){if($n instanceof \DOMAttr){$texts=[$n->value];}
-                    else{$items=$xp->query('.//rdf:li',$n);$texts=[];if($items->length>0){foreach($items as$item){$resource=$item->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#','resource');$texts[]=$resource!==''?$resource:$item->textContent;}}else{$resource=$n->getAttributeNS('http://www.w3.org/1999/02/22-rdf-syntax-ns#','resource');$texts[]=$resource!==''?$resource:$n->textContent;}}
+                    else{$texts=$this->texts($n);}
                     foreach($texts as$i=>$text){$this->value($values,$field,$path.'.'.$local.'['.$i.']',$text);}
                 }
             }
         }finally{libxml_clear_errors();libxml_use_internal_errors($previous);}
+    }
+    private function literal(\DOMElement $node):string
+    {
+        foreach($node->childNodes as$child){if($child instanceof \DOMElement){throw new \InvalidArgumentException('Structured XMP value unsupported.');}}
+        $rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+        if($node->hasAttributeNS($rdf,'resource')){if(trim($node->textContent)!==''){throw new \InvalidArgumentException();}return $node->getAttributeNS($rdf,'resource');}
+        return $node->textContent;
+    }
+    private function texts(\DOMElement $node):array
+    {
+        $children=[];foreach($node->childNodes as$child){if($child instanceof \DOMElement){$children[]=$child;}}
+        if($children===[]){return [$this->literal($node)];}
+        $rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+        if(count($children)!==1||$node->hasAttributeNS($rdf,'resource')||$children[0]->namespaceURI!==$rdf||!in_array($children[0]->localName,['Alt','Bag','Seq'],true)){throw new \InvalidArgumentException();}
+        foreach($node->childNodes as$child){if($child instanceof \DOMText&&trim($child->textContent)!==''){throw new \InvalidArgumentException();}}
+        $texts=[];foreach($children[0]->childNodes as$child){
+            if($child instanceof \DOMElement){if($child->namespaceURI!==$rdf||$child->localName!=='li'){throw new \InvalidArgumentException();}if(count($texts)>=128){throw new \LengthException();}$texts[]=$this->literal($child);}
+            elseif($child instanceof \DOMText&&trim($child->textContent)!==''){throw new \InvalidArgumentException();}
+        }return $texts;
     }
     private function png(string $bytes,array &$values,array &$issues,int &$budget,int $deadline):void
     {

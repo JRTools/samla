@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.32
+Version: 1.33
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 30, begrenzte eingebettete Metadaten und strukturierte KI-Deklarationen, siehe Abschnitte 41 und 42. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 31, präzisierter XMP-Dateibezug, siehe Abschnitte 42 und 43. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1014,3 +1014,14 @@ Version 1.32: Begrenztes IPTC-/XMP-/PNG-Auslesen, strukturierte KI-Deklaration m
 ### 42.1 Konkrete folgende Komponentenentscheidung für Export
 
 Die Vorlage zip-library-decision.md beschreibt native ext-zip/ZipArchive einschließlich libzip in der tatsächlichen Workerlaufzeit, den vorgesehenen ersten ZIP-/JSON-Aufbau und erforderliche Rechte-/Grenz-/Abbruchtests. Die Bibliothek ist noch nicht in Samla eingeführt. Vor der ZIP-Paketierung ist gemäß Konzept und AGENTS die konkrete Betreiberfreigabe erforderlich; bestehende Komponentenfreigaben werden nicht erweitert ausgelegt. Die übrigen offenen Betreiberentscheidungen bleiben in offene-entscheidungen.md zusammengefasst.
+
+
+## 43. Iteration 31: XMP-Subjektbindung präzisieren
+
+Die Auslese beschränkt XMP-Eigenschaften auf direkte Felder der unterstützten Hauptbeschreibungen unter xmpmeta, xapmeta oder barem RDF. Nur ein fehlender oder leerer rdf:about-Wert ohne anders gebundene rdf:nodeID/rdf:ID wird als unterstützter Dateibezug behandelt. XML-Basisumleitungen und komplexe statt primitiver Property-/Listenwerte werden als nicht unterstützt behandelt. Ausdrücklich fremde Subjekte und verschachtelte Ressourcen werden nicht als Herkunftsangaben des aktuellen Mediums übernommen. Ein ausschließlich benanntes nicht zuordenbares Subjekt ergibt teilweise untersucht und unbekannte Herkunft. Die Abdeckung bleibt bewusst konservativ und ersetzt keine Herkunftsvalidierung.
+
+Provider-Version 1.1 verändert die Verarbeitungssignatur, damit ältere Ergebnisse nicht ungeprüft angezeigt werden. Bestehende Bestände können mit dem vorhandenen seitenweisen Neuaufbau aktualisiert werden. Keine neue Migration oder Komponente. Zusätzliche Unit-/Integrationsfälle prüfen fremde und verschachtelte Subjekte, bare RDF-Unterstützung und einen gültigen Hauptwert neben einem anders bezeichneten Nebenobjekt.
+
+Prüfung und Veröffentlichungsstand: verification.md. Die vorherige GitHub-Matrix einschließlich XMP-/Promptprüfung ist in allen vier Kombinationen erfolgreich und mit gelesenen Joblogs in verification-iteration-30.md dokumentiert. Für die folgende ZIP-Paketierung liegt weiterhin die konkrete noch nicht freigegebene Komponentenentscheidung zip-library-decision.md vor. Die übrigen offenen Entscheidungen bleiben in offene-entscheidungen.md gebündelt.
+
+Version 1.33: Keine Übernahme fremder beziehungsweise verschachtelter RDF-Herkunftsangaben als aktuelle Dateideklaration; Cachebindung an Provider-Version 1.1.
