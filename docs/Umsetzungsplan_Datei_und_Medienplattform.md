@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.44
+Version: 1.45
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1042,7 +1042,7 @@ Der Betreiber plant aktuell voraussichtlich maximal 100 GB Gesamtbestand. Diese 
 
 Persönliche und gemeinsame Speicherbereiche sind gewünscht. Gruppen und Berechtigungen werden in Samla gepflegt; externe IdP-Gruppen dienen optional als Mappingquelle für lokale Samla-Gruppen. Gruppenhoheit und tatsächliche externe Mitgliedschaft bleiben getrennt; spätere IdP-Mappings benötigen konkrete Claims/Kennungen und eine Entzugsrichtlinie.
 
-Offlineverfügbarkeit ist ein gewünschtes Ziel für die bestätigten Plattformen. Nur offline lesen gegenüber Offlinebearbeitung mit bidirektionaler Synchronisierung sowie die Referenzclients sind noch zu klären. Vorhandene WebDAV-Unterstützung allein gilt nicht als geprüfte Offline-Synchronisierung. Zusätzliche Clientkomponenten werden nicht aus diesem Wunsch pauschal freigegeben.
+Offlinebearbeitung mit automatischer Synchronisierung nach Wiederverbindung ist für die bestätigten Plattformen verbindlich. Referenzclients und konkrete Konfliktoberfläche bleiben festzulegen. Vorhandene WebDAV-Unterstützung allein gilt nicht als geprüfte Offline-Synchronisierung. Zusätzliche Clientkomponenten werden nicht aus diesem Wunsch pauschal freigegeben.
 
 Die Löschfrist muss konfigurierbar sein. Konkrete Vorgabewerte sowie getrennte Regeln für Papierkorb, Dateiversionen und Audit werden damit noch nicht festgelegt. Es wird keine automatische Löschung mit erfundenen Fristen aktiviert.
 
@@ -1172,3 +1172,14 @@ Ein neuer Unitfall und fünf Integrationstests ergänzen öffentliche Werte, kom
 Weitere Konzeptarbeit: Sammlungen/Referenzen, freie Katalogfelder, weitere Verwaltungsoberflächen und abschließende Betriebs-/Geräteabnahme. Offene konkrete Betreiberentscheidungen bleiben dokumentiert und ersetzen keine erneute Go-Abfrage für unabhängige Arbeiten.
 
 Version 1.44: manueller Katalog einschließlich geschützter bereichsweiter Suche.
+
+
+## 53. Anforderungsklärung: Offlinebearbeitung und automatische Synchronisation
+
+Der Betreiber bestätigt ausdrücklich, dass die App Daten offline bearbeitbar halten und nach Wiederverbindung automatisch synchronisieren soll. Dies ist ein verbindliches Ausbauziel. Die vorhandene WebDAV-Anbindung und der Browsereditor erfüllen es noch nicht vollständig.
+
+[offline-sync.md](offline-sync.md) konkretisiert dauerhafte lokale Änderungen, Speicherung der Ausgangsrevision, bedingte Uploads, Wiederaufnahme nach Neustart und Verbindungsabbruch, Antwortverlust, aktuelle Rechte und sichtbare Konflikte. Vorläufiger Sicherheitsstandard ist der Erhalt beider Bearbeitungen; keine stille Auswahl nach Gerätezeit. Mobile Hintergrundbeschränkungen werden ausdrücklich berücksichtigt. Konkrete Clients und neue Laufzeitkomponenten sind damit nicht pauschal ausgewählt oder freigegeben.
+
+Die Arbeitspakete folgen Serververtragsprüfung, lokaler Clientbasis/Warteschlange, Synchronisation/Konfliktoberfläche und tatsächlicher Geräteabnahme. Diese Dokumentationsfortschreibung enthält keine neue Laufzeitfunktion, Migration oder behauptete Offlineabnahme. Die zuvor unvollständige Arbeit an Sammlungen ist nicht veröffentlicht und wird nicht als Iteration 41 abgeschlossen geführt.
+
+Version 1.45: Offlinebearbeitung und automatische Synchronisation verbindlich konkretisiert; veröffentlichter Funktionsstand bleibt Iteration 40.

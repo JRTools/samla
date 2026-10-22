@@ -6,6 +6,8 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
+**Verbindliches Ausbauziel:** Dateien in der App offline bearbeiten und nach Wiederverbindung automatisch synchronisieren. Dauerhafte lokale Änderungen, Wiederaufnahme und sichtbare Konfliktbehandlung gehören dazu. Die vorhandene WebDAV-Basis ist noch keine fertige Offline-App. [Ablauf, Arbeitspakete und Abnahme](docs/offline-sync.md).
+
 ## Entwicklungsstand: Iteration 40 (Katalogsuche mit Beschreibungen und Tags)
 
 **Beschreibungen und Tags durchsuchen** findet Dateien über Namen, manuelle Beschreibungen und Tagbezeichnungen. Tag und Dateiendung lassen sich kombinieren, Ergebnisse sind geschützt und paginiert. Ausgelesene sensible Medienfelder und Originalinhalte werden nicht mit durchsucht. Keine neue Migration. [Bedienung und Grenzen](docs/catalog-search.md).

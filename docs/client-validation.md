@@ -33,3 +33,7 @@ Aktuelle noch gesperrte Protokollfälle stehen in [webdav.md](webdav.md). Ein er
 Ausreichend sind Plattform, Betriebssystemversion, Client samt Version, betroffener Prüfschritt und sichtbare Fehlermeldung beziehungsweise HTTP-Status. Keine App-Passwörter, Authorization-Header, Cookies oder IdP-Tokens in Berichte aufnehmen. Ein Serverlog darf die vorhandene gekürzte Exceptionklasse mit Quelldatei/Zeile nennen; vollständige Requests sind dafür nicht erforderlich.
 
 Abnahme erfordert tatsächlich ausgeführte Schritte und dokumentierte Einschränkungen. Eine gefüllte Planungstabelle allein ist kein erfolgreicher Test.
+
+## Zusätzliche verpflichtende Offlineabnahme
+
+Für jede der vier Plattformen sind zusätzlich sämtliche Fälle aus [offline-sync.md](offline-sync.md) tatsächlich durchzuführen. Lesen und Schreiben bei bestehender Verbindung reichen nicht aus. Insbesondere Offlinebearbeitung mit App-Neustart, automatische Wiederaufnahme, Antwortverlust und konkurrierende Änderungen sind bislang nicht auf Geräten abgenommen.
