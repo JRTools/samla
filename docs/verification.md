@@ -1,16 +1,12 @@
-# Prüfung Iteration 31
+# Prüfung Iteration 32
 
-PHP 8.4.5/8.5.4 × MySQL 8.0.46/MariaDB 11.8.6: alle vier Kombinationen erfolgreich. Jeweils **477 Tests / 2489 Assertions**: 197 Unit-/Architekturtests mit 1106 Assertions und 280 Integrationstests mit 1383 Assertions. Syntax aller 233 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Keine neue Migration oder Komponente. Composer-Manifest gültig mit unveränderten bekannten Hinweisen zur noch offenen Lizenz und zu bewusst fixierten Versionen.
+JRTools-Gestaltung: gemeinsame PHP-Templates und lokale CSS-Datei, keine neue Runtime und keine Migration. Die vorhandene Inhaltsprüfung der Startseite wurde an die aktualisierte Überschrift angepasst. Der erste Integrationslauf fand noch den alten erwarteten Text; nach Aktualisierung dieser Erwartung wurden beide vollständigen Datenbankläufe erneut ausgeführt.
 
-Ein neuer Unitfall prüft nicht zuordenbare benannte Hauptsubjekte, rdf:nodeID/rdf:ID, XML-Basisumleitungen, verschachtelte andere Ressourcen, komplexe Property-/Listenwerte statt erlaubter primitiver Skalare, weiterhin unterstütztes bares RDF und eine gültige aktuelle Deklaration neben einem anders bezeichneten Nebenobjekt. Ein zusätzlicher Integrationsfall weist nach, dass ein fremdes RDF-Subjekt in der tatsächlich gerenderten Medienansicht weder eine aktuelle KI-Einstufung noch dessen konkrete Herkunfts-URI erzeugt. Der Status bleibt teilweise untersucht und die aktuelle Herkunft unbekannt. Alle bisherigen Namespace-, Parser-, Rechte-, Prompt-, Original- und Previewfälle bleiben erfolgreich.
+PHP 8.4.5/8.5.4 × MySQL 8.0.46/MariaDB 11.8.6: alle vier Kombinationen erfolgreich, jeweils 477 Tests / 2489 Assertions (197 Unit-/Architekturtests, 1106 Assertions; 280 Integrationstests, 1383 Assertions). Syntax aller 233 eigenen PHP-Dateien und Migrations-CLI erfolgreich. Tatsächlicher synthetischer HTTP-/HTTPS-Durchlauf erfolgreich: PHP 8.4/8.5 development HTTP und PHP 8.4 production HTTPS. Erwartete PDOException-Zeilen sind absichtliche DAV-Rollbackfixtures.
 
-Die zusätzlichen Varianten wurden schrittweise ergänzt; nach der letzten Quelländerung wurde die vollständige Vierfachmatrix erneut erfolgreich ausgeführt. Der tatsächliche HTTP-/HTTPS-Durchlauf mit gültigen Hauptsubjekten, strukturierter KI-Angabe und ausdrücklicher zusätzlicher Promptberechtigung bleibt ebenfalls erfolgreich: PHP 8.4/8.5 development HTTP und PHP 8.4 production HTTPS. Dies ersetzt keine visuelle Browser- oder native Geräteabnahme.
+Die JRTools-Referenz wurde im Browser betrachtet und ihre öffentliche CSS-Datei gelesen. Die lokale Samla-Vorschau war im Cloud-Browser nicht erreichbar; dessen Sperre für Datei-URLs wurde respektiert. Keine visuelle Browserabnahme der geänderten Samla-Seiten, native Geräteprüfung, vollständige Barrierefreiheits- oder Offlineabnahme behauptet. Designumfang und Kontrastvarianten: design.md.
 
-Eine zusätzliche isolierte PHP-8.4-Probe kombinierte ein synthetisches JPEG mit einem XMP-APP1-Segment vor dem EXIF-Segment und Orientierung 6. Die Vorschau war vorhanden und mit 90 × 60 Pixeln korrekt gedreht; Orientierung 6 und Kamerahersteller wurden gelesen, die eingebettete Metadatenverarbeitung meldete ready und die Originalprüfsumme blieb gleich. Der native EXIF-/Rasterpfad meldete dabei konservativ partial. Dieses Ergebnis wird nicht als vollständige JPEG-/EXIF-Metadatenvalidierung ausgegeben; ausgewählte Abdeckung und abgefangene native Hinweise bleiben ausdrücklich getrennt.
-
-EmbeddedMetadataProvider meldet Verarbeitungs-Version 1.1. Die geänderte Signatur verhindert das ungeprüfte Anzeigen früherer Ableitungen; Bestände können mit dem vorhandenen bereichsweisen Neuaufbau erneut verarbeitet werden. C2PA bleibt nicht untersucht oder validiert. Komplexe/nicht zuordenbare XMP-Subjekte sind eine ausgewiesene Abdeckungsgrenze. Das ist keine kryptografische Dateibindung oder allgemeine RDF-/Formatvalidierung.
-
-Die vorige GitHub-Matrix für Commit c8f769c1023f011ec584370704564256ad3237a2 ist vollständig erfolgreich und alle vier Joblogs wurden gelesen, einschließlich PHP 8.4.27/8.5.12 und HTTP/HTTPS. Siehe verification-iteration-30.md. Neue CI folgt nach Veröffentlichung dieser Phase. Die konkrete ZIP-Komponentenentscheidung ist vorbereitet und noch nicht freigegeben; keine ZIP-Implementierung oder Betreiberinstallation wird behauptet. Weitere Konzept-, Betriebs-, Last-/Restore- und Geräteabnahmen bleiben offen. Erwartete PDOException-Zeilen gehören zu absichtlichen bestehenden DAV-Rollbackfixtures.
+Keine zusätzliche CSS-Testbibliothek installiert. Ein versuchter optionaler lokaler CSS-Parser war nicht vorhanden; daraus wird kein erfolgreicher Parserlauf abgeleitet. git diff --check erfolgreich. ZIP ist inzwischen freigegeben, bleibt aber noch nicht implementiert; frühere anderslautende Freigabehinweise im historischen Prüfprotokoll sind überholt. GitHub-CI folgt auf die Veröffentlichung.
 
 ### locked-matrix-results.txt
 
@@ -28,9 +24,9 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 ............................................................... 189 / 197 ( 95%)
 ........                                                        197 / 197 (100%)
 
-Time: 00:03.943, Memory: 26.00 MB
+Time: 00:04.050, Memory: 26.00 MB
 
-OK (197 tests, 1106 assertions)
+[30;42mOK (197 tests, 1106 assertions)[0m
 
 
 8.4 / phpunit.integration.xml
@@ -45,9 +41,9 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integratio
 ............................................................... 252 / 280 ( 90%)
 ............................                                    280 / 280 (100%)
 
-Time: 01:00.073, Memory: 38.00 MB
+Time: 00:56.959, Memory: 38.00 MB
 
-OK (280 tests, 1383 assertions)
+[30;42mOK (280 tests, 1383 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
@@ -68,9 +64,9 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 ............................................................... 189 / 197 ( 95%)
 ........                                                        197 / 197 (100%)
 
-Time: 00:03.619, Memory: 26.00 MB
+Time: 00:04.002, Memory: 26.00 MB
 
-OK (197 tests, 1106 assertions)
+[30;42mOK (197 tests, 1106 assertions)[0m
 
 
 8.5 / phpunit.integration.xml
@@ -85,14 +81,15 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integratio
 ............................................................... 252 / 280 ( 90%)
 ............................                                    280 / 280 (100%)
 
-Time: 00:56.081, Memory: 38.00 MB
+Time: 00:56.454, Memory: 38.00 MB
 
-OK (280 tests, 1383 assertions)
+[30;42mOK (280 tests, 1383 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
 
 8.5 / migrate CLI: Schema is current.
+
 ```
 
 ### mariadb-matrix-results.txt
@@ -111,9 +108,9 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 ............................................................... 189 / 197 ( 95%)
 ........                                                        197 / 197 (100%)
 
-Time: 00:04.056, Memory: 26.00 MB
+Time: 00:03.751, Memory: 26.00 MB
 
-OK (197 tests, 1106 assertions)
+[30;42mOK (197 tests, 1106 assertions)[0m
 
 
 8.4 / phpunit.integration.xml
@@ -128,9 +125,9 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integratio
 ............................................................... 252 / 280 ( 90%)
 ............................                                    280 / 280 (100%)
 
-Time: 00:49.814, Memory: 38.00 MB
+Time: 00:50.586, Memory: 38.00 MB
 
-OK (280 tests, 1383 assertions)
+[30;42mOK (280 tests, 1383 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
@@ -151,9 +148,9 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.xml
 ............................................................... 189 / 197 ( 95%)
 ........                                                        197 / 197 (100%)
 
-Time: 00:03.854, Memory: 26.00 MB
+Time: 00:03.781, Memory: 26.00 MB
 
-OK (197 tests, 1106 assertions)
+[30;42mOK (197 tests, 1106 assertions)[0m
 
 
 8.5 / phpunit.integration.xml
@@ -168,14 +165,15 @@ Configuration: /workspace/scratch/2dc1270c696b/implementation/phpunit.integratio
 ............................................................... 252 / 280 ( 90%)
 ............................                                    280 / 280 (100%)
 
-Time: 00:50.130, Memory: 38.00 MB
+Time: 00:50.581, Memory: 38.00 MB
 
-OK (280 tests, 1383 assertions)
+[30;42mOK (280 tests, 1383 assertions)[0m
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Administration/PdoMutationRunner.php:26
 Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation/src/Storage/FileService.php:139
 
 
 8.5 / migrate CLI: Schema is current.
+
 ```
 
 ### oidc-web-results.txt
@@ -184,4 +182,5 @@ Samla DAV failed: PDOException in /workspace/scratch/2dc1270c696b/implementation
 8.4 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
 8.5 development HTTP: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
 8.4 production HTTPS: OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK
+
 ```

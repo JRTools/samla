@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.35
+Version: 1.36
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 31, präzisierter XMP-Dateibezug, siehe Abschnitte 42 und 43. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 32, gemeinsame Gestaltung nach JRTools, siehe Abschnitt 44. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1049,3 +1049,16 @@ Die Löschfrist muss konfigurierbar sein. Konkrete Vorgabewerte sowie getrennte 
 Nächster freigegebener Implementierungsschritt bleibt der geschützte ZIP-Export aktueller Originale samt Manifest über den vorhandenen Worker. Persönliche Bereiche, Offlineabnahme und konfigurierbare Aufbewahrungsabläufe folgen als eigene prüfbare Arbeitspakete. Die Betreiberübersicht und README wurden abgeglichen.
 
 Version 1.35: Betreiberantworten dokumentiert; reine Dokumentationsänderung, mit git diff --check geprüft.
+
+
+## 44. Iteration 32: JRTools-Gestaltung und konkretisierter Offlinebedarf
+
+Gemeinsames Layout und lokale CSS-Datei wurden an die betrachtete JRTools-Startseite angepasst: dunkle schieferblaue Navigation/Kopfzeile, helle graue Flächen, weiße Karten, grüne Akzente, Systemschriften und kompaktere Rundungen. Kleine Texte und Buttons verwenden kontraststärkere Varianten. Fokus, Formulare und responsive Tabellen wurden abgeglichen. Keine externe Schrift, Theme-Runtime, neue Bibliothek oder Migration. Die Startseite öffnet Dateien und Medien und kündigt diese nicht mehr als zukünftige Funktionen an. Bestehende Rechteprüfungen bleiben wirksam.
+
+Der Betreiber bestätigt Offlinebearbeitung und spätere Synchronisierung. Referenzclients und Konfliktbehandlung bleiben zu klären; WebDAV allein ist kein Nachweis einer fertigen Offline-Synchronisierung. Übliche Einzeldateigröße ist bis etwa 100 MB; größere Videos bleiben möglich. 100 MB ist keine harte Obergrenze. Vorhandene konfigurierbare Uploadgrenze und Medienparsergrenzen werden durch diese Dokumentation nicht still geändert.
+
+Die JRTools-Referenz wurde visuell im Browser geprüft. Die lokale Samla-Vorschau konnte wegen getrennter Loopback-Umgebung und gesperrter Datei-URLs im Cloud-Browser nicht visuell abgenommen werden; kein Umgehen der Richtlinie. Prüfergebnisse und Grenzen siehe verification.md und design.md.
+
+Während dieser Phase wünscht der Betreiber zusätzlich eine Berechtigungsverwaltung im UI. Sie wird als folgende eigene Phase umgesetzt, damit alltägliche Gruppen-/Bereichs- und Workerzuweisungen keine Konsolenarbeit mehr verlangen. Danach bleibt der bereits freigegebene ZIP-Export vorgesehen. Keine erneute Freigabe der bekannten Komponenten nötig.
+
+Version 1.36: JRTools-Gestaltung; Offlinebearbeitung und übliche Dateigröße konkretisiert.

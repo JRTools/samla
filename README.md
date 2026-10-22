@@ -6,7 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 31 (Eindeutiger Dateibezug von XMP-Angaben)
+## Entwicklungsstand: Iteration 32 (JRTools-Gestaltung)
+
+Die gemeinsame Oberfläche folgt dem JRTools-Design: dunkle schieferblaue Navigation und Kopfzeile, hellgraue Flächen, grüne Akzente, kompakte Karten und Systemschriften. Die Startseite öffnet die vorhandenen Datei- und Medienfunktionen; alle Seiten verwenden die gemeinsame lokale CSS-Datei. [Gestaltungsumfang und Prüfgrenzen](docs/design.md).
 
 Vorhanden sind:
 
@@ -184,7 +186,7 @@ Iteration 15: App-Passwörter sind über den OIDC-Kontobereich verwaltbar; ein a
 
 Die vorhandenen Upload-/Listen-/Baumgrenzen sind vorläufige technische Schutzgrenzen. Vor der nächsten WebDAV-Schreib-/Lastabnahme werden gemäß Konzept 8.2 Bestandsgröße, maximale Dateigröße, parallele Nutzung und konkrete Referenzclients mit dem Betreiber festgelegt.
 
-Iteration 16: Betriebsziel sind etwa 1000 Dateien und fünf gleichzeitig aktive Benutzer, mit iOS, Android, Windows und macOS als Zielplattformen. Ein 1000-Dateien-Katalog und fünf gleichzeitig gestartete PHP-Uploadprozesse sind in der Datenbankmatrix geprüft. Das ist keine native Geräteclientabnahme und kein vollständiger Lastnachweis. APP_MAX_UPLOAD_BYTES macht die vorläufige 16-MiB-Schutzgrenze konfigurierbar; konkrete größere Datei-/Volumenziele sind noch nicht vereinbart. WebDAV-Schreibsperren und Protokollanbindung werden weiter umgesetzt.
+Iteration 16: Betriebsziel sind etwa 1000 Dateien und fünf gleichzeitig aktive Benutzer, mit iOS, Android, Windows und macOS als Zielplattformen. Ein 1000-Dateien-Katalog und fünf gleichzeitig gestartete PHP-Uploadprozesse sind in der Datenbankmatrix geprüft. Das ist keine native Geräteclientabnahme und kein vollständiger Lastnachweis. APP_MAX_UPLOAD_BYTES macht die vorläufige 16-MiB-Schutzgrenze konfigurierbar; Inzwischen bestätigt: voraussichtlich bis 100 GB Bestand, üblicherweise bis etwa 100 MB je Datei und gegebenenfalls größere Videos; die tatsächlichen Hostinggrenzen müssen dazu passend konfiguriert werden. WebDAV-Schreibsperren und Protokollanbindung werden weiter umgesetzt.
 
 ## Hintergrundverarbeitung und UI-Abdeckung
 
@@ -199,4 +201,4 @@ Die aktuelle Übersicht der noch offenen Betreiberentscheidungen steht in [offen
 
 Native ZIP-Paketierung mit ext-zip/ZipArchive und libzip ist vom Betreiber freigegeben. Der vorgesehene Exportumfang und die noch ausstehende Implementierung sind in [zip-library-decision.md](docs/zip-library-decision.md) dokumentiert.
 
-Bestätigte Ausbauvorgaben: voraussichtlich bis 100 GB Gesamtbestand, persönliche und gemeinsame Speicherbereiche, Gruppenverwaltung in Samla mit optionalem IdP-Gruppenmapping und konfigurierbare Löschfristen. Offlineverfügbarkeit ist als Ziel gewünscht; Clientauswahl und Synchronisationsverhalten bleiben festzulegen. Diese Vorgaben sind keine Zusage bereits vollständig implementierter Funktionen.
+Bestätigte Ausbauvorgaben: voraussichtlich bis 100 GB Gesamtbestand, persönliche und gemeinsame Speicherbereiche, Gruppenverwaltung in Samla mit optionalem IdP-Gruppenmapping und konfigurierbare Löschfristen. Offlinebearbeitung mit späterer Synchronisierung ist gewünscht; Referenzclients und Konfliktverhalten bleiben festzulegen. Diese Vorgaben sind keine Zusage bereits vollständig implementierter Funktionen.

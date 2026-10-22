@@ -55,7 +55,7 @@ final class WebAdministrationTest extends TestCase
     { return $this->controller()->handle(new Request('POST', $path, post: $post + ['csrf' => $this->csrf]), $actor, $this->csrf); }
     public function testOverviewUsersAndGroupsRenderWithRealDirectoryData(): void
     {
-        foreach (['/' => 'Gut organisiert.', '/users' => 'Benutzerverzeichnis', '/groups' => 'Gruppenverzeichnis'] as $path => $label) {
+        foreach (['/' => 'Dateien und Medien.', '/users' => 'Benutzerverzeichnis', '/groups' => 'Gruppenverzeichnis'] as $path => $label) {
             $response = $this->controller()->handle(new Request('GET', $path), 'admin', $this->csrf);
             self::assertSame(200, $response->status); self::assertStringContainsString($label, $response->body);
             self::assertStringContainsString('Lokaler Entwicklungszugang', $response->body);
