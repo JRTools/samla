@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'"><title>Samla Worker-Token lokal erzeugen</title>
+<style>body{max-width:48rem;margin:3rem auto;padding:0 1rem;font:1rem/1.6 system-ui;color:#162325}button{padding:.8rem 1rem;cursor:pointer}label{display:block;margin-top:1.5rem;font-weight:bold}textarea{box-sizing:border-box;width:100%;font:1rem/1.5 monospace;padding:.8rem}p{max-width:65ch}</style>
+<h1>Worker-Token lokal erzeugen</h1><p>Diese Datei als HTML herunterladen und im eigenen Browser öffnen. Die Erzeugung läuft lokal mit Web Crypto. Es werden keine Daten übertragen und keine Samla-Einstellungen verändert. Die Datei gehört außerhalb des öffentlichen Webverzeichnisses.</p>
+<button id="generate" type="button">Neues Token und Konfigurationswert erzeugen</button><p id="status" role="status"></p>
+<label for="token">Privates Token für den Scheduler</label><textarea id="token" rows="3" readonly spellcheck="false" autocomplete="off"></textarea>
+<label for="config">Für die .env-Datei</label><textarea id="config" rows="3" readonly spellcheck="false" autocomplete="off"></textarea>
+<p>Das Token sicher im Passwortmanager beziehungsweise Scheduler verwahren. In Samlas .env nur den Hash eintragen. Das Token nie in eine URL, einen Screenshot oder ein öffentliches Repository kopieren. Ein neues Token ersetzt das alte erst nach Änderung der Konfiguration.</p>
+<script>
+'use strict';
+document.getElementById('generate').addEventListener('click',async()=>{
+  const status=document.getElementById('status');
+  document.getElementById('token').value='';document.getElementById('config').value='';
+  try{
+    const bytes=crypto.getRandomValues(new Uint8Array(32));
+    const token=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));
+    const hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+    document.getElementById('token').value=token;document.getElementById('config').value='APP_WORKER_HTTP_TOKEN_SHA256='+hash;
+    status.textContent='Lokal erzeugt. Das Token wird beim Schließen dieser Datei nicht gespeichert.';
+  }catch{status.textContent='Web Crypto ist in diesem Browserkontext nicht verfügbar. Bitte einen aktuellen Browser oder bin/worker-token.php auf einem eigenen Rechner verwenden.';}
+});
+</script></html>

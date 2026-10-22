@@ -1,6 +1,6 @@
-# Entscheidungsvorlage: Hintergrundverarbeitung
+# Freigegebene Grundlage: Hintergrundverarbeitung
 
-Stand: 22. Oktober 2026. Vorschlag zur Freigabe, noch nicht eingerichtet oder als Worker implementiert.
+Stand: 22. Oktober 2026. Der Betreiber hat PHP-CLI per Cron und zusätzlich einen Webtrigger freigegeben. Iteration 26 implementiert beide Zugänge. Die folgende ursprüngliche Entscheidungsvorlage dokumentiert den Rahmen; maßgeblicher Stand und Einrichtung stehen in [background-worker.md](background-worker.md). Ein Host-Cronjob ist noch nicht eingerichtet.
 
 ## Warum diese Entscheidung jetzt nötig ist
 

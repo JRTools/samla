@@ -133,3 +133,7 @@ Es gibt keine automatische Vergabe des zusätzlichen Historienleserechts. Gruppe
 ## Update auf Iteration 17
 
 Die neue Sperrtabelle ist vor Schreibzugriffen zu migrieren. Der vorhandene Wartungsbefehl bin/migrate.php gilt unverändert. Browser und spätere DAV-Mutationen verwenden dieselbe Sperrbasis. Es gibt in dieser Phase noch keinen angeschlossenen WebDAV-Endpunkt.
+
+## Worker und geplante Aufgaben
+
+Iteration 26 ergänzt die Migration platform.administration:0002_outbox_delivery und den freigegebenen CLI-/HTTPS-Worker. Vor dem Start migrieren. Cronaufruf oder HTTPS-POST-Scheduler sind anschließend gemäß [background-worker.md](background-worker.md) einzurichten. Ein leerer APP_WORKER_HTTP_TOKEN_SHA256 deaktiviert den Webtrigger. Die Codeinstallation richtet noch keine geplante Aufgabe ein.

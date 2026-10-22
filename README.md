@@ -6,9 +6,11 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 25 (bereichsweite Namenssuche)
+## Entwicklungsstand: Iteration 26 (Outbox-Worker per CLI und HTTPS)
 
 Vorhanden sind:
+
+- Gemeinsamer begrenzter Outbox-Worker für CLI-Cron und authentifizierte HTTPS-POST-Aufrufe, mit deaktiviertem Webtrigger als Standard, Tokenhash in .env, Header-/Formularauthentifizierung, Überlappungsschutz, Zustellleases, begrenzten Wiederholungen und idempotentem Referenzempfänger. [Einrichtung und Grenzen](docs/background-worker.md). Neue Migration erforderlich.
 
 - Bereichsweite Namenssuche über alle sichtbaren Unterordner, mit Unicode-Groß-/Kleinschreibung, wörtlichen Sonderzeichen, Datei-/Ordnerfilter, Ordnerpfad und Cursorseiten bis 100 Treffer. Papierkorb und Inhalte unter gelöschten Eltern bleiben ausgeschlossen. Kein externer Suchdienst und keine Inhaltsindizierung. [Dateisuche](docs/file-search.md).
 
@@ -46,7 +48,7 @@ Vorhanden sind:
 
 Die Weboberfläche kann mit konfiguriertem OIDC unter HTTPS/PHP-FPM betrieben werden. Alternativ bleibt der begrenzte lokale Entwicklungsadapter verfügbar. Erweiterte Dateioperationen und konkrete native Clientabnahme bleiben offen. Der Betreiber bestätigt erfolgreichen ZITADEL-Login und initiale Administration auf seinem Plesk-Host; es gibt keine pauschale Produktivfreigabe für die gesamte Datei-/Medienplattform.
 
-Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox speichert Ereignisse, stellt sie aber noch nicht zu.
+Abgesehen von der begrenzten Erstadministration bleiben globale beziehungsweise administrative Rollenzuweisungen, Rollenbearbeitung, Gruppenlöschung und atomare Mehrfach-Mappingänderungen offen. Mapping- und Rollenpflege haben noch keine Formulare. Der Schutz aktuell nutzbarer Administrationszugänge umfasst die beschriebenen vier Verwaltungsfähigkeiten; ein vollständiger Notfallzugang ist noch nicht umgesetzt. Die Outbox kann registrierte Empfänger nun über den ausdrücklich gestarteten Worker beliefern; Medienhandler und eine administrative Zustelloberfläche fehlen noch.
 
 ## Voraussetzungen
 
@@ -174,8 +176,8 @@ Die vorhandenen Upload-/Listen-/Baumgrenzen sind vorläufige technische Schutzgr
 
 Iteration 16: Betriebsziel sind etwa 1000 Dateien und fünf gleichzeitig aktive Benutzer, mit iOS, Android, Windows und macOS als Zielplattformen. Ein 1000-Dateien-Katalog und fünf gleichzeitig gestartete PHP-Uploadprozesse sind in der Datenbankmatrix geprüft. Das ist keine native Geräteclientabnahme und kein vollständiger Lastnachweis. APP_MAX_UPLOAD_BYTES macht die vorläufige 16-MiB-Schutzgrenze konfigurierbar; konkrete größere Datei-/Volumenziele sind noch nicht vereinbart. WebDAV-Schreibsperren und Protokollanbindung werden weiter umgesetzt.
 
-## Nächste Betriebsentscheidung
+## Hintergrundverarbeitung und UI-Abdeckung
 
-Für die zuverlässige Outbox-Verarbeitung und folgende Medienaufgaben liegt ein [konkreter Vorschlag für PHP-CLI per Cron](docs/background-processing-decision.md) vor: geplanter Aufruf pro Minute, begrenzte Batches, Überlappungsschutz und idempotente Zustellung mit Wiederholungen. Der Worker und der Host-Cronjob sind noch nicht implementiert beziehungsweise eingerichtet. Das Konzept verlangt die ausdrückliche Abstimmung dieser zusätzlichen Betriebsanforderung.
+PHP-CLI per Cron und der zusätzliche Webtrigger sind vom Betreiber freigegeben und implementiert. Einrichten und prüfen lässt sich beides nach [background-worker.md](docs/background-worker.md). Es wurde noch kein Cronjob auf dem Betreiberhost installiert. Der ursprüngliche Betriebsrahmen bleibt in [background-processing-decision.md](docs/background-processing-decision.md) dokumentiert.
 
-Eine Übersicht über vorhandene UI-Einstiege, CLI-Funktionen und noch offene Verwaltungsoberflächen steht in [ui-status.md](docs/ui-status.md). Auf GitHub veröffentlichter Code ist nicht automatisch auf einem Betreiberhost installiert.
+Eine Übersicht über vorhandene UI-Einstiege, CLI-Funktionen und offene Verwaltungsoberflächen steht in [ui-status.md](docs/ui-status.md). Veröffentlichtes GitHub-Repository und Betreiberdeployment sind getrennte Schritte.

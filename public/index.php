@@ -15,7 +15,20 @@ try {
     $environment = EnvironmentLoader::fromGlobals();
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     $actor = DevelopmentAccess::actor($environment, $_SERVER, PHP_SAPI);
-    if ($path === '/dav' || str_starts_with((string) $path, '/dav/')) {
+    if ($path === '/tasks/run') {
+        $hash=$environment['APP_WORKER_HTTP_TOKEN_SHA256']??'';
+        if ($hash==='') { $response=new Response(404); }
+        else {
+            $config=AppConfig::fromEnvironment($environment);$oidc=OidcConfig::fromEnvironment($environment);
+            if ($config->maintenance) { $response=new Response(503); }
+            elseif ($oidc===null || parse_url($oidc->redirectUri,PHP_URL_SCHEME)!=='https' || !OidcOrigin::accepts($oidc,$_SERVER,PHP_SAPI)) { $response=new Response(400); }
+            elseif ((int)($_SERVER['CONTENT_LENGTH']??0)>4096) { $response=new Response(413); }
+            else {
+                $response=(new \Samla\Core\Web\WorkerController($hash,static fn() => (require dirname(__DIR__).'/bootstrap/worker.php')((new ConnectionFactory())->connect($config->database),$config)))
+                    ->handle(Request::fromGlobals(),$_SERVER);
+            }
+        }
+    } elseif ($path === '/dav' || str_starts_with((string) $path, '/dav/')) {
         $config = AppConfig::fromEnvironment($environment); $oidc = OidcConfig::fromEnvironment($environment);
         if ($config->maintenance || $oidc === null) { $response = new Response(503); }
         elseif (!OidcOrigin::accepts($oidc, $_SERVER, PHP_SAPI)) { $response = new Response(400); }

@@ -19,6 +19,8 @@ final class PluginRuntime implements PermissionRegistry
     private array $restrictions = [];
     /** @var list<array{plugin: string, priority: int, index: int, validator: ChangeValidator}> */
     private array $validators = [];
+    /** @var array<string, \Samla\PluginApi\OutboxSubscription> */
+    private array $subscribers = [];
 
     private function __construct() {}
 
@@ -51,6 +53,9 @@ final class PluginRuntime implements PermissionRegistry
                 }
                 public function restriction(AccessRestriction $restriction, int $priority = 0): void {
                     $this->check(); $this->runtime->addRestriction($this->owner, $restriction, $priority);
+                }
+                public function outboxSubscriber(\Samla\PluginApi\OutboxSubscription $subscription): void {
+                    $this->check(); $this->runtime->addSubscriber($this->owner, $subscription);
                 }
             };
             try { $plugin->register($registrar); } finally { $registrar->close(); }
@@ -92,4 +97,12 @@ final class PluginRuntime implements PermissionRegistry
         if ($this->sealed) { throw new \LogicException('Registration is closed.'); }
         $this->validators[] = ['plugin' => $owner, 'priority' => $priority, 'index' => count($this->validators), 'validator' => $validator];
     }
+    public function addSubscriber(string $owner, \Samla\PluginApi\OutboxSubscription $subscription): void
+    {
+        if ($this->sealed || !isset($this->active[$owner]) || !str_starts_with($subscription->id, $owner . '.')
+            || isset($this->subscribers[$subscription->id]) || count($this->subscribers) >= 32) { throw new \LogicException('Invalid outbox subscriber registration.'); }
+        $this->subscribers[$subscription->id] = $subscription;
+    }
+    /** @return array<string, \Samla\PluginApi\OutboxSubscription> */
+    public function subscribers(): array { return $this->subscribers; }
 }

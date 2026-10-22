@@ -6,6 +6,7 @@ return [
     ...require __DIR__ . '/../migrations/identity.php',
     ...require __DIR__ . '/../migrations/app-passwords.php',
     ...require __DIR__ . '/../migrations/administration.php',
+    ...require __DIR__ . '/../migrations/outbox-delivery.php',
     ...require __DIR__ . '/../migrations/storage.php',
     ...require __DIR__ . '/../migrations/files.php',
     ...require __DIR__ . '/../migrations/file-lifecycle.php',

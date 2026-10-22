@@ -106,3 +106,7 @@ GET /files/edit öffnet unterstützten UTF-8-Quelltext. POST /files/edit/save sp
 ## Namenssuche
 
 GET /files/search nutzt denselben listgeschützten Bereichskatalog wie die Ablage. Suchtext, Dateityp und Cursor werden begrenzt validiert. Alle Treffer- und Ordnernamen bleiben escaped. Die reine GET-Suche verändert keine Daten; andere Methoden liefern 405. [Verhalten und Grenzen](file-search.md).
+
+## Maschinen-Webtrigger
+
+POST /tasks/run wird vor der OIDC-Browserstrecke behandelt. Er ist standardmäßig deaktiviert und verlangt bei Aktivierung HTTPS am kanonischen Origin und ein separates Worker-Token als Bearer-Header oder POST-Formularwert. Keine Browsersession, URL-Geheimnisse oder unauthentifizierte GET-Verarbeitung. Er verwendet denselben OutboxWorker wie CLI und liefert begrenzte JSON-Zähler. [Einrichtung](background-worker.md).

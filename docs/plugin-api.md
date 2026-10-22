@@ -122,3 +122,11 @@ Der eingebaute Texteditor nutzt unverändert storage.file.replace mit StorageCha
 ## Namenssuche
 
 Die eingebaute bereichsweite Namenssuche verwendet files.list und die vorhandenen AuthorizationProvider-/AccessRestriction-Verträge. Ein zusätzliches Restriktionsplugin kann sie trotz positiver RBAC-Zuweisung verweigern. Die Funktion schreibt nichts und erzeugt keine Abschlussereignisse. Treffer enthalten ausschließlich sichtbare logische Verzeichnismetadaten; Dateiinhalte werden über den bestehenden separaten Lesepfad geschützt. Zusätzliche Suchprovider und pluginregistrierte Feldfilter sind noch nicht veröffentlicht.
+
+## Outbox-Empfänger ab experimenteller API 0.10
+
+OutboxSubscription(id,eventTypes,handler,replayExisting=false) und OutboxHandler.handle(OutboxEvent) sind öffentliche Verträge. PluginRegistrar.outboxSubscriber registriert bis 32 eindeutige Empfänger, deren Kennung mit der eigenen Pluginkennung plus Punkt beginnt. Je Empfänger maximal 16 eindeutige exakte Ereignistypen. Nach Registrierungsschluss sind Änderungen ausgeschlossen. Doppelte, fremde oder ungültige Empfänger verhindern die atomare Runtimeerstellung. Der experimentelle API-Major bleibt 0; die Registrar-Schnittstelle ist erweitert.
+
+OutboxEvent enthält feste Kennung, Typ, Zeit und eine begrenzte JSON-Wertkopie des Payloads ohne Referenzen des Aufrufers. Der Worker validiert auch die Übereinstimmung mit payload.id. Das Ereignis ist kein aktueller Berechtigungsnachweis. Das Plugin implementiert idempotente Wirkungen nach Empfänger-/Ereigniskennung und schließt eigene Transaktionen vor der Rückgabe. Offene Transaktionen werden zurückgerollt und als Fehler behandelt. Externe Wirkungen benötigen ihre eigene Deduplication. Ein wirksamer Effekt vor fehlgeschlagener Quittierung kann wiederholt zugestellt werden.
+
+Standardmäßig startet ein neuer Empfänger am Wasserstand seines ersten Workeraufrufs. Replay vorhandener Ereignisse ist explizit und begrenzt. Die persistierte Signatur fixiert Ereignistypen und Replaypolitik; eine Änderung erfordert eine neue Empfängerkennung. Deaktivierte Empfänger werden nicht aufgerufen. Der aktuelle Referenzempfänger konsumiert ausgewählte Storage-Abschlussereignisse und speichert ausschließlich eindeutige technische Quittungen. [Zustellablauf und Grenzen](background-worker.md).

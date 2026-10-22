@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.27
+Version: 1.28
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 25 und vorbereitete Betriebsentscheidung, siehe Abschnitte 35 und 36. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 26, siehe Abschnitt 37. Repository: https://github.com/JRTools/samla
 
 ## 1. Ziel und Vorgehen
 
@@ -920,3 +920,24 @@ Benötigte Entscheidung: Darf und kann auf dem Plesk-Host ein PHP-CLI-Aufruf pro
 Version 1.27: Reviewbare Entscheidungsvorlage für die nächste Hintergrundverarbeitungsphase.
 
 UI-Abdeckung zu den veröffentlichten Funktionen und verbleibenden CLI-/Backendlücken ist in docs/ui-status.md dokumentiert. Veröffentlichung und Betreiberdeployment werden getrennt ausgewiesen.
+
+
+## 37. Iteration 26: Freigegebener Worker mit CLI- und Webzugang
+
+### 37.1 Betreiberentscheidung und Zugänge
+
+Der Betreiber bestätigt PHP-CLI per Cron und verlangt zusätzlich einen Webrequest-Trigger für Hoster ohne CLI-Cron. Beides ist mit demselben OutboxWorker umgesetzt. CLI erlaubt bis 50 Ereignisversuche oder reine Statusabfrage. POST /tasks/run ist standardmäßig aus, verlangt kanonisches HTTPS und ein separates zufälliges Token als Bearer-Header oder POST-Formularwert. In .env liegt nur dessen SHA-256. URL-Parameter und GET lösen keine Arbeit aus. Token kann mit lokalem PHP oder dem ausgelieferten Offline-Web-Crypto-Werkzeug erzeugt werden. Auf dem Host wurde kein Cronjob eingerichtet und kein produktives Token erzeugt.
+
+### 37.2 Öffentlicher Vertrag, Zustellzustände und Fehler
+
+API 0.10 ergänzt OutboxEvent, OutboxSubscription und OutboxHandler sowie atomare besitzgebundene Pluginregistrierung. Migration platform.administration:0002_outbox_delivery führt Ereignissequenz, Empfängerwasserstände, dauerhafte Bedienreihenfolge, Zustellleases und Referenzquittungen ein. Ein separater Datenbanklock verhindert überlappende CLI-/Webläufe; der fachliche globale Lock wird nur für die kurze Discovery gehalten, damit niedrigere uncommittete Sequenzen nicht übersprungen werden. Mindestens-einmal-Zustellung verlangt Idempotenz je Empfänger und Ereignis. Abbrüche vor Quittierung können wiederholt werden. Offene Handlertransaktionen werden verworfen.
+
+Discovery ist je Empfänger auf 100 passende neue Ereignisse begrenzt, Zustellversuche insgesamt auf 50. Nach 45 Sekunden wird kein weiterer Handler begonnen; bereits laufende Aufgaben werden nicht hart abgebrochen. Leases laufen nach 120 Sekunden aus. Fehler erhalten exponentielle Wiederholabstände und nach acht Versuchen einen sichtbaren Fehlerstatus. Deaktivierte Empfänger werden nicht aufgerufen; Typ-/Replayänderungen erfordern eine neue Kennung. Der idempotente Referenzempfänger belegt ausgewählte Storage-Abschlussereignisse ohne Dateien oder Secrets zu kopieren. Medienextraktion, Vorschauen und ein administrativer Retrybildschirm sind damit noch nicht implementiert.
+
+### 37.3 Verifikation, Installation und Fortsetzung
+
+Unitprüfungen decken öffentliche DTO-/Registrierungsgrenzen und Referenzkopien, Tokenauthentifizierung ohne Sitzung, deaktivierten Webtrigger, Methoden-/URL-Verweigerung und verzögerte Worker-/DB-Erzeugung nach Authentifizierung ab. Echte Integrationen prüfen begrenzte historische Zustellung, Wasserstände, Retry bis Fehlerstatus, malformed Events, parallele sowie rekursive Aufrufe, Abbruch zwischen Wirkung und Quittierung, Leaseablauf, achte abgebrochene Zustellung, kleine faire Batches, Vertragsänderung, offene Handlertransaktion und Discovery bei einer noch nicht abgeschlossenen niedrigeren Sequenz. HTTP/HTTPS und CLI werden zusätzlich über die tatsächlichen Einstiegspunkte geprüft. Finale Ergebnisse stehen in verification.md.
+
+Vor Nutzung ist die neue Migration im Wartungsmodus erforderlich. docs/background-worker.md beschreibt Plesk-Aufgabe, Webtrigger, Tokenrotation, Status und Grenzen. Eine visuelle Adminoberfläche für Zustellung/Retry, fachliche Medienhandler, weitere Konzeptfunktionen sowie Host-/Geräte-/Last-/Restore-Abnahme bleiben offen. Die durchgehende Umsetzung ist weiter autorisiert; zusätzliche Komponenten wie C2PA-Validatoren bleiben vor Einsatz abzustimmen.
+
+Version 1.28: Gemeinsamer Outbox-Worker per freigegebenem CLI-Cron und authentifiziertem HTTPS-POST mit dauerhaften Zustellzuständen.

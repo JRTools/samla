@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, veröffentlichte Funktionsphasen 24 und 25. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 22. Oktober 2026, veröffentlichte Funktionsphasen bis 26. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -16,7 +16,7 @@ Stand: 22. Oktober 2026, veröffentlichte Funktionsphasen 24 und 25. Codeveröff
 | WebDAV-Dateioperationen und LOCK/UNLOCK | Externer WebDAV-Client über /dav/ | Protokolladapter vorhanden; keine eigene browserseitige Sperrenverwaltung oder native Clientabnahme |
 | Rollenbearbeitung, Zuweisungen, Gruppenmapping und Delegationsverwaltung | Noch kein umfassender UI-Einstieg | Bestehende Backendverträge/geschützte Teilfunktionen und Wartungs-CLI ersetzen keine vollständige Verwaltungsoberfläche |
 | Bereichsanlage, initiale Administration, Konsistenzcheck und Objekt-GC | Dokumentierte CLI-Befehle | Noch keine vollständigen Webformulare |
-| Outbox-Zustellstatus, Wiederholungen und Worker | Noch kein UI-/CLI-Dispatcher | Ereignisse werden gespeichert; Zustellung und Hintergrundmechanismus sind noch nicht implementiert/freigegeben |
+| Outbox-Worker und Zustellstatus | bin/worker.php beziehungsweise authentifizierter POST /tasks/run | CLI und Maschinen-Webtrigger implementiert, Token-Erzeugung auch lokal im Browser möglich; noch kein administrativer Zustell-/Retrybildschirm |
 | Medienraster, Vorschauen, Metadaten, Tags und Sammlungen | Noch offen | Nicht als fertig implementiert oder im UI vorhanden ausgewiesen |
 
 Die bloße Sichtbarkeit eines Buttons gewährt keine Berechtigung. Jeder tatsächliche Dienstaufruf prüft seine Rechte erneut. Fehlende Rechte blenden passende Aktionen aus oder verhindern direkte Aufrufe. Dateisperren schützen Browseränderungen auch ohne zusätzliche Browser-Sperrenschaltfläche.

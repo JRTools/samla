@@ -90,6 +90,8 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
             if secure:env.update(APP_ENV='production',OIDC_REDIRECT_URI=app_url+'/auth/callback')
             init="require 'vendor/autoload.php';$c=Samla\\Core\\Configuration\\AppConfig::fromGlobals();$p=(new Samla\\Core\\Database\\ConnectionFactory())->connect($c->database);(new Samla\\Core\\Database\\MigrationRunner($p))->migrate(require 'bootstrap/migrations.php');foreach(['outbox_events','audit_events','rbac_delegation_permissions','rbac_delegations','rbac_assignments','rbac_role_permissions','rbac_roles','identity_memberships','identity_external_groups','identity_group_mappings','identity_users','identity_groups','storage_spaces']as$t){$p->exec('DELETE FROM '.$t);}"
             subprocess.run(php+['-r',init],cwd=project,env=env,check=True)
+            worker_token='c'*64
+            env['APP_WORKER_HTTP_TOKEN_SHA256']=hashlib.sha256(worker_token.encode()).hexdigest() if secure else ''
             storage=p/('storage'+version+str(secure));storage.mkdir(mode=0o700);env['APP_STORAGE_ROOT']=str(storage)
             sessions=p/('sessions'+version+str(secure));sessions.mkdir(mode=0o700)
             jar=http.cookiejar.CookieJar();opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar),NoRedirect(),urllib.request.HTTPSHandler(context=ssl.create_default_context(cafile=str(p/'cert.pem'))))
@@ -301,6 +303,28 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert checked.returncode==2 and 'Unreferenced object:' in checked.stdout,checked.stdout+checked.stderr
                     gc=subprocess.run(php+['bin/storage-gc.php'],cwd=project,env=bootstrap,capture_output=True,text=True)
                     assert gc.returncode==0 and 'removed: 0' in gc.stdout,gc.stdout+gc.stderr
+                    if secure:
+                        machine=urllib.request.build_opener(NoRedirect(),urllib.request.HTTPSHandler(context=ssl.create_default_context(cafile=str(p/'cert.pem'))))
+                        def trigger(data=None,auth=None,path='/tasks/run'):
+                            headers={} if auth is None else {'Authorization':auth}
+                            request=urllib.request.Request(app_url+path,data=data if isinstance(data,bytes) else None if data is None else urllib.parse.urlencode(data).encode(),headers=headers)
+                            try:response=machine.open(request,timeout=20)
+                            except urllib.error.HTTPError as error:response=error
+                            return response.code,response.read().decode(),response.headers
+                        assert trigger()[0]==405
+                        assert trigger({})[0]==401 and trigger({'token':'wrong'})[0]==401
+                        assert trigger({},'Bearer '+worker_token,path='/tasks/run?forbidden=1')[0]==400
+                        assert trigger(b'x'*4097,'Bearer '+worker_token)[0]==413
+                        cli=subprocess.run(php+['bin/worker.php','--max-events=1'],cwd=project,env=env,capture_output=True,text=True)
+                        assert cli.returncode==0 and json.loads(cli.stdout)['processed']==1,cli.stdout+cli.stderr
+                        status,worker_body,worker_headers=trigger({},'Bearer '+worker_token)
+                        assert status==200 and json.loads(worker_body)['queue']['delivered']>0,(status,worker_body)
+                        assert 'Set-Cookie' not in worker_headers and worker_token not in worker_body
+                        assert trigger({'token':worker_token})[0]==200
+                        cli=subprocess.run(php+['bin/worker.php','--status'],cwd=project,env=env,capture_output=True,text=True)
+                        assert cli.returncode==0 and json.loads(cli.stdout)['queue']['pending']==0,cli.stdout+cli.stderr
+                    else:
+                        assert req('/tasks/run',{})[0]==404
                     assert req('/auth/logout')[0]==405
                     assert req('/auth/logout',{'csrf':'bad'})[0]==403
                     assert req('/auth/logout',{'csrf':csrf(body)})[0]==303
@@ -320,7 +344,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()
