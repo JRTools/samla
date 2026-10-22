@@ -10,13 +10,13 @@ final readonly class AdminController
 {
     public function __construct(private AdministrationQueryService $directory, private AuthorizationChecker $authorization,
         private UserStatusService $users, private GroupDetailsService $groups, private GroupMembershipService $memberships,
-        private PageRenderer $renderer = new PageRenderer(), private ?FileController $files = null,private ?WorkerAdministrationController $worker=null,private ?MediaController $media=null,private ?PermissionController $permissions=null,private ?SpaceAdministrationController $spaces=null,private ?ExportController $exports=null) {}
+        private PageRenderer $renderer = new PageRenderer(), private ?FileController $files = null,private ?WorkerAdministrationController $worker=null,private ?MediaController $media=null,private ?PermissionController $permissions=null,private ?SpaceAdministrationController $spaces=null,private ?ExportController $exports=null,private ?GroupMappingController $mappings=null) {}
 
     /** actorId and session token come only from the trusted entry point, never request fields. */
     public function capabilities(string $actorId): array
     {
         $caps = [];
-        foreach (['identity.users.read','identity.groups.read','identity.users.status.manage','identity.groups.details.manage','identity.groups.memberships.manage','operations.worker.read','operations.worker.retry'] as $action) {
+        foreach (['identity.users.read','identity.groups.read','identity.users.status.manage','identity.groups.details.manage','identity.groups.memberships.manage','identity.groups.mappings.manage','operations.worker.read','operations.worker.retry'] as $action) {
             $caps[$action] = $this->authorization->decide(new AuthorizationRequest($actorId, $action, Scope::Global))->decision === Decision::Permit;
         }
         $caps['access.profiles.manage']=$this->permissions?->canManage($actorId)??false;
@@ -32,6 +32,7 @@ final readonly class AdminController
         if(str_starts_with($request->path,'/permissions')&&$this->permissions!==null){return $this->permissions->handle($request,$actorId,$csrf,$data);}
         if(str_starts_with($request->path,'/administration/spaces')&&$this->spaces!==null){return $this->spaces->handle($request,$actorId,$csrf,$data);}
         if(str_starts_with($request->path,'/exports')&&$this->exports!==null){return $this->exports->handle($request,$actorId,$csrf,$data);}
+        if(str_starts_with($request->path,'/administration/group-mappings')&&$this->mappings!==null){return $this->mappings->handle($request,$actorId,$csrf,$data);}
         try {
             $posts = ['/users/status','/groups/create','/groups/rename','/memberships/change'];
             if (in_array($request->path, $posts, true)) {

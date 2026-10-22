@@ -42,7 +42,7 @@ final class GroupMappingTest extends TestCase
         $this->identity->addManualMembership('alice', 'operators'); $this->identity->addManualMembership('alice', 'managers');
         $this->pdo->exec("INSERT INTO storage_spaces (id, name) VALUES ('media', 'Media'), ('board', 'Board')");
         $this->runtime = $this->boot();
-        $this->roles->save(new Role('operator', Scope::Global, ['identity.users.status.manage','identity.groups.memberships.manage','identity.groups.details.manage','identity.groups.mappings.manage']), $this->runtime);
+        $this->roles->save(new Role('operator', Scope::Global, ['identity.groups.read','identity.users.status.manage','identity.groups.memberships.manage','identity.groups.details.manage','identity.groups.mappings.manage']), $this->runtime);
         $this->roles->assign(new RoleAssignment('operators', 'operator', Scope::Global));
         $this->roles->save(new Role('manager', Scope::Space, ['rbac.assignments.manage']), $this->runtime);
         $this->roles->assign(new RoleAssignment('managers', 'manager', Scope::Space, 'media'));
@@ -314,4 +314,83 @@ final class GroupMappingTest extends TestCase
         $this->expectException(\LogicException::class);
         $this->identity->changeGroupMappingInsideTransaction(new GroupMappingChange(self::ISSUER, 'press', 'readers', true));
     }
+    private function controller(?string $claim='groups'): \Samla\Core\Web\GroupMappingController
+    {
+        $auth=new AuthorizationService($this->runtime,$this->identity);
+        return new \Samla\Core\Web\GroupMappingController($this->service(),new \Samla\Core\Administration\AdministrationQueryService($this->pdo,$auth),self::ISSUER,$claim);
+    }
+    private function mappingRequest(string $method='GET',array $post=[],array $query=['group'=>'readers'],string $actor='alice',?string $claim='groups'): \Samla\Core\Web\Response
+    {
+        $csrf=str_repeat('a',64);
+        return $this->controller($claim)->handle(new \Samla\Core\Web\Request($method,$method==='GET'?'/administration/group-mappings':'/administration/group-mappings/change',$query,$post),$actor,$csrf,
+            ['actor'=>$actor,'csrf'=>$csrf,'caps'=>[],'flash'=>null,'oidc'=>true]);
+    }
+    private function mappingPost(array $changes=[]):array
+    {return array_replace(['csrf'=>str_repeat('a',64),'group'=>'readers','operation'=>'grant','external'=>'press','confirm'=>'1'],$changes);}
+    public function testMappingUiUsesNamesAndConfiguredIssuerAndPreservesOtherSources():void
+    {
+        $this->pdo->exec("UPDATE identity_groups SET name='Redaktion <Team>' WHERE id='readers'");
+        $page=$this->mappingRequest();self::assertSame(200,$page->status);
+        self::assertStringContainsString('Redaktion &lt;Team&gt;</option>',$page->body);
+        self::assertStringContainsString('name="external"',$page->body);
+        self::assertSame(303,$this->mappingRequest('POST',$this->mappingPost(['issuer'=>'https://attacker.example']))->status);
+        self::assertTrue($this->allowed());
+        self::assertSame(self::ISSUER,$this->pdo->query('SELECT issuer FROM identity_group_mappings')->fetchColumn());
+        $edge=(new GroupMappingChange(self::ISSUER,'press','readers',false))->mappingId();
+        $this->identity->addManualMembership('bob','readers');
+        self::assertSame(303,$this->mappingRequest('POST',$this->mappingPost(['operation'=>'revoke','mapping'=>$edge]))->status);
+        self::assertTrue($this->allowed());
+        self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM identity_group_mappings')->fetchColumn());
+        self::assertSame(2,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+    }
+    public function testMappingUiManualClaimModeCannotBreakNextLoginButCanRemoveExistingEdges():void
+    {
+        $page=$this->mappingRequest(claim:null);self::assertSame(200,$page->status);
+        self::assertStringContainsString('OIDC_GROUPS_CLAIM',$page->body);self::assertStringNotContainsString('name="external"',$page->body);
+        self::assertSame(409,$this->mappingRequest('POST',$this->mappingPost(),claim:null)->status);
+        $this->service()->grant('alice',self::ISSUER,'press','readers');
+        $edge=(new GroupMappingChange(self::ISSUER,'press','readers',false))->mappingId();
+        self::assertSame(303,$this->mappingRequest('POST',$this->mappingPost(['operation'=>'revoke','mapping'=>$edge]),claim:null)->status);
+        self::assertFalse($this->allowed());
+    }
+    public function testMappingUiRejectsUnauthorizedActorsCsrfAndMalformedSelections():void
+    {
+        self::assertSame(403,$this->mappingRequest(actor:'bob')->status);
+        self::assertSame(403,$this->mappingRequest('POST',$this->mappingPost(['csrf'=>str_repeat('b',64)]))->status);
+        foreach([['confirm'=>'0'],['group'=>['readers']],['external'=>"a\n"],['external'=>''],['external'=>str_repeat('x',257)],['external'=>"\xff"],['operation'=>'edit']]as$change){
+            self::assertSame(400,$this->mappingRequest('POST',$this->mappingPost($change))->status);
+        }
+        self::assertSame(400,$this->mappingRequest(query:['group'=>['readers']])->status);
+        self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+    }
+    public function testMappingUiProtectsAdministrativeGroupsAndEscapesExternalNames():void
+    {
+        self::assertSame(403,$this->mappingRequest('POST',$this->mappingPost(['group'=>'operators']))->status);
+        self::assertSame(303,$this->mappingRequest('POST',$this->mappingPost(['external'=>'<script>bad</script>']))->status);
+        $page=$this->mappingRequest();self::assertStringContainsString('&lt;script&gt;bad&lt;/script&gt;',$page->body);
+        self::assertStringNotContainsString('<script>bad</script>',$page->body);
+    }
+    public function testMappingExpectedEdgeStateRejectsStaleFormsAtomically():void
+    {
+        $this->service()->grant('alice',self::ISSUER,'press','readers',false);
+        self::assertSame(409,$this->mappingRequest('POST',$this->mappingPost())->status);
+        $this->service()->revoke('alice',self::ISSUER,'press','readers',true);
+        try{$this->service()->revoke('alice',self::ISSUER,'press','readers',true);self::fail('Stale edge accepted.');}
+        catch(\Samla\PluginApi\MutationConflict){self::assertFalse($this->pdo->inTransaction());}
+        self::assertSame(2,(int)$this->pdo->query('SELECT COUNT(*) FROM audit_events')->fetchColumn());
+    }
+    public function testMappingUiHonorsBoundedGroupAndEdgeChoicesAndMethods():void
+    {
+        $controller=$this->controller();$data=['actor'=>'alice','csrf'=>str_repeat('a',64),'caps'=>[],'flash'=>null];
+        $response=$controller->handle(new \Samla\Core\Web\Request('POST','/administration/group-mappings'),'alice',str_repeat('a',64),$data);
+        self::assertSame(405,$response->status);self::assertSame('GET',$response->headers['Allow']);
+        $q=$this->pdo->prepare('INSERT INTO identity_group_mappings(issuer,external_id,internal_id) VALUES(?,?,?)');
+        for($i=0;$i<100;$i++){$q->execute([self::ISSUER,'edge'.$i,'readers']);}
+        self::assertSame(413,$this->mappingRequest('POST',$this->mappingPost())->status);
+        try{$this->service()->grant('alice',self::ISSUER,'extra','readers',false);self::fail('Transactional mapping limit ignored.');}
+        catch(\LengthException){self::assertFalse($this->pdo->inTransaction());}
+        self::assertSame(100,(int)$this->pdo->query('SELECT COUNT(*) FROM identity_group_mappings')->fetchColumn());
+        $q->execute([self::ISSUER,'overflow','readers']);self::assertSame(413,$this->mappingRequest()->status);
+    }
+
 }

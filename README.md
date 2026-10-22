@@ -6,7 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 35 (Private ZIP-Exporte im UI)
+## Entwicklungsstand: Iteration 36 (IdP-Gruppenmappings im UI)
+
+**IdP-Gruppen zuordnen** ergänzt die Gruppenverwaltung: lokale Gruppen nach Namen auswählen, externe Kanten hinzufügen und bestätigt entfernen. Neue Zuordnungen bleiben ohne konfigurierten signierten Gruppenclaim gesperrt; Delegation, Verwaltungsgruppen und verbleibende Administrationszugänge bleiben geschützt. Keine neue Migration. [Bedienung und Grenzen](docs/group-mappings.md).
 
 Dateien lassen sich mit dem gesonderten Bereichsprofil **Originale exportieren** auswählen und als privater ZIP-Auftrag vormerken. **Meine Exporte** zeigt Status, Ablauf, Retry und Entfernen. Der vorhandene CLI-/HTTPS-Worker erzeugt Originale mit JSON-Manifest; Downloads prüfen Besitzer, aktuelle Rechte, Quellen, Providerpolicy und Paketprüfsumme erneut. Temporäre Pakete werden begrenzt reserviert und beim Workeraufruf nach Ablauf bereinigt. **Neue Migration erforderlich; ext-zip mit Abbruchcallback in FPM und Worker aktivieren.** [Einrichtung, Grenzen und Bedienung](docs/portable-export.md).
 

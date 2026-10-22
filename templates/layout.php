@@ -4,7 +4,7 @@ $e = PageRenderer::escape(...);
 $titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen', 'error' => 'Zugriff', 'login' => 'Anmelden', 'account' => 'Mein Zugang', 'spaces' => 'Speicherbereiche', 'files' => 'Dateien'];
 $caps = $data['caps'];
 $titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb', 'app-passwords' => 'App-Passwörter'];
-$titles['exports']='Meine Exporte';$titles['permissions']='Berechtigungen';$titles['space-administration']='Bereichsverwaltung';
+$titles['group-mappings']='IdP-Gruppen zuordnen';$titles['exports']='Meine Exporte';$titles['permissions']='Berechtigungen';$titles['space-administration']='Bereichsverwaltung';
 $titles['versions'] = 'Dateiversionen';
 $titles['text-editor'] = 'Text bearbeiten';
 $titles['file-search'] = 'Dateien suchen';
@@ -22,6 +22,7 @@ $titles['media-gallery']='Medien';$titles['media-detail']='Medium';$titles['medi
 <?php if (($data['oidc'] ?? false) && $data['actor'] !== null): ?><a href="/account">Mein Zugang</a><form class="logout" method="post" action="/auth/logout"><input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>"><button class="button button-outline" type="submit">Bei Samla abmelden</button></form><?php endif ?>
 <?php if ($caps['identity.users.read'] ?? false): ?><a href="/users" <?= $page === 'users' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">◎</span> Benutzer</a><?php endif ?>
 <?php if ($caps['identity.groups.read'] ?? false): ?><a href="/groups" <?= $page === 'groups' ? 'aria-current="page"' : '' ?>><span aria-hidden="true">▦</span> Gruppen</a><?php endif ?>
+<?php if(($caps['identity.groups.mappings.manage']??false)&&($caps['identity.groups.read']??false)): ?><a href="/administration/group-mappings" <?= $page==='group-mappings'?'aria-current="page"':'' ?>>IdP-Gruppen zuordnen</a><?php endif ?>
 <?php if ($caps['operations.worker.read'] ?? false): ?><a href="/operations/worker" <?= $page === 'worker' ? 'aria-current="page"' : '' ?>>Hintergrundaufgaben</a><?php endif ?>
 <?php if($caps['access.profiles.manage']??false): ?><a href="/permissions" <?= $page==='permissions'?'aria-current="page"':'' ?>>Berechtigungen</a><a href="/administration/spaces" <?= $page==='space-administration'?'aria-current="page"':'' ?>>Bereiche verwalten</a><?php endif ?>
 </nav><div class="sidebar-bottom"><span class="small-mark" aria-hidden="true">S</span><div>Ein Tool von JRTools.<small>Samla · Gemeinsam organisiert.</small></div></div></aside>

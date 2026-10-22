@@ -150,6 +150,10 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,body,_=req('/groups');assert status==200
                     assert req('/groups/create',{'csrf':csrf(body),'name':'OIDC created group'})[0]==303
                     assert 'OIDC created group' in req('/groups')[1]
+                    # Manual-only login must not be broken by introducing a mapping without a signed groups claim.
+                    status,mappings,_=req('/administration/group-mappings?group=samla.administrators')
+                    assert status==200 and 'OIDC_GROUPS_CLAIM' in mappings and 'name="external"' not in mappings
+                    assert req('/administration/group-mappings/change',{'csrf':csrf(mappings),'group':'samla.administrators','operation':'grant','external':'fake-admins','confirm':'1'})[0]==409
                     # Browser administration: named dropdowns, current profile state and empty-space lifecycle.
                     status,management,_=req('/administration/spaces');assert status==200
                     status,_,headers=req('/administration/spaces/create',{'csrf':csrf(management),'name':'HTTP UI Bereich','quota':'100000000000'})
@@ -474,7 +478,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, claim-aware IdP mapping UI, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

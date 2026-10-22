@@ -1,0 +1,17 @@
+# IdP-Gruppen im Browser zuordnen
+
+Unter **IdP-Gruppen zuordnen** (/administration/group-mappings) die lokale Samla-Gruppe anhand ihres Namens auswählen. Die Oberfläche benötigt identity.groups.read und identity.groups.mappings.manage. Die bestehenden Standardadministratoren besitzen diese Rechte bereits; es werden keine bestehenden Rollen erweitert.
+
+Neue Zuordnungen verwenden ausschließlich den vertrauenswürdig konfigurierten OIDC_ISSUER. Die externe Kennung muss exakt dem stabilen Wert im signierten OIDC_GROUPS_CLAIM entsprechen; Anzeigenamen werden nicht automatisch aufgelöst. Ein externer Gruppenbrowser oder Abruf der IdP-Verwaltungs-API ist nicht implementiert. Die lokale Zielgruppe ist ein Namens-Dropdown. Die Oberfläche bietet Hinzufügen und bestätigtes Entfernen; zum Ändern einer Kante diese entfernen und die gewünschte hinzufügen.
+
+Ohne konfigurierten signierten Gruppenclaim ist Hinzufügen gesperrt: Der vorhandene Login im Modus ausschließlich lokaler Gruppen würde bei externen Mappings sonst absichtlich fehlschlagen. Bestehende Zuordnungen können zur Bereinigung entfernt werden, auch aus früheren Issuern. Die Claimkonfiguration bleibt Betreiberkonfiguration in .env; sie wird nicht aus Formularen oder vom Browser übernommen. Ein passender Claim muss vom IdP tatsächlich signiert geliefert werden. Die erwartete Entzugsverzögerung und konkrete Claimwerte sind weiterhin Betreiberentscheidungen.
+
+Der bestehende GroupMappingService und die öffentliche GroupMappingPolicy prüfen aktuelle Rechte, sämtliche Rechte der Zielgruppe und Delegationsgrenzen erneut. Gruppen mit administrativen/globalen Rollen bleiben geschützt; feste freigegebene Inhaltsprofile nutzen die bereits vorhandene abgesicherte Verwaltungsregel. Ein Mapping kann die Rechte aller aktuellen und zukünftigen externen Mitglieder vermitteln und ist daher keine bloße Katalogänderung.
+
+Bereits verifizierte externe Gruppenstände werden unter dem gemeinsamen Administrationslock abgeglichen. Andere externe Quellen und manuelle Mitgliedschaften bleiben erhalten; lokale Sperren und Snapshotalter werden nicht zurückgesetzt. Die Sicherung verbleibender Administrationszugänge bleibt aktiv. Gruppen-, Snapshot- und Rechteänderungen sind transaktional mit Audit und Outbox gebunden. Audit/Outbox enthalten interne Gruppe und Kantenfingerabdruck, keine externen Rohclaims oder Login-Tokens.
+
+Formulare benötigen CSRF und Bestätigung. Ein optionaler öffentlicher GroupMappingChange.expectedPresent bindet Änderungen an den erwarteten Kantenbestand: Hinzufügen erwartet Abwesenheit, Entfernen Anwesenheit. Abweichung führt atomar zu 409. Bestehende Dienstaufrufe ohne Erwartung bleiben idempotent. Das ist eine Zustandsbedingung, kein fortlaufender Versionszähler einer Kante.
+
+Auswahlgrenzen: 1000 lokale Gruppen, 100 Mappings je ausgewählter Gruppe. Neue Browserzuordnungen prüfen die 100-Kanten-Grenze zusätzlich unter dem Transaktionslock. Überschrittene Altbestände werden mit 413 begrenzt und müssen zunächst im kontrollierten Betreiberablauf reduziert werden. Externe Neuanlagen erlauben gültiges UTF-8 ohne Steuerzeichen mit höchstens 256 Bytes; vorhandene opake Altkanten bleiben intern unverändert und können über ihren versteckten Fingerabdruck entfernt werden. Weder Serverpfade noch Benutzerclaims werden angezeigt.
+
+Keine neue Migration oder Laufzeitkomponente erforderlich. Die Oberfläche ist über PHP-/HTTP-Prüfungen abgedeckt; visuelle und produktive IdP-Abnahme bleiben getrennte Betreiberprüfungen.

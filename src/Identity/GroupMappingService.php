@@ -11,10 +11,10 @@ final readonly class GroupMappingService
     public function __construct(private PdoIdentityRepository $identities, private AuthorizationChecker $authorization,
         private GroupMappingPolicy $policy, private ResourceDirectory $resources, private MutationRunner $mutations) {}
 
-    public function grant(string $actorId, string $issuer, string $externalId, string $groupId): bool
-    { return $this->change($actorId, new GroupMappingChange($issuer, $externalId, $groupId, true)); }
-    public function revoke(string $actorId, string $issuer, string $externalId, string $groupId): bool
-    { return $this->change($actorId, new GroupMappingChange($issuer, $externalId, $groupId, false)); }
+    public function grant(string $actorId, string $issuer, string $externalId, string $groupId, ?bool $expectedPresent = null): bool
+    { return $this->change($actorId, new GroupMappingChange($issuer, $externalId, $groupId, true, $expectedPresent)); }
+    public function revoke(string $actorId, string $issuer, string $externalId, string $groupId, ?bool $expectedPresent = null): bool
+    { return $this->change($actorId, new GroupMappingChange($issuer, $externalId, $groupId, false, $expectedPresent)); }
 
     private function change(string $actorId, GroupMappingChange $change): bool
     {

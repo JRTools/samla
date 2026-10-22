@@ -27,6 +27,26 @@ final readonly class AdministrationQueryService
         if(count($rows)>1000){throw new \LengthException('User selection limit.');}
         return $rows;
     }
+    /** Administrative mapping edges only; never login tokens or full claim snapshots. */
+    public function mappingChoices(string $actorId): array
+    {
+        $this->guard($actorId, 'identity.groups.read', null);
+        $this->guard($actorId, 'identity.groups.mappings.manage', null);
+        $rows=$this->pdo->query('SELECT id,name FROM identity_groups ORDER BY name,id LIMIT 1001')->fetchAll();
+        if(count($rows)>1000){throw new \LengthException('Group selection limit.');}
+        return $rows;
+    }
+    public function mappings(string $actorId,string $groupId): array
+    {
+        $this->guard($actorId, 'identity.groups.read', null);
+        $this->guard($actorId, 'identity.groups.mappings.manage', null);
+        if(!preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D',$groupId)){throw new \InvalidArgumentException();}
+        $q=$this->pdo->prepare('SELECT issuer,external_id,internal_id FROM identity_group_mappings WHERE internal_id=? ORDER BY issuer,external_id LIMIT 101');
+        $q->execute([$groupId]);$rows=$q->fetchAll();
+        if(count($rows)>100){throw new \LengthException('Mapping selection limit.');}
+        foreach($rows as&$row){$row['id']=(new \Samla\PluginApi\GroupMappingChange($row['issuer'],$row['external_id'],$groupId,false))->mappingId();}unset($row);
+        return $rows;
+    }
     private function guard(string $actorId, string $action, ?string $after): void
     {
         if ($this->authorization->decide(new AuthorizationRequest($actorId, $action, Scope::Global))->decision !== Decision::Permit) { throw new AccessDenied(); }

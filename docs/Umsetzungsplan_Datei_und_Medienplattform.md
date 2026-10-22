@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.39
+Version: 1.40
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 35, private ZIP-Aufträge mit Worker und Oberfläche, siehe Abschnitt 47. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 36, IdP-Gruppenmappings im Browser, siehe Abschnitt 48. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1106,3 +1106,15 @@ Vier lokale PHP-/Datenbankkombinationen mit jeweils 513 Tests/2769 Assertions un
 Nächste unabhängige Arbeiten: persönliche Bereiche, weitere Katalogpflege und Rechteoberflächen. Automatische persönliche Bereitstellung und fachliche Aufbewahrungsfristen benötigen weiterhin die in offene-entscheidungen.md bezeichneten konkreten Vorgaben; sie blockieren unabhängige Implementierung nicht. Weitere Arbeitspakete werden ohne Go-Abfrage umgesetzt und einzeln veröffentlicht.
 
 Version 1.39: kompletter begrenzter Exportdurchstich, technische Workeraufgaben und UI statt rein internem Paketkern.
+
+## 48. Iteration 36: IdP-Gruppenmappings im Browser
+
+Die bisherige abgesicherte Mappingfunktion erhält eine Weboberfläche mit lokalem Gruppennamen-Dropdown, festen konfigurierten Issuer, exakter externer Kennung und bestätigtem Entfernen. Neue Kanten sind ohne konfigurierten signierten OIDC-Gruppenclaim gesperrt, damit der Modus lokaler Gruppen nicht die nächste Anmeldung verliert. Bestehende Kanten lassen sich bereinigen. Eine IdP-API oder neue Laufzeitkomponente wird nicht eingeführt; keine neue Migration.
+
+Der bestehende öffentliche Mapping-/Delegationsvertrag bleibt maßgeblich. Administrative Zielgruppen, Rechteumfang der Gruppe, Snapshotfrische und verbleibende Administrationszugänge bleiben geschützt. Ein optionaler erwarteter Kantenbestand verhindert veraltete Browseränderungen unter dem gemeinsamen Mutationslock. Externe Quellen und manuelle Mitgliedschaften bleiben getrennt; Audit/Outbox enthalten keine Rohclaims. Auswahl und Neuanlage sind begrenzt. Details: group-mappings.md.
+
+Sechs zusätzliche Integrationstests prüfen Namensauswahl/HTML-Escaping, feste Issuerbindung, lokale Claimkonfiguration, Entfernen trotz deaktivierter Claims, aktuelle Rechte/Delegation, CSRF, fehlerhafte Formulare, veralteten Zustand, atomare Kapazitätsgrenze und begrenzte Listen. Der synthetische HTTP-/HTTPS-Test prüft zusätzlich den sicheren lokalen Gruppenmodus. Genaue Matrixergebnisse: verification.md. Paket 35 ist inzwischen in allen vier GitHub-Kombinationen erfolgreich.
+
+Die fachlichen Vorgaben zum tatsächlichen IdP-Claim und akzeptierter Entzugsverzögerung bleiben konkret einzurichten; die UI erfindet dafür keine Werte. Unabhängige Katalog- und Dateifunktionen werden ohne weitere Go-Abfrage fortgesetzt.
+
+Version 1.40: Gruppenmapping als geprüfter Browserablauf mit bestehendem öffentlichen Policyvertrag.

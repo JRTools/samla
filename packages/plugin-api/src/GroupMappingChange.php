@@ -6,7 +6,7 @@ namespace Samla\PluginApi;
 /** Exact, bounded mapping edge. Opaque issuer/group bytes are for validation, not audit payloads. */
 final readonly class GroupMappingChange
 {
-    public function __construct(public string $issuer, public string $externalId, public string $groupId, public bool $grant)
+    public function __construct(public string $issuer, public string $externalId, public string $groupId, public bool $grant, public ?bool $expectedPresent = null)
     {
         if ($issuer === '' || strlen($issuer) > 1024 || $externalId === '' || strlen($externalId) > 256
             || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $groupId)) {

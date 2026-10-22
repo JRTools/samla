@@ -109,6 +109,12 @@ final readonly class PdoIdentityRepository implements IdentityReader
         $params = [$change->issuer, $change->externalId, $change->groupId];
         $query = $this->pdo->prepare('SELECT 1 FROM identity_group_mappings WHERE issuer = ? AND external_id = ? AND internal_id = ? FOR UPDATE');
         $query->execute($params); $exists = $query->fetchColumn() !== false;
+        if ($change->expectedPresent !== null && $change->expectedPresent !== $exists) { throw new MutationConflict(); }
+        if ($change->expectedPresent === false && $change->grant) {
+            $count = $this->pdo->prepare('SELECT COUNT(*) FROM identity_group_mappings WHERE internal_id = ?');
+            $count->execute([$change->groupId]);
+            if ((int) $count->fetchColumn() >= 100) { throw new \LengthException('Mapping selection limit.'); }
+        }
         $changed = $exists !== $change->grant;
         if ($changed) {
             $query = $this->pdo->prepare($change->grant

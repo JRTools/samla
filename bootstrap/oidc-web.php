@@ -16,6 +16,6 @@ return static function (AppConfig $app, OidcConfig $oidc): OidcWebController {
     $identity = new PdoIdentityRepository($pdo, $app->groupMaxAgeSeconds);
     $runtime = PluginRuntime::boot([new IdentityPlugin(), new StoragePlugin(), new RbacPlugin(new PdoRoleRepository($pdo), $identity)]);
     return new OidcWebController($oidc, $pdo, $identity, new LoginProvisioner($pdo, $identity, new PdoMutationRunner($pdo, $runtime)),
-        (require __DIR__ . '/web.php')($pdo, $app), new PageRenderer(),
+        (require __DIR__ . '/web.php')($pdo, $app, $oidc), new PageRenderer(),
         new AppPasswordController(new AppPasswordService($pdo, $identity, new PdoMutationRunner($pdo, $runtime))));
 };

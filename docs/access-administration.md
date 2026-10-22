@@ -47,3 +47,6 @@ Der Kern verwendet `AccessProfileAdministration` und `SpaceAccessCleanup`, ohne 
 Freies Erstellen/Bearbeiten beliebiger Rollen, administrative Rollenzuweisungen, allgemeine Delegations- und IdP-Mappingverwaltung sind nicht Teil dieser Oberfläche. Ebenso erzeugt die Bereichsverwaltung noch keine automatischen persönlichen Bereiche und keine Aufbewahrungsrichtlinie. Diese Grenzen ersetzen nicht die übrigen offenen Konzeptpunkte.
 
 Prüfungen und verbleibende visuelle-/Gerätegrenzen: [verification.md](verification.md). Gestaltung: [design.md](design.md).
+
+
+IdP-Gruppen werden seit Iteration 36 über [group-mappings.md](group-mappings.md) zugeordnet. Die Zielgruppe wird nach Namen ausgewählt; Zuordnungen ersetzen keine lokale Rollenpflege. Ohne konfigurierten signierten Claim bleibt Hinzufügen gesperrt. Freie Rollen und Delegationskonfiguration bleiben weitere Arbeitspakete.
