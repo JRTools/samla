@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.33
+Version: 1.34
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1025,3 +1025,12 @@ Provider-Version 1.1 verändert die Verarbeitungssignatur, damit ältere Ergebni
 Prüfung und Veröffentlichungsstand: verification.md. Die vorherige GitHub-Matrix einschließlich XMP-/Promptprüfung ist in allen vier Kombinationen erfolgreich und mit gelesenen Joblogs in verification-iteration-30.md dokumentiert. Für die folgende ZIP-Paketierung liegt weiterhin die konkrete noch nicht freigegebene Komponentenentscheidung zip-library-decision.md vor. Die übrigen offenen Entscheidungen bleiben in offene-entscheidungen.md gebündelt.
 
 Version 1.33: Keine Übernahme fremder beziehungsweise verschachtelter RDF-Herkunftsangaben als aktuelle Dateideklaration; Cachebindung an Provider-Version 1.1.
+
+
+### 43.1 Betreiberfreigabe für ZIP und nächste fachliche Angaben
+
+Am 22. Oktober 2026 hat der Betreiber native ext-zip/ZipArchive einschließlich der in zip-library-decision.md beschriebenen libzip-Abhängigkeit ausdrücklich freigegeben. Die vorherigen Hinweise auf eine noch offene Komponentenfreigabe sind historisch überholt. Keine fertige Exportfunktion und keine Installation auf dem Betreiberhost werden daraus abgeleitet.
+
+Für die fachliche Auslegung sind als nächste Angaben Gesamtbestand in GB, größte benötigte Einzeldatei und gewünschte Paketgröße sowie Onlinezugriff gegenüber Offline-Synchronisierung hilfreich. Gruppenverwaltung, persönliche Bereiche und Aufbewahrung können bei den jeweils betroffenen Funktionen entschieden werden. Technische Umsetzung innerhalb des freigegebenen Umfangs kann fortgesetzt werden. Die vollständige Betreiberübersicht bleibt offene-entscheidungen.md.
+
+Version 1.34: ZIP-Freigabe festgehalten; keine Änderung am Anwendungscode. Dokumentationsprüfung mit git diff --check; keine erneute Anwendungstestmatrix für diese reine Dokumentationsänderung.

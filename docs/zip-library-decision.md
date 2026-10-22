@@ -1,6 +1,6 @@
 # Entscheidungsvorlage: ZIP-Paketierung für portable Exporte
 
-Stand: 22. Oktober 2026. Komponentenfreigabe noch offen. Diese Vorlage ist Vorbereitung des vorgesehenen Exportpakets und keine bereits implementierte oder geprüfte Exportfunktion.
+Stand: 22. Oktober 2026. Vom Betreiber ausdrücklich freigegeben: „ja, du darfst zip verwenden“. Diese Vorlage ist Vorbereitung des vorgesehenen Exportpakets und keine bereits implementierte oder geprüfte Exportfunktion.
 
 ## Konkreter Vorschlag
 
@@ -47,10 +47,10 @@ Das Beispiel beschreibt die fünf UTF-8-Bytes hello. Originale werden beim Expor
 
 Ein Manifest und einzelne autorisierte Dateidownloads lassen sich mit den vorhandenen Schnittstellen anbieten. Ein zusammenhängendes ZIP-Paket wäre dabei zunächst nicht verfügbar. Die Paketierungsentscheidung beeinflusst dieses Transportformat, nicht das übrige Berechtigungsmodell.
 
-## Grundlage und Freigabefrage
+## Grundlage und erteilte Freigabe
 
-Konzept Abschnitt 3.7 und 9 verlangen die Abstimmung der konkreten Exportpaketierung und benötigten PHP-Erweiterungen. AGENTS.md schreibt vor: „Keine zusätzlichen Laufzeitkomponenten ohne Abstimmung einführen.“ Für ext-zip liegt bislang keine ausdrückliche Freigabe vor.
+Konzept Abschnitt 3.7 und 9 verlangen die Abstimmung der konkreten Exportpaketierung und benötigten PHP-Erweiterungen. AGENTS.md schreibt vor: „Keine zusätzlichen Laufzeitkomponenten ohne Abstimmung einführen.“ Der Betreiber hat ext-zip/ZipArchive einschließlich der beschriebenen libzip-Abhängigkeit am 22. Oktober 2026 ausdrücklich freigegeben.
 
-Soll die native ZIP-Erweiterung in diesem Umfang für die folgende Exportimplementierung verwendet werden?
+Die folgende Exportimplementierung darf diese native ZIP-Fähigkeit im beschriebenen Umfang verwenden. Die Installation und Prüfung auf dem Betreiberhost stehen noch aus.
 
 Primärquellen: [PHP ZipArchive](https://www.php.net/manual/en/class.ziparchive.php) und [PHP-ZIP-Voraussetzungen](https://www.php.net/manual/en/zip.requirements.php). Eine eigene PHP- oder ZIP-Binärdistribution wird aus dieser Vorlage nicht als bereits installiert oder auf dem Betreiberhost geprüft ausgegeben.

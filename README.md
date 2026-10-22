@@ -196,3 +196,5 @@ Für die folgende Medienphase liegt eine [konkrete Entscheidungsvorlage zu ext-e
 
 
 Die aktuelle Übersicht der noch offenen Betreiberentscheidungen steht in [offene-entscheidungen.md](docs/offene-entscheidungen.md). Bereits erteilte Freigaben werden dort nicht erneut angefragt.
+
+Native ZIP-Paketierung mit ext-zip/ZipArchive und libzip ist vom Betreiber freigegeben. Der vorgesehene Exportumfang und die noch ausstehende Implementierung sind in [zip-library-decision.md](docs/zip-library-decision.md) dokumentiert.
