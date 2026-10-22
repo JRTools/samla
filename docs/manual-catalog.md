@@ -1,0 +1,25 @@
+# Beschreibungen und Tags
+
+Iteration 37 ergänzt einen manuellen Katalog für aktive Dateien. Unter **Berechtigungen** stehen die neuen festen Bereichsprofile **Katalog lesen**, **Katalog bearbeiten** und **Katalog und Tags verwalten** bereit. Bestehende Rollen erhalten keine neuen Rechte automatisch. Die Profile erlauben Originallesen und Katalogzugriff; sie gewähren keine Originaländerung oder Löschung.
+
+Nach Codeupdate `php bin/migrate.php` im dokumentierten Wartungsablauf ausführen: neue Migration platform.catalog:0001_manual. Keine zusätzliche PHP-Erweiterung oder andere Laufzeitkomponente. Der Katalog liegt in der vorhandenen Datenbank.
+
+Über **Dateien → Eintrag verwalten → Beschreibung und Tags** die Angaben öffnen. Leseberechtigte sehen die Beschreibung und nach Namen ausgewählte Tags. Bearbeiter können die Beschreibung als UTF-8-Text bis 16 KiB speichern und im Mehrfach-Dropdown bis zu 50 Tags auswählen. Ohne Auswahl werden die bisherigen Tagreferenzen dieser Datei entfernt. Tags stammen ausschließlich aus demselben Bereich; IDs müssen nicht eingegeben werden. Die Größenprüfung erfolgt in Bytes, das Browserlimit in Zeichen kann sie nicht ersetzen.
+
+Tagverwalter können im selben Bildschirm Bereichstags anlegen, umbenennen und unbenutzte Tags nach ausdrücklicher Bestätigung löschen. Umbenennen ändert die Bezeichnung aller vorhandenen Referenzen. Ein noch zugeordneter Tag, auch im Papierkorb, wird nicht gelöscht; zuerst die gewünschten aktiven Zuordnungen entfernen beziehungsweise den betreffenden Papierkorbinhalt bewusst bereinigen. Die Löschantwort verrät keine versteckten Datei-/Trefferzahlen. Taglabels sind ein gemeinsam gepflegtes Bereichswörterbuch, keine privaten Angaben einzelner Dateien.
+
+Taggrenzen: höchstens 100 Tags pro Bereich, 80 Unicode-Zeichen/320 UTF-8-Bytes pro Name, keine Steuerzeichen, keine leeren Namen. Außenliegende ASCII-Leerzeichen werden im Formular entfernt. Namen sind nach Unicode-Kleinschreibung eindeutig; eine zusätzliche Unicode-Normalisierung (NFC) wird nicht zugesagt. Namens- und Kapazitätsprüfung laufen unter dem gemeinsamen Administrationslock. Bestehende identische Änderungen sind idempotent; veraltete Tagrevisionen oder belegte Namen erhalten 409.
+
+## Zugriff und Datenlebenszyklus
+
+Jeder Zugriff benötigt files.list, files.read und catalog.read im aktuellen Bereich; Schreiben zusätzlich catalog.write, Tagverwaltung catalog.tags.manage. Aktuelle Kontosperren, Gruppenfrische und Plugins bleiben maßgeblich. Die Dateiprüfung verwendet FileService einschließlich sichtbarer Eltern; Papierkorb und Inhalte unter gelöschten Ordnern sind ausgeschlossen. Originalleserecht allein öffnet den manuellen Katalog nicht.
+
+Speichern bindet die exakte Dateirevision und eine unabhängige Katalogrevision. Ein inzwischen ersetzter Dateiinhalt oder ein anderer Bearbeiter führt zu 409; es wird kein fremder Stand überschrieben. Die Fehlerseite bewahrt den nicht gespeicherten Katalogentwurf derzeit nicht automatisch; bei umfangreichen Änderungen vorher lokal sichern. Originalbytes, Versionshistorie, Dateiname und ausgelesene Medienfelder werden nicht geändert. Eine neue Medienanalyse kann den manuellen Katalog nicht überschreiben.
+
+Umbenennen/Verschieben innerhalb des Bereichs erhält die stabile Dateikennung und damit den Katalog. Neue Inhaltsversionen behalten manuelle Angaben; das ist keine automatisch versionsbezogene Aussage über eingebettete Metadaten. Papierkorb/Wiederherstellung behält die Angaben, endgültiges berechtigtes Löschen entfernt die Dateizuordnungen und Beschreibung transaktional über Fremdschlüssel. Das Tagwörterbuch bleibt bis zur bewussten Löschung unbenutzter Tags bestehen. Eine Einzeldateikopie erhält derzeit ausdrücklich keine manuelle Beschreibung oder Tagzuordnung; ein späterer Kopiervertrag kann dies gezielt ergänzen. Es wird keine neue fachliche Aufbewahrungsfrist gesetzt.
+
+## Erweiterung und verbleibender Umfang
+
+CatalogPlugin registriert die drei Bereichsrechte. CatalogEntryChange enthält den unveränderlich kopierten, sortierten Referenzplan, Dateirevision, Katalogrevision und Beschreibung; CatalogTagChange die exakte Tagoperation mit Revision. MutationContext bindet die Vorschläge an Operation, Bereich und Ziele. Öffentliche Validatoren können Änderungen vetoieren; auditierte Mutation und Outbox laufen atomar. Ereignisse catalog.entry.update.completed und catalog.tag.create/rename/delete.completed enthalten Kennungen, keine Beschreibungen oder Tagtexte.
+
+Dieses Paket ergänzt noch keine Tagsuche, Mehrfachänderung mehrerer Dateien, Sammlungen, frei konfigurierbare Feldtypen oder manuelle Katalogbeiträge im ZIP-Manifest. Der vorhandene ZIP-Export erhält weiterhin die unveränderten Originale und nur seine ausdrücklich registrierten Metadatenprovider. Diese Katalogangaben werden nicht automatisch in Dateien oder Archive geschrieben. Weitere Katalogarbeit folgt ohne erneute Go-Abfrage. Visuelle, native Geräte- und produktive Hostingabnahme bleiben getrennt von den automatisierten Prüfungen.

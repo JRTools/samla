@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, Funktionsphasen bis 36. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 22. Oktober 2026, Funktionsphasen bis 37. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -23,6 +23,7 @@ Stand: 22. Oktober 2026, Funktionsphasen bis 36. Codeveröffentlichung ist keine
 | Medienraster, Vorschauen und ausgewählte EXIF-Felder | Medien unter /media mit Ordnern und Detailseite | Rechtegeschützte PNG-Vorschau, getrennte Metadatenrechte, Quelle/Originalwert, einzelne Analysevormerkung und bereichsweiter seitenweiser Neuaufbau; GD/EXIF und Worker erforderlich |
 | Ausgewählte IPTC-/XMP-/PNG-Textangaben und strukturierte KI-Deklaration | Medien-Detailansicht | Quelle/Normalisierung und Auslesestatus; separate Rechte auf Prompt-/Autorfelder; C2PA nicht untersucht oder validiert |
 | Private ZIP-Exporte aktueller Dateien | Dateiauswahl unter Dateien; Meine Exporte unter /exports | Eigene Aufträge, Status/Ablauf, geschützter Download, Retry und Entfernen; separates Exportprofil und ZIP-fähiger Worker erforderlich |
-| Tags, Sammlungen, C2PA, manuelle Metadaten | Noch offen | Noch nicht als im UI vorhanden ausgewiesen |
+| Manuelle Beschreibungen und Tags | Dateien → Eintrag verwalten → Beschreibung und Tags | Texte, Namens-Mehrfachauswahl, Taganlage/-umbenennung und bestätigtes Löschen unbenutzter Tags; gesonderte Bereichsprofile, neue Migration |
+| Tagsuche, Mehrfachbearbeitung mehrerer Dateien, Sammlungen, C2PA, frei konfigurierbare manuelle Felder | Noch offen | Noch nicht als im UI vorhanden ausgewiesen |
 
 Die bloße Sichtbarkeit eines Buttons gewährt keine Berechtigung. Jeder tatsächliche Dienstaufruf prüft seine Rechte erneut. Fehlende Rechte blenden passende Aktionen aus oder verhindern direkte Aufrufe. Dateisperren schützen Browseränderungen auch ohne zusätzliche Browser-Sperrenschaltfläche.

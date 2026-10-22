@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.40
+Version: 1.41
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 36, IdP-Gruppenmappings im Browser, siehe Abschnitt 48. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 37, manuelle Beschreibungen und Tags, siehe Abschnitt 49. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1118,3 +1118,17 @@ Sechs zusätzliche Integrationstests prüfen Namensauswahl/HTML-Escaping, feste 
 Die fachlichen Vorgaben zum tatsächlichen IdP-Claim und akzeptierter Entzugsverzögerung bleiben konkret einzurichten; die UI erfindet dafür keine Werte. Unabhängige Katalog- und Dateifunktionen werden ohne weitere Go-Abfrage fortgesetzt.
 
 Version 1.40: Gruppenmapping als geprüfter Browserablauf mit bestehendem öffentlichen Policyvertrag.
+
+## 49. Iteration 37: manuelle Beschreibungen und Tags
+
+Die Dateidetailseite öffnet einen getrennten manuellen Katalog mit Beschreibung und Tag-Mehrfachauswahl nach Namen. Tagverwalter legen Bereichstags an, benennen sie um und löschen nach Bestätigung ausschließlich unbenutzte Tags. Vorhandene Original-, Versions- und Extraktionsdaten werden nicht umgeschrieben. Neue Bereichsprofile Katalog lesen/bearbeiten/verwalten ergänzen die Berechtigungsoberfläche ohne automatische Rollenerweiterung. Neue Migration platform.catalog:0001_manual erforderlich, keine neue Laufzeitkomponente.
+
+Katalog- und Dateirevision schützen gegen parallele Bearbeitung und veraltete Quellen; fremde Bereichsreferenzen werden abgewiesen. Aktuelle Dateileserechte, sichtbare Eltern, Identitätsfrische und separate Katalogrechte gelten für jeden Zugriff. Beschreibungen sind begrenzter sicher dargestellter Text (16 KiB), Tagwörterbücher maximal 100 Namen mit 80 Zeichen, Dateizuordnungen maximal 50. Öffentlich typisierte Vorschläge binden Validatoren an konkreten Inhalt, Operation und Bereich; auditierte Outboxereignisse enthalten keine Katalogtexte.
+
+Papierkorb/Wiederherstellung behält manuelle Werte; endgültiges Löschen entfernt Dateikatalog und Referenzen atomar. Ein im Papierkorb benutzter Tag ist weiter gegen versehentliche Wörterbuchlöschung geschützt. Umbenennung/Verschieben erhält den Katalog, neue Inhalte behalten manuelle Angaben. Einzeldateikopien übernehmen ausdrücklich zunächst keine manuellen Werte. Neuaufbau ausgelesener Medien überschreibt diese Tabellen nicht. Kein automatischer Katalogexport oder fachlicher Retentionswert wird eingeführt.
+
+Unit- und Integrationsfälle prüfen unveränderliche Vorschläge, genaue Bindung, Autorisierung, CSRF, Referenzen, Revisionen, Kapazität, Pluginveto, datensparsame Ereignisse, Originalintegrität und Papierkorb/Purge. Der synthetische HTTP-/HTTPS-Durchlauf ergänzt echte Profile, benannte Tags, Beschreibung, Konflikt und Rechteentzug. Matrixergebnisse und Grenzen: verification.md; Bedienung: manual-catalog.md. Die GitHub-Matrix von Paket 36 ist vollständig erfolgreich.
+
+Nächster unabhängiger Ausbau: Mehrfachbearbeitung von Tags, Tagsuche und weitere Katalogfelder. Automatische persönliche Bereiche und noch unbestimmte Aufbewahrungs-/Offlinevorgaben bleiben gesonderte Betreiberentscheidungen.
+
+Version 1.41: manueller Dateikatalog als eigener geprüfter Browserdurchstich.

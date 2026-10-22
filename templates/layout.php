@@ -4,7 +4,7 @@ $e = PageRenderer::escape(...);
 $titles = ['home' => 'Übersicht', 'users' => 'Benutzer', 'groups' => 'Gruppen', 'error' => 'Zugriff', 'login' => 'Anmelden', 'account' => 'Mein Zugang', 'spaces' => 'Speicherbereiche', 'files' => 'Dateien'];
 $caps = $data['caps'];
 $titles += ['file-detail' => 'Datei verwalten', 'trash' => 'Papierkorb', 'app-passwords' => 'App-Passwörter'];
-$titles['group-mappings']='IdP-Gruppen zuordnen';$titles['exports']='Meine Exporte';$titles['permissions']='Berechtigungen';$titles['space-administration']='Bereichsverwaltung';
+$titles['catalog']='Beschreibung und Tags';$titles['group-mappings']='IdP-Gruppen zuordnen';$titles['exports']='Meine Exporte';$titles['permissions']='Berechtigungen';$titles['space-administration']='Bereichsverwaltung';
 $titles['versions'] = 'Dateiversionen';
 $titles['text-editor'] = 'Text bearbeiten';
 $titles['file-search'] = 'Dateien suchen';

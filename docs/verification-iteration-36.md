@@ -1,0 +1,11 @@
+# Prüfung Iteration 36: Gruppenmapping im Browser
+
+Vier isolierte lokale Kombinationen PHP 8.4.5/8.5.4 mit MySQL 8.0/MariaDB 11.8 erfolgreich: jeweils 210 Unit-/Architekturtests mit 1225 Assertions und 309 Integrationstests mit 1584 Assertions. Syntaxprüfung aller 267 eigenen PHP-Dateien erfolgreich. Keine neue Migration; CLI meldet Schema is current.
+
+Sechs neue Integrationsfälle decken lokale Gruppennamen, feste Issuerbindung trotz manipuliertem Formular, HTML-Escaping externer Namen, signierten Claimmodus, sicheren lokalen Gruppenmodus, Entfernen vorhandener Kanten bei deaktiviertem Claim, Erhalt manueller Mitgliedschaften, aktuelle Verwaltungsrechte/Delegation, geschützte administrative Gruppen, CSRF, fehlerhafte/übergroße Formulare, erwarteten Kantenbestand, Listenbegrenzung und HTTP-Methoden ab. Nach Ergänzung der Kapazitätsprüfung im transaktionalen Writer wurden die vollständigen 32 Mappingfälle gezielt in allen vier Kombinationen erneut ausgeführt: jeweils 182 Assertions erfolgreich. Dieser letzte Lauf prüft auch die Dienstgrenze unabhängig vom vorgeschalteten UI-Check. Keine zusätzliche Laufzeitkomponente.
+
+Der vollständige synthetische HTTP-/HTTPS-Ablauf mit OIDC, Berechtigungen, Bereichen, ZIP-Aufträgen, Medien und DAV bleibt erfolgreich: Entwicklungs-HTTP PHP 8.4/8.5 und Produktions-HTTPS PHP 8.4. Zusätzlich wird das reale Bootstrap-/Navigations-/Mapping-UI im lokalen Gruppenmodus aufgerufen; eine manipulierte Neuanlage ohne signierten Claim wird mit 409 gesperrt. Keine echten Betreiberzugangsdaten verwendet.
+
+Die vollständige GitHub-CI von Paket 35 ist erfolgreich; gelesene Jobs und Ergebnisse: verification-iteration-35.md. CI für Paket 36 folgt nach Veröffentlichung. Kein produktiver IdP-Claim, keine nativen Geräte und keine visuelle Browserabnahme werden dadurch bestätigt. Die Kapazität von 100 Kanten ist eine technische Browsergrenze; übergroße Altkataloge müssen kontrolliert reduziert werden.
+
+GitHub-CI für Paket 36 vollständig erfolgreich: Lauf 39764080187, gelesene Jobs 119775087208, 119775087517, 119775087530, 119775087559. PHP 8.4.27/8.5.12, alle vier Kombinationen jeweils 210 Unit-/Architekturtests mit 1225 Assertions und 309 Integrationstests mit 1586 Assertions einschließlich des abschließenden transaktionalen Kapazitätstests. HTTP und HTTPS erfolgreich.

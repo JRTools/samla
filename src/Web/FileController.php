@@ -68,6 +68,7 @@ final readonly class FileController
             if ($request->path === '/files/detail') {
                 $data['entry'] = $this->files->details($actor, $space, $this->query($request, 'entry', 32)); $data['space_id'] = $space;
                 $data['destinations'] = $this->files->folderChoices($actor, $space);
+                $data['can_catalog']=$this->files->allowed($actor,'catalog.read',$space)&&$this->files->allowed($actor,'files.read',$space);
                 foreach (['update','delete','restore','read','create','versions.read'] as $action) { $data['file_caps'][$action] = $this->files->allowed($actor, 'files.' . $action, $space); }
                 return new Response(200, $this->renderer->render('file-detail', $data));
             }

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use Samla\Core\Background\{OutboxWorker,ReceiptPlugin,WorkerPlugin};
+use Samla\Core\Catalog\CatalogPlugin;
 use Samla\Core\Configuration\AppConfig;
 use Samla\Core\Media\{MediaPlugin,MediaPipeline,MediaCacheCollector};
 use Samla\Core\Storage\LocalContentStore;
@@ -23,6 +24,6 @@ return static function (\PDO $pdo,AppConfig $config): OutboxWorker {
         $auth=new AuthorizationService($runtime,$identity);$mutations=new PdoMutationRunner($pdo,$runtime);
         (new ExportService($pdo,new FileService($pdo,$auth,$mutations,new LocalContentStore($config->storageRoot,$config->maxUploadBytes)),$auth,$identity,$mutations,$runtime,$store,$config->exports))->handle($event);
     },static function()use($pdo,$store):void{(new ExportCollector($pdo,$store))->collect();});
-    $runtime=PluginRuntime::boot([new IdentityPlugin(),new StoragePlugin(),new RbacPlugin(new PdoRoleRepository($pdo),$identity),new ReceiptPlugin($pdo),new WorkerPlugin(),$media,$exports]);
+    $runtime=PluginRuntime::boot([new CatalogPlugin(),new IdentityPlugin(),new StoragePlugin(),new RbacPlugin(new PdoRoleRepository($pdo),$identity),new ReceiptPlugin($pdo),new WorkerPlugin(),$media,$exports]);
     return new OutboxWorker($pdo,$runtime);
 };

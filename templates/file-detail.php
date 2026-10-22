@@ -1,4 +1,5 @@
 <?php $row = $data['entry']; $rights = $data['file_caps']; ?>
+<?php if($row['kind']==='file'&&($data['can_catalog']??false)): ?><p><a class="button button-outline" href="<?= $e('/catalog?'.http_build_query(['space'=>$data['space_id'],'entry'=>$row['id']])) ?>">Beschreibung und Tags</a></p><?php endif ?>
 <?php if ($row['kind'] === 'file' && $rights['read'] && (int) $row['size_bytes'] <= \Samla\Core\Storage\TextDocument::MAX_BYTES && \Samla\Core\Storage\TextDocument::supports($row['name'])): ?><p><a class="button button-outline" href="<?= $e('/files/edit?' . http_build_query(['space' => $data['space_id'], 'entry' => $row['id']])) ?>">Text öffnen</a></p><?php endif ?>
 <div class="page-heading"><div><p class="eyebrow">DATEIABLAGE</p><h1><?= $e($row['name']) ?></h1><p class="lead"><?= $row['kind'] === 'folder' ? 'Ordner' : 'Datei' ?></p></div><a class="button button-outline" href="<?= $e('/files?' . http_build_query(['space' => $data['space_id'], 'parent' => $row['parent_id']])) ?>">Zurück zum Ordner</a></div>
 <section class="panel"><div class="panel-heading"><h2>Eintrag verwalten</h2></div><div class="group-list">

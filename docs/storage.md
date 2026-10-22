@@ -169,3 +169,8 @@ FileService.search benötigt files.list im exakten Bereich. Ein einmalig begrenz
 ## Onlineverwaltung von Bereichen und Profilen
 
 Seit Iteration 33 stehen Bereichsanlage, Name-/Quotenänderung, bestätigte Löschung vollständig leerer Bereiche sowie die festen Gruppenprofile im Browser bereit. Die zuvor dokumentierten Wartungs-CLI-Befehle bleiben als Betreiberwerkzeuge erhalten. Namensbasierte Dropdowns und Schutz vor veralteten Formularen ersetzen das Abtippen von Kennungen. Bereichsanlage vergibt keine Inhaltsrechte. Papierkorb und Historien zählen weiter zur Quote; ein gefüllter Bereich kann nicht über den Verwaltungsknopf kaskadierend gelöscht werden. [Bedienung, Autorisierung und Grenzen](access-administration.md).
+
+
+## Manueller Katalog
+
+Iteration 37 ergänzt [Beschreibungen und Tags](manual-catalog.md) mit getrennten Bereichsrechten und unabhängigem Revisionsschutz. Stabile Dateikennungen erhalten diese Angaben bei Umbenennung/Verschieben und Papierkorb/Wiederherstellung. Eine Einzeldateikopie übernimmt ausdrücklich noch keine manuellen Katalogwerte. Originale und eingebettete Angaben bleiben unverändert.

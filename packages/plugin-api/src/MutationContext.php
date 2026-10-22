@@ -25,6 +25,8 @@ final readonly class MutationContext
         public ?AccessProfileChange $accessProfile=null,
         public ?StorageSpaceChange $storageSpace=null,
         public ?ExportChange $exportChange=null,
+        public ?CatalogEntryChange $catalogEntry=null,
+        public ?CatalogTagChange $catalogTag=null,
     ) {
         if (!preg_match('/^[a-f0-9]{32}$/D', $id) || !preg_match('/^[a-zA-Z0-9_.:-]{1,64}$/D', $actorId)
             || !preg_match('/^[a-z][a-z0-9_.]{1,127}$/D', $operation)
@@ -43,6 +45,11 @@ final readonly class MutationContext
                 || ($targets['subscriber']??null)!==hash('sha256',$outboxRetry->subscriberId)))) {throw new \InvalidArgumentException('Retry proposal must match its targets.');}
         if(($operation==='media.asset.refresh')!==($mediaRefresh!==null)||($mediaRefresh!==null&&($scope!==Scope::Space||($targets['entry']??null)!==$mediaRefresh->entryId))){throw new \InvalidArgumentException('Media refresh proposal must match its target.');}
         if(($operation==='media.batch.refresh')!==($mediaBatchRefresh!==null)||($mediaBatchRefresh!==null&&($scope!==Scope::Space||($targets['batch']??null)!==$mediaBatchRefresh->signature()))){throw new \InvalidArgumentException('Media batch must match its exact proposal.');}
+        if(($operation==='catalog.entry.update')!==($catalogEntry!==null)||($catalogEntry!==null&&($scope!==Scope::Space
+            ||$spaceId!==$catalogEntry->spaceId||$targets!==['entry'=>$catalogEntry->entryId]))){throw new \InvalidArgumentException('Catalog entry proposal mismatch.');}
+        $tagOperation=in_array($operation,['catalog.tag.create','catalog.tag.rename','catalog.tag.delete'],true);
+        if($tagOperation!==($catalogTag!==null)||($catalogTag!==null&&($scope!==Scope::Space||$spaceId!==$catalogTag->spaceId
+            ||$targets!==['tag'=>$catalogTag->tagId]||$operation!=='catalog.tag.'.$catalogTag->operation))){throw new \InvalidArgumentException('Catalog tag proposal mismatch.');}
         $exportOperation=in_array($operation,['exports.request','exports.retry','exports.remove'],true);
         if($exportOperation!==($exportChange!==null)||($exportOperation&&($scope!==Scope::Space
             ||$spaceId!==$exportChange->spaceId||$targets!==['export'=>$exportChange->jobId]||$operation!=='exports.'.$exportChange->operation))){
