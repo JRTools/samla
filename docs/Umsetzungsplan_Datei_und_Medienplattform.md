@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.41
+Version: 1.42
 Stand: 22. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 37, manuelle Beschreibungen und Tags, siehe Abschnitt 49. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Iteration 38, atomare Tag-Mehrfachbearbeitung, siehe Abschnitt 50. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1132,3 +1132,15 @@ Unit- und Integrationsfälle prüfen unveränderliche Vorschläge, genaue Bindun
 Nächster unabhängiger Ausbau: Mehrfachbearbeitung von Tags, Tagsuche und weitere Katalogfelder. Automatische persönliche Bereiche und noch unbestimmte Aufbewahrungs-/Offlinevorgaben bleiben gesonderte Betreiberentscheidungen.
 
 Version 1.41: manueller Dateikatalog als eigener geprüfter Browserdurchstich.
+
+## 50. Iteration 38: atomare Tag-Mehrfachbearbeitung
+
+Die Dateiliste öffnet eine ordnerweise Auswahl bis 100 Dateien mit benannten Checkboxen und einem Tag-/Operations-Dropdown. Hinzufügen/Entfernen erfordert Bestätigung, aktuelle Dateileserechte und catalog.write. Ordner werden nicht rekursiv übernommen. Eine gemeinsame Mutation prüft exakte Datei-/Katalogrevisionen, Quellenzugriff und Tagkapazität für alle ausgewählten Dateien. Ein Konflikt oder Fehler rollt den gesamten Auftrag zurück; Beschreibung und andere Tags bleiben erhalten.
+
+Der neue öffentliche CatalogBatchChange enthält den unveränderlich kopierten, sortierten exakten Auswahl-/Änderungsplan, gebunden an Bereich, Tag, Operation und Signatur. Pluginveto bleibt möglich. Nur tatsächlich geänderte Dateien erhalten eine neue Katalogrevision und individuelle Audit-/Outboxereignisse; unveränderte Zuweisungen bleiben No-ops. Die Gesamtmutation wird zusätzlich protokolliert. Beschreibungen und Tagtexte stehen nicht in diesen Ereignissen. Listen- und Formularverarbeitung bleiben begrenzt; Katalogrevisionen für die angezeigte Ordnerseite werden gesammelt gelesen.
+
+Die HTTP-Prüfung erweitert den realen Ablauf um Tagentzug/-erneute Zuweisung, veraltete Batchformulare und eine tatsächlich 16 KiB große UTF-8-Beschreibung mit größerem URL-kodiertem Request. Dafür wird die Bodygrenze ausschließlich für den begrenzten Katalogspeicherpfad angepasst; Feldgrenzen gelten unverändert. Keine neue Migration oder Laufzeitkomponente über den bereits vorhandenen Katalog hinaus.
+
+Die Tests prüfen zusätzlich mehrteilige Änderungen, erhaltene Beschreibungen/andere Tags, unveränderte Mitglieder, individuelle Ereignisse, Konflikt/Kapazität, Pluginveto und injizierten SQL-Fehler mit vollständigem Rollback. Matrix und Webprüfungen: verification.md. GitHub-CI von Paket 37 ist vollständig erfolgreich. Die persönliche Bereitstellung bei der ersten Anmeldung ist inzwischen ausdrücklich gewählt. Die noch nicht bestätigte Standardquote wird als konfigurierbarer technischer Startwert von 10 GiB vorbereitet; Austritts-/Löschregeln, Aufbewahrung und native Offline-Referenzclients bleiben konkrete Betreiberangaben; sie werden nicht aus den technischen Kataloglimits abgeleitet.
+
+Version 1.42: gemeinsamer Tagauftrag mit exaktem Revisionsplan und Einzelnachvollziehbarkeit.

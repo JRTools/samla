@@ -37,6 +37,7 @@ final readonly class FileService
         return ['space' => $catalog, 'folder' => $folder, 'parent' => $parent, 'rows' => $rows, 'next' => $next,
             'used' => StorageUsage::bytes($this->pdo, $space), 'upload_max_bytes' => $this->content->maxBytes, 'can_create' => $this->allowed($actor, 'files.create', $space),
             'can_read' => $this->allowed($actor, 'files.read', $space), 'can_export'=>$this->allowed($actor,'files.export',$space)&&$this->allowed($actor,'files.read',$space), 'can_restore' => $this->allowed($actor, 'files.restore', $space),
+            'can_tag_batch'=>$this->allowed($actor,'files.read',$space)&&$this->allowed($actor,'catalog.read',$space)&&$this->allowed($actor,'catalog.write',$space),
             'can_view_trash' => $this->allowed($actor, 'files.restore', $space) || $this->allowed($actor, 'files.purge', $space)];
     }
     public function createFolder(string $actor, string $space, string $parent, string $name): string

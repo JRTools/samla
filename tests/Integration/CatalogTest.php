@@ -128,4 +128,56 @@ final class CatalogTest extends TestCase
         try{$this->save('Too many',array_slice($ids,0,51),1);self::fail('Unbounded assignments.');}catch(\InvalidArgumentException){self::assertSame('Fünfzig',$this->catalog->details('alice','space',$this->entry)['catalog']['description']);}
     }
 
+    private function secondFile():string
+    {
+        $s=fopen('php://temp','w+b');fwrite($s,'second');rewind($s);try{return $this->files->upload('alice','space','','Zweite.txt',$s);}finally{fclose($s);}
+    }
+    public function testBatchAddRemovePreservesDescriptionsOtherTagsAndNoopsWithPerChangedFileEvents():void
+    {
+        $tag=$this->tag();$other=$this->tag('Anderer Tag');$second=$this->secondFile();$this->save('Beschreibung',[$tag,$other]);
+        self::assertTrue($this->catalog->batch('alice','space',$tag,'add',[$this->entry=>[1,1],$second=>[1,0]]));
+        $a=$this->catalog->details('alice','space',$this->entry);$b=$this->catalog->details('alice','space',$second);
+        self::assertSame(1,(int)$a['catalog']['revision']);self::assertSame('Beschreibung',$a['catalog']['description']);self::assertCount(2,$a['selected_tags']);self::assertSame([$tag],$b['selected_tags']);
+        self::assertFalse($this->catalog->batch('alice','space',$tag,'add',[$this->entry=>[1,1],$second=>[1,1]]));
+        self::assertSame(1,(int)$this->pdo->query("SELECT COUNT(*) FROM audit_events WHERE operation='catalog.entry.tags.add'")->fetchColumn());
+        self::assertSame(1,(int)$this->pdo->query("SELECT COUNT(*) FROM outbox_events WHERE event_type='catalog.entry.tags.add.completed'")->fetchColumn());
+        self::assertTrue($this->catalog->batch('alice','space',$tag,'remove',[$this->entry=>[1,1],$second=>[1,1]]));
+        self::assertSame([$other],$this->catalog->details('alice','space',$this->entry)['selected_tags']);self::assertSame([],$this->catalog->details('alice','space',$second)['selected_tags']);
+        self::assertSame(2,(int)$this->pdo->query("SELECT COUNT(*) FROM audit_events WHERE operation='catalog.entry.tags.remove'")->fetchColumn());
+    }
+    public function testBatchStaleOrOverCapacityMemberLeavesWholeSelectionUnchanged():void
+    {
+        $tag=$this->tag();$second=$this->secondFile();$this->save('New description');
+        try{$this->catalog->batch('alice','space',$tag,'add',[$second=>[1,0],$this->entry=>[1,0]]);self::fail('Stale selection accepted.');}
+        catch(MutationConflict){self::assertSame([],$this->catalog->details('alice','space',$second)['selected_tags']);}
+        $ids=[];for($i=0;$i<50;$i++){$ids[]=$this->tag('Capacity '.$i);}$this->save('Full',$ids,1);
+        try{$this->catalog->batch('alice','space',$tag,'add',[$second=>[1,0],$this->entry=>[1,2]]);self::fail('Partial capacity mutation.');}
+        catch(\LengthException){self::assertSame([],$this->catalog->details('alice','space',$second)['selected_tags']);}
+        self::assertSame(0,(int)$this->pdo->query("SELECT COUNT(*) FROM audit_events WHERE operation='catalog.tags.batch.add'")->fetchColumn());
+    }
+    public function testBatchPluginVetoAndSqlFailureAreAtomicAndExposeExactProposal():void
+    {
+        $tag=$this->tag();$second=$this->secondFile();
+        $validator=new class implements ChangeValidator {public ?\Samla\PluginApi\CatalogBatchChange $seen=null;public function validate(MutationContext $c):void{if($c->catalogBatch!==null){$this->seen=$c->catalogBatch;throw new AccessDenied();}}};
+        $this->boot([new Extension('example.batch',static function(PluginRegistrar $r)use($validator):void{$r->validator($validator);})]);
+        try{$this->catalog->batch('alice','space',$tag,'add',[$this->entry=>[1,0],$second=>[1,0]]);self::fail('Veto ignored.');}
+        catch(AccessDenied){self::assertCount(2,$validator->seen->changedEntries());self::assertSame($tag,$validator->seen->tagId);}
+        $this->boot();$this->pdo->exec("CREATE TRIGGER fail_catalog_batch BEFORE INSERT ON outbox_events FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='injected batch failure'");
+        try{
+            try{$this->catalog->batch('alice','space',$tag,'add',[$this->entry=>[1,0],$second=>[1,0]]);self::fail('SQL failure ignored.');}
+            catch(\PDOException){self::assertFalse($this->pdo->inTransaction());}
+            self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM catalog_entries')->fetchColumn());self::assertSame(0,(int)$this->pdo->query('SELECT COUNT(*) FROM catalog_entry_tags')->fetchColumn());
+            self::assertSame(0,(int)$this->pdo->query("SELECT COUNT(*) FROM audit_events WHERE operation LIKE 'catalog.tags.batch.%'")->fetchColumn());
+        }finally{$this->pdo->exec('DROP TRIGGER fail_catalog_batch');}
+    }
+    public function testBatchHttpShowsNamesAndChecksExactSelectionConfirmationAndCsrf():void
+    {
+        $tag=$this->tag();$page=$this->page('/catalog/batch');self::assertSame(200,$page->status);self::assertStringContainsString('Sommer</option>',$page->body);
+        self::assertStringContainsString('Hallo &lt;Team&gt;.txt',$page->body);
+        $post=['csrf'=>$this->csrf,'space'=>'space','parent'=>'','tag'=>$tag,'operation'=>'add','confirm'=>'1','entries'=>[$this->entry.':1:0']];
+        foreach([['csrf'=>str_repeat('b',64)],['confirm'=>'0'],['entries'=>[]],['entries'=>[$this->entry.':1:0',$this->entry.':1:0']],['entries'=>[$this->entry.':1:0:x']]]as$i=>$bad){self::assertSame($i===0?403:400,$this->page('/catalog/batch/change','POST',array_replace($post,$bad))->status);}
+        self::assertSame(303,$this->page('/catalog/batch/change','POST',$post)->status);self::assertSame(409,$this->page('/catalog/batch/change','POST',$post)->status);
+        self::assertSame(403,$this->page('/catalog/batch',actor:'bob')->status);
+    }
+
 }

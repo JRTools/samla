@@ -234,6 +234,21 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert req('/catalog/save',save)[0]==303
                     assert req('/catalog/save',save)[0]==409
                     status,catalog,_=req(catalog_url);assert 'Manuell &lt;Text&gt;' in catalog and 'selected>HTTP Sommer</option>' in catalog
+                    # Exact tag batch plans, stale selection and URL-encoded UTF-8 at the catalog byte limit.
+                    batch_url='/catalog/batch?'+urllib.parse.urlencode({'space':space,'parent':parent})
+                    status,batch,_=req(batch_url);assert status==200 and 'HTTP Sommer</option>' in batch
+                    def batch_body(page,operation):
+                        selected=re.search(r'name="entries\[\]" value="([a-f0-9]{32}:[0-9]+:[0-9]+)"',page).group(1)
+                        return urllib.parse.urlencode([('csrf',csrf(page)),('space',space),('parent',parent),('tag',tag),('operation',operation),('confirm','1'),('entries[]',selected)]).encode()
+                    stale_batch=batch_body(batch,'remove')
+                    assert req('/catalog/batch/change',stale_batch)[0]==303 and req('/catalog/batch/change',stale_batch)[0]==409
+                    status,batch,_=req(batch_url);assert req('/catalog/batch/change',batch_body(batch,'add'))[0]==303
+                    status,catalog,_=req(catalog_url)
+                    revision=re.search(r'name="catalog_revision" value="([0-9]+)"',catalog).group(1)
+                    long_description='ä'*8192
+                    long_form=urllib.parse.urlencode([('csrf',csrf(catalog)),('space',space),('entry',entry),('entry_revision','1'),('catalog_revision',revision),('description',long_description),('tags[]',tag)]).encode()
+                    assert len(long_form)>16384 and req('/catalog/save',long_form)[0]==303
+                    status,catalog,_=req(catalog_url);assert long_description in catalog
                     assert req('/catalog/tag',{'csrf':csrf(catalog),'space':space,'entry':entry,'operation':'delete','selection':tag+':1','confirm':'1'})[0]==409
                     assert req('/files/download?space='+space+'&entry='+entry)[1]=='<?php echo 123;'
                     status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':space}))
@@ -498,7 +513,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     subprocess.run(php+['-r',block,user],cwd=project,env=env,check=True)
                     assert req('/account')[0]==403
                     callback=login();assert req(callback)[0]==401
-                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, claim-aware IdP mapping UI, manual catalog and named tags with independent revisions, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
+                    print(version+(' production HTTPS' if secure else ' development HTTP')+': OIDC, app passwords, cookie-free DAV reads/writes/locks/copy/move/name reuse/revocation, named profile dropdowns and protected grant/revoke, space create/edit/empty-delete UI, claim-aware IdP mapping UI, manual catalog and named tags with independent revisions, atomic tag batches and full UTF-8 form limits, private ZIP jobs/worker/binary downloads and revoked export rights, storage setup, RBAC, multipart files, historical versions and restore, UTF-8 editor/draft recovery/form limits, scoped name search, bounded CLI/HTTPS worker and protected status/retry UI, media/EXIF provider and private binary previews and bounded batch rebuild, structured XMP/AI and separately authorized prompts, quota/conflicts, lifecycle, consistency, logout and blocking: OK',flush=True)
                 finally:
                     server.terminate();server.wait(timeout=10)
                     log.seek(0);text=log.read()

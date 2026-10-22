@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Samla\Tests\Unit;
 use PHPUnit\Framework\TestCase;
-use Samla\PluginApi\{CatalogEntryChange,CatalogTagChange,MutationContext,Scope};
+use Samla\PluginApi\{CatalogBatchChange,CatalogEntryChange,CatalogTagChange,MutationContext,Scope};
 final class CatalogChangeTest extends TestCase
 {
     public function testCatalogProposalCopiesReferencesAndBindsExactEntryAndSpace():void
@@ -33,4 +33,17 @@ final class CatalogChangeTest extends TestCase
             fn()=>new MutationContext(str_repeat('d',32),'alice','catalog.tag.delete',Scope::Space,'space',['tag'=>$id],catalogTag:$change),
         ]as$make){try{$make();self::fail('Invalid tag proposal accepted.');}catch(\InvalidArgumentException){self::assertTrue(true);}}
     }
+    public function testBatchPlansCopyNestedReferencesAndBindExactOperationAndSignature():void
+    {
+        $entry=str_repeat('a',32);$tag=str_repeat('b',32);$revision=1;$changes=true;
+        $batch=new CatalogBatchChange('space',$tag,'add',[$entry=>[&$revision,0,&$changes]]);$revision=2;$changes=false;
+        self::assertSame([$entry=>[1,0,true]],$batch->entries);self::assertSame([$entry],$batch->changedEntries());
+        $context=new MutationContext(str_repeat('c',32),'alice','catalog.tags.batch.add',Scope::Space,'space',['batch'=>$batch->signature(),'tag'=>$tag],catalogBatch:$batch);self::assertSame($batch,$context->catalogBatch);
+        foreach([
+            fn()=>new CatalogBatchChange('space',$tag,'add',[]),fn()=>new CatalogBatchChange('space',$tag,'add',[$entry=>[1,0,1]]),
+            fn()=>new MutationContext(str_repeat('c',32),'alice','catalog.tags.batch.remove',Scope::Space,'space',['batch'=>$batch->signature(),'tag'=>$tag],catalogBatch:$batch),
+            fn()=>new MutationContext(str_repeat('c',32),'alice','catalog.tags.batch.add',Scope::Space,'other',['batch'=>$batch->signature(),'tag'=>$tag],catalogBatch:$batch),
+        ]as$make){try{$make();self::fail('Invalid batch accepted.');}catch(\InvalidArgumentException){self::assertTrue(true);}}
+    }
+
 }

@@ -36,6 +36,16 @@ final readonly class PdoMutationRunner implements MutationRunner
                     $payload = json_encode($data, JSON_THROW_ON_ERROR);
                     $event->execute([$id, $context->operation . '.completed', $payload, $time]);
                 }
+                if($context->catalogBatch!==null){
+                    foreach($context->catalogBatch->changedEntries()as$entry){
+                        $id=substr(hash('sha256',$context->id.':catalog:'.$entry),0,32);$operation='catalog.entry.tags.'.$context->catalogBatch->operation;
+                        $entryTargets=['entry'=>$entry,'tag'=>$context->catalogBatch->tagId,'batch'=>$context->catalogBatch->signature()];
+                        $audit->execute([$id,$context->actorId,$operation,$context->scope->value,$context->spaceId,json_encode($entryTargets,JSON_THROW_ON_ERROR),1,$time]);
+                        $payload=json_encode(['id'=>$id,'actor_id'=>$context->actorId,'operation'=>$operation,'scope'=>$context->scope->value,
+                            'space_id'=>$context->spaceId,'targets'=>$entryTargets,'batch_id'=>$context->id],JSON_THROW_ON_ERROR);
+                        $event->execute([$id,$operation.'.completed',$payload,$time]);
+                    }
+                }
                 if($context->mediaBatchRefresh!==null){
                     $batchIndex=0;
                     foreach($context->mediaBatchRefresh->entryRevisions as$entry=>$revision){

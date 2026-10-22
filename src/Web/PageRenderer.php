@@ -8,7 +8,7 @@ final class PageRenderer
     { return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
     public function render(string $page, array $data): string
     {
-        if (!in_array($page, ['home','users','groups','error','login','account','spaces','files','file-detail','trash','app-passwords','versions','text-editor','file-search','worker','media-gallery','media-detail','media-rebuild','permissions','space-administration','exports','group-mappings','catalog'], true)) { throw new \InvalidArgumentException('Unknown template.'); }
+        if (!in_array($page, ['home','users','groups','error','login','account','spaces','files','file-detail','trash','app-passwords','versions','text-editor','file-search','worker','media-gallery','media-detail','media-rebuild','permissions','space-administration','exports','group-mappings','catalog','catalog-batch'], true)) { throw new \InvalidArgumentException('Unknown template.'); }
         ob_start();
         try { require __DIR__ . '/../../templates/layout.php'; return ob_get_clean(); }
         catch (\Throwable $error) { ob_end_clean(); throw $error; }

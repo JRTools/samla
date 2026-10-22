@@ -6,7 +6,9 @@ Fachliche Funktionen erhalten öffentliche Erweiterungsverträge. Das mitgeliefe
 
 Repository: https://github.com/JRTools/samla
 
-## Entwicklungsstand: Iteration 37 (Beschreibungen und Tags)
+## Entwicklungsstand: Iteration 38 (Tags gemeinsam bearbeiten)
+
+**Tags für mehrere Dateien ändern** ergänzt die Dateiliste: bis zu 100 Dateien auswählen, einen Tag nach Namen hinzufügen oder entfernen und gemeinsam speichern. Konflikte und Kapazitätsfehler verhindern die gesamte Änderung; Beschreibungen und andere Tags bleiben erhalten. Keine neue Migration über Paket 37 hinaus. [Bedienung und Grenzen](docs/manual-catalog.md).
 
 **Beschreibung und Tags** ergänzt die Dateiverwaltung: manuelle Texte, Tag-Mehrfachauswahl nach Namen sowie bestätigte Anlage, Umbenennung und Löschung unbenutzter Bereichstags. Unabhängige Katalogrevisionen schützen vor parallelem Überschreiben; Originale und ausgelesene Medienangaben bleiben getrennt. Neue feste Katalogprofile und **neue Migration erforderlich**. [Bedienung und Grenzen](docs/manual-catalog.md).
 
