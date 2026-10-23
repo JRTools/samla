@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.53
+Version: 1.54
 Stand: 23. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1256,5 +1256,14 @@ Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Ger�
 Die ersten tatsächlichen Chromium-Aufnahmen der echten Templates wurden optisch betrachtet. Daraufhin wurden die zuvor zu hellen Ordnerpfade abgedunkelt, der mobile Kopfbereich auf eine kompakte Marken-/Menüzeile reduziert und Dateititel von Rücksprungaktionen getrennt. Die Exportleiste erscheint mit JavaScript erst nach einer Auswahl. Gruppen-/Bereichswechsel ist bei gewähltem Kontext zusammenklappbar; die Profilkarten stehen früher im Blickfeld. Medienhinweise folgen dem Raster. Die Browserprüfung kontrolliert zusätzlich Pfadkontrast und sichtbaren Beginn der Dateiliste.
 
 Prüfung: Der Browserjob 120213191019 aus Lauf 39891842200 ist erfolgreich: Chromium 156.0.8078.4, Breiten 1440/1024/390/320, 44 Aufnahmen und erfolgreiche Interaktions-/Fallbackprüfungen. Das Artefakt wurde heruntergeladen; Dateiliste, Berechtigungen, Bereichsformular, Katalog einschließlich Entwurf, Dateidetail, Medien und Login wurden an repräsentativen Breiten optisch geprüft. Lokale 31 gezielte Unitprüfungen mit 202 Assertions und Syntax erfolgreich. Für die darauf folgenden optischen Korrekturen läuft ein neuer Browser-/Matrixnachweis. Dies ist eine synthetische Browserprüfung, keine Produktions- oder native Geräteabnahme.
+
+Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.
+
+
+## 62. UI-Paket U5.1: Lokale Entwurfssicherung als Offline-Vorbereitung
+
+Im geöffneten Texteditor erzeugt Entwurf herunterladen nun in unterstützten Browsern eine lokale Textdatei ohne Serveranfrage. Damit bleibt die bewusste Sicherung auch nach Verbindungsabbruch möglich; ohne JavaScript bleibt der geschützte Serverdownload erhalten. Keine automatische Speicherung, persistente Offline-Warteschlange oder Synchronisation wird dadurch behauptet. Der vollständige U5-Ablauf hängt weiterhin vom Offlineclient ab, insbesondere vom gewünschten Verhalten bei geschlossener App. Die mobile Marken-/Menüzeile erhält nach erneuter optischer Prüfung eine explizite horizontale Flexrichtung.
+
+Prüfung: Lokale Syntax und 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich. Browserfixture und Prüffälle sind um den Texteditor sowie einen Download bei tatsächlich deaktiviertem Netzwerk ergänzt; sie prüfen UTF-8-Inhalt und portablen Dateinamen. 48 Bildschirmaufnahmen sind nun vorgesehen. Der neue CI-Lauf wird getrennt geprüft. Die vorangehende UI-/Datenbankmatrix einschließlich 44 Browseransichten ist vollständig erfolgreich; repräsentative Screenshots wurden tatsächlich optisch betrachtet.
 
 Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.

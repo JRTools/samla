@@ -24,3 +24,12 @@ Der lokale Router wird um die ausdrücklich erlaubte Datei /assets/workspace.js 
 ## Grenzen
 
 Der Cloud-Browser konnte den lokalen synthetischen Vorschauhost nicht erreichen (ERR_HTTP_RESPONSE_CODE_FAILURE). Authentifizierte Ansichten auf dem Betreiberhost wurden nicht verändert oder als visuell abgenommen ausgegeben. Vollständige visuelle Desktop-/Mobilabnahme und native Geräteprüfung bleiben offen. Erfolgreiche PHP-/HTTP-Tests beweisen keine intuitive Bedienung und keine Offline-Synchronisation. U5 hängt weiterhin von der Wahl des Offlineclients und dessen tatsächlicher Synchronisationsbasis ab.
+
+
+## Synthetische visuelle Abnahme und Nachkorrektur
+
+Der zusätzliche Browserjob 120213191019 in Lauf 39891842200 erzeugte erfolgreich 44 Chromium-Aufnahmen der echten Templates bei 1440, 1024, 390 und 320 Pixeln. Die Artefakte wurden heruntergeladen und repräsentative Datei-, Detail-, Katalog-, Entwurfs-, Medien-, Berechtigungs-, Bereichs- und Loginansichten optisch betrachtet. Erkannte Schwächen an Pfadkontrast, mobilem Seitenrahmen und vorgeschalteten Auswahlformularen wurden korrigiert.
+
+Lauf 39892301526 ist anschließend einschließlich des Browserjobs 120214646902 sowie aller vier PHP-/Datenbankkombinationen erfolgreich. Die 44 erneuten Aufnahmen wurden heruntergeladen und die korrigierten mobilen Datei-/Detail-/Berechtigungs-/Medienansichten betrachtet. Die mobile Navigation benötigte noch eine explizite Flexrichtung; diese zusätzliche Korrektur erhält eine eigene Browserassertion. Der nächste Lauf prüft außerdem den lokalen Entwurfsdownload bei tatsächlich abgeschaltetem Browsernetzwerk.
+
+Es handelt sich um synthetische Ansichten und Interaktionen auf einem isolierten CI-Server, nicht um Zugriff auf Produktionsdaten oder eine native iOS-/Android-Abnahme.

@@ -16,7 +16,7 @@ if($path==='/media/preview'){
     header('Content-Type: image/svg+xml');
     echo '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320"><rect width="480" height="320" fill="#e2e8f0"/><path d="M0 280 150 90 260 230 340 130 480 280v40H0" fill="#15803d"/><circle cx="370" cy="70" r="28" fill="#facc15"/></svg>';exit;
 }
-$pages=['/'=>'home','/files'=>'files','/files/detail'=>'file-detail','/media'=>'media-gallery','/media/detail'=>'media-detail','/permissions'=>'permissions','/administration/spaces'=>'space-administration','/catalog'=>'catalog','/account'=>'account','/auth/login'=>'login'];
+$pages=['/'=>'home','/files'=>'files','/files/detail'=>'file-detail','/files/edit'=>'text-editor','/media'=>'media-gallery','/media/detail'=>'media-detail','/permissions'=>'permissions','/administration/spaces'=>'space-administration','/catalog'=>'catalog','/account'=>'account','/auth/login'=>'login'];
 if(!isset($pages[$path])){http_response_code(404);exit;}
 $reader=($_GET['reader']??'')==='1';$page=$pages[$path];
 $caps=[];foreach(['identity.users.read','identity.groups.read','identity.groups.mappings.manage','access.profiles.manage','operations.worker.read'] as$cap){$caps[$cap]=!$reader;}
@@ -34,6 +34,7 @@ $data=['actor'=>$page==='login'?null:'synthetic.test','display_name'=>'Alex Beis
     ],
     'catalog'=>['revision'=>2,'description'=>'Eine gemeinsame Notiz mit einer verständlichen Beschreibung.'],'tags'=>[['id'=>str_repeat('e',32),'name'=>'Familie','revision'=>1],['id'=>str_repeat('f',32),'name'=>'Planung','revision'=>1]],'selected_tags'=>[str_repeat('e',32)],'can_write'=>!$reader,'can_manage_tags'=>!$reader
 ];
+if($page==='text-editor'){$data['name']=$entry['name'];$data['entry_id']=$entry['id'];$data['revision']=3;$data['text']='Entwurf <nicht verlieren>'; $data['can_update']=!$reader;}
 if(($_GET['draft']??'')==='1'){$data['form_error']='Die Angaben wurden inzwischen geändert. Dein Entwurf bleibt erhalten.';$data['catalog']['description']='Entwurf <nicht verlieren>';$data['submitted_catalog_revision']='1';}
 $response=new Response(200,(new PageRenderer())->render($page,$data));
 foreach($response->headers as$name=>$value){header($name.': '.$value);}

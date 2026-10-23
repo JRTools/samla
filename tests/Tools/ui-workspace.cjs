@@ -22,7 +22,7 @@ let serverLog='';server.stdout.on('data', b => {serverLog+=b;});server.stderr.on
     browser=await chromium.launch({headless:true});
     const page=await browser.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
-    const routes=[['login','/auth/login'],['start','/'],['files','/files'],['detail','/files/detail'],['permissions','/permissions'],['space','/administration/spaces'],['space-create','/administration/spaces?create=1'],['media','/media'],['media-detail','/media/detail'],['catalog','/catalog'],['catalog-draft','/catalog?draft=1']];
+    const routes=[['login','/auth/login'],['start','/'],['files','/files'],['detail','/files/detail'],['editor','/files/edit'],['permissions','/permissions'],['space','/administration/spaces'],['space-create','/administration/spaces?create=1'],['media','/media'],['media-detail','/media/detail'],['catalog','/catalog'],['catalog-draft','/catalog?draft=1']];
     for (const width of [1440,1024,390,320]) {
       await page.setViewportSize({width,height:width<760?844:1000});
       for (const [name,route] of routes) {
@@ -34,6 +34,7 @@ let serverLog='';server.stdout.on('data', b => {serverLog+=b;});server.stderr.on
       }
       await page.goto('http://127.0.0.1:18080/files');
       if(width<760){
+        assert((await page.locator('.sidebar').boundingBox()).height<=90, 'Collapsed mobile navigation must keep a compact brand/menu row');
         const toggle=page.getByRole('button',{name:'Menü',exact:true});await toggle.waitFor();
         assert.equal(await toggle.getAttribute('aria-expanded'),'false');
         await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');
@@ -65,12 +66,21 @@ let serverLog='';server.stdout.on('data', b => {serverLog+=b;});server.stderr.on
       assert.equal(await page.getByLabel('Beschreibung',{exact:true}).inputValue(),'Entwurf <nicht verlieren>');
       assert.equal(await page.locator('input[name="catalog_revision"]').inputValue(),'1');
     }
+    await page.goto('http://127.0.0.1:18080/files/edit');
+    await page.getByLabel('Dateiinhalt').fill('Offline geändert: ä <Text>\n');
+    await page.context().setOffline(true);
+    const downloading=page.waitForEvent('download');
+    await page.getByRole('button',{name:'Entwurf herunterladen',exact:true}).click();
+    const download=await downloading;
+    assert.equal(fs.readFileSync(await download.path(),'utf8'),'Offline geändert: ä <Text>\n');
+    assert.equal(download.suggestedFilename(),'Notiz _Team_.txt.draft.txt');
+    await page.context().setOffline(false);
     const noJs=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
     const fallback=await noJs.newPage();await fallback.goto('http://127.0.0.1:18080/files');
     assert.equal(await fallback.locator('nav[aria-label="Arbeitsplatz"]').isVisible(),true);
     await fallback.getByText('Neuer Ordner',{exact:true}).click();assert.equal(await fallback.getByLabel('Ordnername').isVisible(),true);
     assert.deepEqual(errors,[]);
-    fs.writeFileSync(path.join(output,'result.json'),JSON.stringify({result:'passed',browser:await browser.version(),viewports:[1440,1024,390,320],screenshots:44,checks:'synthetic real templates, no horizontal page overflow, mobile menu and Escape, file selection/reset, progressive disclosures, reader navigation, retained draft conditions, no-JS fallback'},null,2));
+    fs.writeFileSync(path.join(output,'result.json'),JSON.stringify({result:'passed',browser:await browser.version(),viewports:[1440,1024,390,320],screenshots:routes.length*4,checks:'synthetic real templates, no horizontal page overflow, mobile menu and Escape, file selection/reset, progressive disclosures, reader navigation, retained draft conditions, no-JS fallback, local draft download while offline'},null,2));
     console.log(fs.readFileSync(path.join(output,'result.json'),'utf8'));
   } catch(e){fs.writeFileSync(path.join(output,'fixture.log'),serverLog);throw e;}
   finally {await browser?.close();server.kill('SIGTERM');}

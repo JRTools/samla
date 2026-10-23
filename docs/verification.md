@@ -70,3 +70,10 @@ Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und
 Der Browserjob 120213191019 aus Lauf 39891842200 ist erfolgreich: Chromium 156.0.8078.4, Breiten 1440/1024/390/320, 44 Aufnahmen und erfolgreiche Interaktions-/Fallbackprüfungen. Das Artefakt wurde heruntergeladen; Dateiliste, Berechtigungen, Bereichsformular, Katalog einschließlich Entwurf, Dateidetail, Medien und Login wurden an repräsentativen Breiten optisch geprüft. Lokale 31 gezielte Unitprüfungen mit 202 Assertions und Syntax erfolgreich. Für die darauf folgenden optischen Korrekturen läuft ein neuer Browser-/Matrixnachweis. Dies ist eine synthetische Browserprüfung, keine Produktions- oder native Geräteabnahme.
 
 Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
+
+
+## UI-Paket U5.1: Lokale Entwurfssicherung als Offline-Vorbereitung (23. Oktober 2026)
+
+Lokale Syntax und 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich. Browserfixture und Prüffälle sind um den Texteditor sowie einen Download bei tatsächlich deaktiviertem Netzwerk ergänzt; sie prüfen UTF-8-Inhalt und portablen Dateinamen. 48 Bildschirmaufnahmen sind nun vorgesehen. Der neue CI-Lauf wird getrennt geprüft. Die vorangehende UI-/Datenbankmatrix einschließlich 44 Browseransichten ist vollständig erfolgreich; repräsentative Screenshots wurden tatsächlich optisch betrachtet.
+
+Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.

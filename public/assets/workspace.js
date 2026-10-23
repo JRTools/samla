@@ -47,3 +47,20 @@ if (exportForm) {
 
 // Bring server validation feedback into view without discarding any form values.
 document.querySelector('[data-form-error]')?.focus();
+
+// A download of the open editor draft also works after losing the connection.
+// This does not persist a queue or claim that server synchronisation has happened.
+const draftButton = document.querySelector('[data-local-draft]');
+const editor = document.getElementById('editor-text');
+if (draftButton && editor && typeof Blob !== 'undefined' && typeof URL.createObjectURL === 'function') {
+  draftButton.addEventListener('click', event => {
+    event.preventDefault();
+    const blob = new Blob([editor.value], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = (editor.dataset.draftName || 'Datei').replace(/[\\/:*?"<>|\x00-\x1f\x7f]/g, '_') + '.draft.txt';
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+}

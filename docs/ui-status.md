@@ -85,3 +85,10 @@ Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
 Die ersten tatsächlichen Chromium-Aufnahmen der echten Templates wurden optisch betrachtet. Daraufhin wurden die zuvor zu hellen Ordnerpfade abgedunkelt, der mobile Kopfbereich auf eine kompakte Marken-/Menüzeile reduziert und Dateititel von Rücksprungaktionen getrennt. Die Exportleiste erscheint mit JavaScript erst nach einer Auswahl. Gruppen-/Bereichswechsel ist bei gewähltem Kontext zusammenklappbar; die Profilkarten stehen früher im Blickfeld. Medienhinweise folgen dem Raster. Die Browserprüfung kontrolliert zusätzlich Pfadkontrast und sichtbaren Beginn der Dateiliste.
 
 Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
+
+
+### UI-Paket U5.1
+
+Im geöffneten Texteditor erzeugt Entwurf herunterladen nun in unterstützten Browsern eine lokale Textdatei ohne Serveranfrage. Damit bleibt die bewusste Sicherung auch nach Verbindungsabbruch möglich; ohne JavaScript bleibt der geschützte Serverdownload erhalten. Keine automatische Speicherung, persistente Offline-Warteschlange oder Synchronisation wird dadurch behauptet. Der vollständige U5-Ablauf hängt weiterhin vom Offlineclient ab, insbesondere vom gewünschten Verhalten bei geschlossener App. Die mobile Marken-/Menüzeile erhält nach erneuter optischer Prüfung eine explizite horizontale Flexrichtung.
+
+Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
