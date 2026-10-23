@@ -22,6 +22,8 @@ Repository: https://github.com/JRTools/samla
 
 **U4.2: Isolierte Browserprüfung und visuelle Nachweise.** Ein zusätzlicher CI-Job rendert die echten Templates mit ausschließlich synthetischen Daten und ohne Datenbank oder Produktivzugriff. Playwright 1.64.1 wird nur im temporären CI-Testverzeichnis installiert, nicht als Samla-Laufzeitabhängigkeit. Die Prüfung deckt Desktop- und Mobilbreiten, Navigation/Escape, Dateiauswahl, aufklappbare Formulare, Leseransicht, erhaltene Entwürfe und den Betrieb ohne JavaScript ab. 44 Bildschirmaufnahmen werden als kurzlebiges CI-Artefakt bereitgestellt und anschließend optisch geprüft.
 
+**U4.3: Optische Nachprüfung und mobile Verdichtung.** Die ersten tatsächlichen Chromium-Aufnahmen der echten Templates wurden optisch betrachtet. Daraufhin wurden die zuvor zu hellen Ordnerpfade abgedunkelt, der mobile Kopfbereich auf eine kompakte Marken-/Menüzeile reduziert und Dateititel von Rücksprungaktionen getrennt. Die Exportleiste erscheint mit JavaScript erst nach einer Auswahl. Gruppen-/Bereichswechsel ist bei gewähltem Kontext zusammenklappbar; die Profilkarten stehen früher im Blickfeld. Medienhinweise folgen dem Raster. Die Browserprüfung kontrolliert zusätzlich Pfadkontrast und sichtbaren Beginn der Dateiliste.
+
 ## Entwicklungsstand: UI-Überarbeitung U1 bis U4, Fachstand Iteration 40
 
 **Beschreibungen und Tags durchsuchen** findet Dateien über Namen, manuelle Beschreibungen und Tagbezeichnungen. Tag und Dateiendung lassen sich kombinieren, Ergebnisse sind geschützt und paginiert. Ausgelesene sensible Medienfelder und Originalinhalte werden nicht mit durchsucht. Keine neue Migration. [Bedienung und Grenzen](docs/catalog-search.md).

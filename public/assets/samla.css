@@ -244,3 +244,13 @@ nav a{min-height:44px}.navigation-toggle{margin-top:12px}
 .button,input:not([type=checkbox]):not([type=radio]),select,textarea{min-height:44px}
 input,select,textarea{font-size:14px}.field-note{font-size:12px}.subtle{font-size:13px}.eyebrow,.nav-heading{font-size:11px}
 .folder-path a:hover{background:#e2e8f0}.checkbox-label{min-height:44px;align-items:center}
+
+/* Visual review: contrast, compact mobile frame and contextual filters. */
+.folder-path a{color:var(--green);font-size:13px}.folder-path{margin-bottom:8px}
+.file-row .checkbox-label{min-width:44px;margin-right:12px;justify-content:center}
+.filter-panel>summary{padding:18px 24px;font-size:14px;font-weight:600;width:100%}.filter-panel .settings-form{margin-bottom:0}.permission-context h2{font-size:18px;margin:20px 0 4px}.permission-context details{margin:0 0 20px}.permission-context summary{font-size:13px}
+@media(max-width:760px){
+.sidebar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0;padding:12px 20px}.navigation-toggle{margin:0}#site-navigation{width:100%}
+.page-heading{flex-direction:column;align-items:stretch;gap:12px}.page-heading>a{align-self:flex-start}.page-heading h1{margin-bottom:8px}
+.file-row>div{flex-basis:100%;width:100%}.file-row>.button{margin-left:56px}
+}

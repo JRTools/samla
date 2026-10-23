@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.52
+Version: 1.53
 Stand: 23. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1247,5 +1247,14 @@ Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Ger�
 Ein zusätzlicher CI-Job rendert die echten Templates mit ausschließlich synthetischen Daten und ohne Datenbank oder Produktivzugriff. Playwright 1.64.1 wird nur im temporären CI-Testverzeichnis installiert, nicht als Samla-Laufzeitabhängigkeit. Die Prüfung deckt Desktop- und Mobilbreiten, Navigation/Escape, Dateiauswahl, aufklappbare Formulare, Leseransicht, erhaltene Entwürfe und den Betrieb ohne JavaScript ab. 44 Bildschirmaufnahmen werden als kurzlebiges CI-Artefakt bereitgestellt und anschließend optisch geprüft.
 
 Prüfung: Alle zwölf synthetischen PHP-Fixturrouten wurden lokal über HTTP ohne PHP-Warnungen gerendert. PHP- und JavaScript-Syntax erfolgreich. Der vorausgehende Nachtrag 39891300634 ist in allen vier PHP-/Datenbankkombinationen erfolgreich. Die neue Browserprüfung ist vorbereitet und wird erst nach ihrem tatsächlichen Lauf als erfolgreich ausgewiesen; eine Produktions- oder native Geräteabnahme ersetzt sie nicht.
+
+Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.
+
+
+## 61. UI-Paket U4.3: Optische Nachprüfung und mobile Verdichtung
+
+Die ersten tatsächlichen Chromium-Aufnahmen der echten Templates wurden optisch betrachtet. Daraufhin wurden die zuvor zu hellen Ordnerpfade abgedunkelt, der mobile Kopfbereich auf eine kompakte Marken-/Menüzeile reduziert und Dateititel von Rücksprungaktionen getrennt. Die Exportleiste erscheint mit JavaScript erst nach einer Auswahl. Gruppen-/Bereichswechsel ist bei gewähltem Kontext zusammenklappbar; die Profilkarten stehen früher im Blickfeld. Medienhinweise folgen dem Raster. Die Browserprüfung kontrolliert zusätzlich Pfadkontrast und sichtbaren Beginn der Dateiliste.
+
+Prüfung: Der Browserjob 120213191019 aus Lauf 39891842200 ist erfolgreich: Chromium 156.0.8078.4, Breiten 1440/1024/390/320, 44 Aufnahmen und erfolgreiche Interaktions-/Fallbackprüfungen. Das Artefakt wurde heruntergeladen; Dateiliste, Berechtigungen, Bereichsformular, Katalog einschließlich Entwurf, Dateidetail, Medien und Login wurden an repräsentativen Breiten optisch geprüft. Lokale 31 gezielte Unitprüfungen mit 202 Assertions und Syntax erfolgreich. Für die darauf folgenden optischen Korrekturen läuft ein neuer Browser-/Matrixnachweis. Dies ist eine synthetische Browserprüfung, keine Produktions- oder native Geräteabnahme.
 
 Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.

@@ -35,7 +35,8 @@ if (exportForm) {
   const submit = exportForm.querySelector('[type="submit"]');
   const update = () => {
     const selected = boxes.filter(box => box.checked).length;
-    count.textContent = selected ? `${selected} Dateien ausgewählt` : 'Keine Dateien ausgewählt';
+    count.textContent = selected ? `${selected} ${selected === 1 ? 'Datei' : 'Dateien'} ausgewählt` : 'Keine Dateien ausgewählt';
+    exportForm.hidden = !selected;
     clear.hidden = !selected;
     submit.disabled = !selected;
   };

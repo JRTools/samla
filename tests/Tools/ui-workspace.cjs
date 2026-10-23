@@ -39,8 +39,19 @@ let serverLog='';server.stdout.on('data', b => {serverLog+=b;});server.stderr.on
         await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');
         await toggle.press('Escape');assert.equal(await toggle.getAttribute('aria-expanded'),'false');
       }
+      const firstRow=await page.locator('.file-row').first().boundingBox();
+      assert(firstRow.y < (width<760?844:1000)-44, 'File content must be visible without scrolling past forms');
+      const contrast=await page.locator('.folder-path a').first().evaluate(el=>{
+        const luminance=css=>{
+          const rgb=css.match(/[0-9.]+/g).slice(0,3).map(Number).map(n=>n/255).map(n=>n<=0.04045?n/12.92:((n+0.055)/1.055)**2.4);
+          return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722;
+        };
+        const a=luminance(getComputedStyle(el).color), b=luminance(getComputedStyle(document.body).backgroundColor);
+        return (Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);
+      });
+      assert(contrast>=4.5, 'Folder breadcrumbs need readable contrast');
       await page.getByLabel('Notiz <Team>.txt für Export auswählen').check();
-      assert.equal(await page.locator('[data-selection-count]').innerText(),'1 Dateien ausgewählt');
+      assert.equal(await page.locator('[data-selection-count]').innerText(),'1 Datei ausgewählt');
       await page.getByRole('button',{name:'Auswahl aufheben'}).click();
       assert.equal(await page.getByLabel('Notiz <Team>.txt für Export auswählen').isChecked(),false);
       await page.getByText('Datei hochladen',{exact:true}).click();

@@ -19,7 +19,7 @@ $administration = ($caps['identity.users.read'] ?? false) || ($caps['identity.gr
 ?>
 <!doctype html>
 <html lang="de">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?= $e($titles[$page]) ?> · Samla</title><link rel="stylesheet" href="/assets/samla.css?v=45"><script src="/assets/workspace.js?v=45" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?= $e($titles[$page]) ?> · Samla</title><link rel="stylesheet" href="/assets/samla.css?v=46"><script src="/assets/workspace.js?v=46" defer></script></head>
 <body class="<?= $signedIn ? 'signed-in' : 'signed-out' ?>"><a class="skip" href="#main">Zum Inhalt</a>
 <div class="shell"><aside class="sidebar" aria-label="Hauptnavigation"><a class="brand" href="/"><span class="brand-icon" aria-hidden="true">S</span>Samla<span class="brand-dot">.</span></a><p class="brand-sub">JRTools · Dateien und Medien</p>
 <?php if ($signedIn): ?>
@@ -37,7 +37,7 @@ $administration = ($caps['identity.users.read'] ?? false) || ($caps['identity.gr
 <?php if ($caps['operations.worker.read'] ?? false): ?><a href="/operations/worker" <?= $page === 'worker' ? 'aria-current="page"' : '' ?>>Hintergrundaufgaben</a><?php endif ?></nav><?php endif ?></div>
 <?php endif ?>
 <div class="sidebar-bottom">Ein Tool von JRTools.</div></aside>
-<div class="workspace"><header class="topbar"><nav class="breadcrumbs" aria-label="Seitenpfad"><a href="/">Samla</a><?php if(in_array($page, $filePages, true) && $page !== 'spaces'): ?><span aria-hidden="true">/</span><a href="/files">Dateien</a><?php endif ?><span aria-hidden="true">/</span><span aria-current="page"><?= $e($titles[$page]) ?></span></nav>
+<div class="workspace"><header class="topbar"><nav class="breadcrumbs" aria-label="Seitenpfad"><a href="/">Samla</a><?php if(in_array($page, $filePages, true) && !in_array($page,['spaces','files'],true)): ?><span aria-hidden="true">/</span><a href="/files">Dateien</a><?php endif ?><span aria-hidden="true">/</span><span aria-current="page"><?= $e($titles[$page]) ?></span></nav>
 <?php if ($signedIn && ($data['oidc'] ?? false)): ?><details class="account-menu"><summary><?= $e($accountName) ?></summary><div class="account-menu-content"><a href="/account" <?= in_array($page,['account','app-passwords'],true) ? 'aria-current="page"' : '' ?>>Mein Zugang</a><a href="/account/app-passwords">Geräte und App-Passwörter</a><form method="post" action="/auth/logout"><input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>"><button class="button button-outline" type="submit">Bei Samla abmelden</button></form></div></details><?php elseif($signedIn): ?><span>Entwicklungszugang</span><?php endif ?></header>
 <?php if ($signedIn && !($data['oidc'] ?? false)): ?><div class="dev-notice">Lokaler Entwicklungszugang: nur auf dem Entwicklungsrechner.</div><?php endif ?>
 <main id="main" tabindex="-1">

@@ -63,3 +63,10 @@ Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und
 Alle zwölf synthetischen PHP-Fixturrouten wurden lokal über HTTP ohne PHP-Warnungen gerendert. PHP- und JavaScript-Syntax erfolgreich. Der vorausgehende Nachtrag 39891300634 ist in allen vier PHP-/Datenbankkombinationen erfolgreich. Die neue Browserprüfung ist vorbereitet und wird erst nach ihrem tatsächlichen Lauf als erfolgreich ausgewiesen; eine Produktions- oder native Geräteabnahme ersetzt sie nicht.
 
 Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
+
+
+## UI-Paket U4.3: Optische Nachprüfung und mobile Verdichtung (23. Oktober 2026)
+
+Der Browserjob 120213191019 aus Lauf 39891842200 ist erfolgreich: Chromium 156.0.8078.4, Breiten 1440/1024/390/320, 44 Aufnahmen und erfolgreiche Interaktions-/Fallbackprüfungen. Das Artefakt wurde heruntergeladen; Dateiliste, Berechtigungen, Bereichsformular, Katalog einschließlich Entwurf, Dateidetail, Medien und Login wurden an repräsentativen Breiten optisch geprüft. Lokale 31 gezielte Unitprüfungen mit 202 Assertions und Syntax erfolgreich. Für die darauf folgenden optischen Korrekturen läuft ein neuer Browser-/Matrixnachweis. Dies ist eine synthetische Browserprüfung, keine Produktions- oder native Geräteabnahme.
+
+Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
