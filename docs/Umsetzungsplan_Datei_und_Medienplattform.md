@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.51
+Version: 1.52
 Stand: 23. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1238,5 +1238,14 @@ Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Ger�
 Der lokale Router liefert das optionale UI-Skript mit korrektem MIME-Typ aus; der HTTP-Prüfablauf kontrolliert die Auslieferung. Assetversionen verhindern alte Layoutdateien nach dem Update. Schriftgrößen und Touchziele der bestehenden Formulare wurden vereinheitlicht. U1 bis U4 sind implementiert. U5 bleibt ausdrücklich abhängig von der noch offenen Entscheidung zwischen einer eigenen installierbaren Samla-Web-App und vorhandenen WebDAV-Apps; eine lokale Warteschlange oder echte Synchronisation ist im aktuellen Serverfrontend nicht vorhanden.
 
 Prüfung: Vollständiger CI-Lauf 39890742597 für U4 ist in allen vier Kombinationen grün: je 221 Unit-/Architekturtests mit 1318 Assertions sowie 336 Integrationstests mit 1766 Assertions, zusätzlich HTTP und HTTPS. Alle vier Testlogs wurden gelesen; archiviert in verification-ui-u1-u4.md. Nachtrag lokal: 31 gezielte Tests mit 202 Assertions sowie tatsächliche HTTP-Auslieferung des UI-Skripts erfolgreich. Der Folgelauf für diesen Nachtrag wird gesondert geprüft. Visuelle Abnahme bleibt wegen des nicht erreichbaren lokalen Vorschauhosts offen.
+
+Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.
+
+
+## 60. UI-Paket U4.2: Isolierte Browserprüfung und visuelle Nachweise
+
+Ein zusätzlicher CI-Job rendert die echten Templates mit ausschließlich synthetischen Daten und ohne Datenbank oder Produktivzugriff. Playwright 1.64.1 wird nur im temporären CI-Testverzeichnis installiert, nicht als Samla-Laufzeitabhängigkeit. Die Prüfung deckt Desktop- und Mobilbreiten, Navigation/Escape, Dateiauswahl, aufklappbare Formulare, Leseransicht, erhaltene Entwürfe und den Betrieb ohne JavaScript ab. 44 Bildschirmaufnahmen werden als kurzlebiges CI-Artefakt bereitgestellt und anschließend optisch geprüft.
+
+Prüfung: Alle zwölf synthetischen PHP-Fixturrouten wurden lokal über HTTP ohne PHP-Warnungen gerendert. PHP- und JavaScript-Syntax erfolgreich. Der vorausgehende Nachtrag 39891300634 ist in allen vier PHP-/Datenbankkombinationen erfolgreich. Die neue Browserprüfung ist vorbereitet und wird erst nach ihrem tatsächlichen Lauf als erfolgreich ausgewiesen; eine Produktions- oder native Geräteabnahme ersetzt sie nicht.
 
 Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.

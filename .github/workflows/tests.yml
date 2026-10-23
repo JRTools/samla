@@ -108,3 +108,36 @@ jobs:
           export SAMLA_TEST_PHP_COMMANDS
           SAMLA_TEST_PHP_COMMANDS=$(python3 -c 'import json,os,shutil;print(json.dumps({os.environ["MATRIX_PHP_VERSION"]:[shutil.which("php")]}))')
           "$RUNNER_TEMP/samla-http-venv/bin/python" tests/Tools/oidc-web-smoke.py
+
+  ui:
+    name: Synthetic browser UI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up fixture PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+      - name: Install isolated browser test tool
+        run: |
+          npm install --prefix "$RUNNER_TEMP/samla-ui-browser" --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.64.1
+          node "$RUNNER_TEMP/samla-ui-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Check workspace and capture synthetic views
+        env:
+          SAMLA_PLAYWRIGHT_MODULE: ${{ runner.temp }}/samla-ui-browser/node_modules/playwright
+          SAMLA_UI_OUTPUT: ${{ runner.temp }}/samla-ui-artifacts
+        run: node tests/Tools/ui-workspace.cjs
+      - name: Save synthetic UI evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: samla-ui-evidence
+          path: ${{ runner.temp }}/samla-ui-artifacts
+          retention-days: 7
+          if-no-files-found: warn

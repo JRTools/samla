@@ -20,6 +20,8 @@ Repository: https://github.com/JRTools/samla
 
 **U4.1: Abschlussprüfung und lokale Skriptauslieferung.** Der lokale Router liefert das optionale UI-Skript mit korrektem MIME-Typ aus; der HTTP-Prüfablauf kontrolliert die Auslieferung. Assetversionen verhindern alte Layoutdateien nach dem Update. Schriftgrößen und Touchziele der bestehenden Formulare wurden vereinheitlicht. U1 bis U4 sind implementiert. U5 bleibt ausdrücklich abhängig von der noch offenen Entscheidung zwischen einer eigenen installierbaren Samla-Web-App und vorhandenen WebDAV-Apps; eine lokale Warteschlange oder echte Synchronisation ist im aktuellen Serverfrontend nicht vorhanden.
 
+**U4.2: Isolierte Browserprüfung und visuelle Nachweise.** Ein zusätzlicher CI-Job rendert die echten Templates mit ausschließlich synthetischen Daten und ohne Datenbank oder Produktivzugriff. Playwright 1.64.1 wird nur im temporären CI-Testverzeichnis installiert, nicht als Samla-Laufzeitabhängigkeit. Die Prüfung deckt Desktop- und Mobilbreiten, Navigation/Escape, Dateiauswahl, aufklappbare Formulare, Leseransicht, erhaltene Entwürfe und den Betrieb ohne JavaScript ab. 44 Bildschirmaufnahmen werden als kurzlebiges CI-Artefakt bereitgestellt und anschließend optisch geprüft.
+
 ## Entwicklungsstand: UI-Überarbeitung U1 bis U4, Fachstand Iteration 40
 
 **Beschreibungen und Tags durchsuchen** findet Dateien über Namen, manuelle Beschreibungen und Tagbezeichnungen. Tag und Dateiendung lassen sich kombinieren, Ergebnisse sind geschützt und paginiert. Ausgelesene sensible Medienfelder und Originalinhalte werden nicht mit durchsucht. Keine neue Migration. [Bedienung und Grenzen](docs/catalog-search.md).

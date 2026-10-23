@@ -56,3 +56,10 @@ Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und
 Vollständiger CI-Lauf 39890742597 für U4 ist in allen vier Kombinationen grün: je 221 Unit-/Architekturtests mit 1318 Assertions sowie 336 Integrationstests mit 1766 Assertions, zusätzlich HTTP und HTTPS. Alle vier Testlogs wurden gelesen; archiviert in verification-ui-u1-u4.md. Nachtrag lokal: 31 gezielte Tests mit 202 Assertions sowie tatsächliche HTTP-Auslieferung des UI-Skripts erfolgreich. Der Folgelauf für diesen Nachtrag wird gesondert geprüft. Visuelle Abnahme bleibt wegen des nicht erreichbaren lokalen Vorschauhosts offen.
 
 Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
+
+
+## UI-Paket U4.2: Isolierte Browserprüfung und visuelle Nachweise (23. Oktober 2026)
+
+Alle zwölf synthetischen PHP-Fixturrouten wurden lokal über HTTP ohne PHP-Warnungen gerendert. PHP- und JavaScript-Syntax erfolgreich. Der vorausgehende Nachtrag 39891300634 ist in allen vier PHP-/Datenbankkombinationen erfolgreich. Die neue Browserprüfung ist vorbereitet und wird erst nach ihrem tatsächlichen Lauf als erfolgreich ausgewiesen; eine Produktions- oder native Geräteabnahme ersetzt sie nicht.
+
+Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
