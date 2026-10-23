@@ -230,3 +230,7 @@ nav a{min-height:44px}.navigation-toggle{margin-top:12px}
 .file-row{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:16px 22px}.file-row>div{min-width:0;position:relative;flex:1}.file-row .checkbox-label{float:left;margin-right:16px;min-height:44px;align-items:center}.file-row .checkbox-label input{margin:0;width:20px;height:20px}.file-row h3{font-size:15px}.file-row h3 a{color:var(--ink)}.file-row .subtle{margin-bottom:4px}.file-row> .button{flex-shrink:0}
 .file-action{margin:0;border-bottom:1px solid var(--line)}.file-action>summary{padding:18px 24px;font-size:14px;font-weight:600;width:100%;min-height:52px}.file-action>form{margin:0;border:0}.file-action .group-row{padding-top:0}
 @media(max-width:760px){.toolbar-disclosure>.disclosure-content{position:static;width:100%;box-shadow:none;margin-top:8px}.toolbar-disclosure[open]{flex-basis:100%}.file-row{align-items:flex-start;flex-wrap:wrap;padding:16px}.file-row>.button{margin-left:36px}.selection-bar{padding:12px}.file-toolbar .button{min-height:44px}.file-action>summary{padding:16px}}
+
+/* U3: contextual administration. */
+.size-input{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:10px}.profile-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,320px);gap:24px}.profile-row .settings-form{margin:0}.danger-zone>summary{color:#991b1b}.view-switch{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:760px){.profile-row{grid-template-columns:1fr;gap:12px}.size-input{grid-template-columns:minmax(0,1fr) 90px}}

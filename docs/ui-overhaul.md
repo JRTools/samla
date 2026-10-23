@@ -89,3 +89,10 @@ PHP 8.4.5: 23 gezielte Unitprüfungen mit 133 Assertions erfolgreich; Syntax all
 Eine kompakte Werkzeugleiste ersetzt die dauerhaft vorgeschalteten Upload- und Ordnerformulare. Dateinamen öffnen die Details, der Bereichs- und Ordnerkontext bleibt sichtbar. Die Exportauswahl hat einen Zähler und lässt sich aufheben; ohne JavaScript bleibt das Formular nutzbar. Detailaktionen sind gezielt aufklappbar. Namenssuche bietet bei vorhandenen Katalogrechten einen Wechsel zur Metadatensuche. Auswahl gilt ausdrücklich nur für die aktuelle Seite; Tagbearbeitung bleibt ein eigener Bereichsablauf.
 
 PHP 8.4.5: 29 gezielte Unitprüfungen mit 181 Assertions erfolgreich, jetzt einschließlich installierter fixierter Composer-Abhängigkeiten und OIDC-Clientprüfungen. Syntax aller 44 Templates/Webklassen und JavaScript erfolgreich. Neue Rendererprüfung deckt Nur-Lese-Navigation, Escaping und ausgeschlossene Upload-/Exportformulare ab. Zielmatrix, echter HTTP-Durchlauf und authentifizierte visuelle Abnahme bleiben noch offen.
+
+
+### U3: Bereiche und Gruppenprofile verständlich verwalten (23. Oktober 2026)
+
+Die Bereichsliste öffnet gezielt einen Bereich; Neuanlage und Löschung sind getrennte Abläufe. Quoten akzeptieren GB, GiB und kleinere Einheiten, mit exakter ganzzahliger Umrechnung und verlustfreier Darstellung bestehender Bytewerte. Profilkarten verbinden Beschreibung, aktuellen Zuweisungsstatus und die passende bestätigte Aktion. Bereichslinks führen direkt in die zugehörige Rechteverwaltung. Bestehende POST-Verträge bleiben kompatibel; widersprüchliche Größenfelder werden abgewiesen.
+
+PHP 8.4.5: 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich, einschließlich Grenzwerten, Dezimalkomma, Überlauf, Bruchteilen von Bytes und exakten Quoten-Roundtrips. PHP- und Python-Syntax erfolgreich. Zusätzlicher Integrationstest und HTTP-Prüfablauf für die neue Größeneingabe vorbereitet; Ausführung der Datenbankmatrix erfolgt in CI und wird getrennt dokumentiert. Authentifizierte visuelle Abnahme noch offen.

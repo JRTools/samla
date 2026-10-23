@@ -169,14 +169,14 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert req('/administration/group-mappings/change',{'csrf':csrf(mappings),'group':'samla.administrators','operation':'grant','external':'fake-admins','confirm':'1'})[0]==409
                     # Browser administration: named dropdowns, current profile state and empty-space lifecycle.
                     status,management,_=req('/administration/spaces');assert status==200
-                    status,_,headers=req('/administration/spaces/create',{'csrf':csrf(management),'name':'HTTP UI Bereich','quota':'100000000000'})
+                    status,_,headers=req('/administration/spaces/create',{'csrf':csrf(management),'name':'HTTP UI Bereich','quota_value':'100','quota_unit':'GB'})
                     assert status==303
                     ui_space=urllib.parse.parse_qs(urllib.parse.urlsplit(headers['Location']).query)['space'][0]
                     assert 'HTTP UI Bereich' not in req('/files')[1], 'Catalog administration must not grant content access'
                     status,permissions,_=req('/permissions?'+urllib.parse.urlencode({'group':'samla.administrators','space':ui_space}))
                     assert status==200 and '<select id="permission-group"' in permissions and 'HTTP UI Bereich</option>' in permissions
                     def profile_selection(body,role):
-                        for encoded in re.findall(r'<option value="([^\"]+)"',body):
+                        for encoded in re.findall(r'name="selection" value="([^\"]+)"',body):
                             value=html.unescape(encoded)
                             if value.startswith('['):
                                 selected=json.loads(value)
@@ -193,7 +193,7 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     assert 'HTTP UI Bereich' not in req('/files')[1]
                     status,management,_=req('/administration/spaces?space='+ui_space);assert status==200
                     expected=re.search(r'name="expected" value="([a-f0-9]{64})"',management).group(1)
-                    update={'csrf':csrf(management),'space':ui_space,'expected':expected,'name':'HTTP UI umbenannt','quota':'110000000000'}
+                    update={'csrf':csrf(management),'space':ui_space,'expected':expected,'name':'HTTP UI umbenannt','quota_value':'110','quota_unit':'GB'}
                     assert req('/administration/spaces/update',update)[0]==303
                     assert req('/administration/spaces/update',update)[0]==409
                     status,management,_=req('/administration/spaces?space='+ui_space)
@@ -539,3 +539,4 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     if gateway is not None:gateway.shutdown();gateway.server_close();gateway_thread.join()
     finally:
         idp.shutdown();idp.server_close();thread.join()
+

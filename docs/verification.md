@@ -32,3 +32,10 @@ Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und
 PHP 8.4.5: 29 gezielte Unitprüfungen mit 181 Assertions erfolgreich, jetzt einschließlich installierter fixierter Composer-Abhängigkeiten und OIDC-Clientprüfungen. Syntax aller 44 Templates/Webklassen und JavaScript erfolgreich. Neue Rendererprüfung deckt Nur-Lese-Navigation, Escaping und ausgeschlossene Upload-/Exportformulare ab. Zielmatrix, echter HTTP-Durchlauf und authentifizierte visuelle Abnahme bleiben noch offen.
 
 Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
+
+
+## UI-Paket U3: Bereiche und Gruppenprofile verständlich verwalten (23. Oktober 2026)
+
+PHP 8.4.5: 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich, einschließlich Grenzwerten, Dezimalkomma, Überlauf, Bruchteilen von Bytes und exakten Quoten-Roundtrips. PHP- und Python-Syntax erfolgreich. Zusätzlicher Integrationstest und HTTP-Prüfablauf für die neue Größeneingabe vorbereitet; Ausführung der Datenbankmatrix erfolgt in CI und wird getrennt dokumentiert. Authentifizierte visuelle Abnahme noch offen.
+
+Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.

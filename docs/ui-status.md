@@ -50,3 +50,10 @@ Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
 Eine kompakte Werkzeugleiste ersetzt die dauerhaft vorgeschalteten Upload- und Ordnerformulare. Dateinamen öffnen die Details, der Bereichs- und Ordnerkontext bleibt sichtbar. Die Exportauswahl hat einen Zähler und lässt sich aufheben; ohne JavaScript bleibt das Formular nutzbar. Detailaktionen sind gezielt aufklappbar. Namenssuche bietet bei vorhandenen Katalogrechten einen Wechsel zur Metadatensuche. Auswahl gilt ausdrücklich nur für die aktuelle Seite; Tagbearbeitung bleibt ein eigener Bereichsablauf.
 
 Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
+
+
+### UI-Paket U3
+
+Die Bereichsliste öffnet gezielt einen Bereich; Neuanlage und Löschung sind getrennte Abläufe. Quoten akzeptieren GB, GiB und kleinere Einheiten, mit exakter ganzzahliger Umrechnung und verlustfreier Darstellung bestehender Bytewerte. Profilkarten verbinden Beschreibung, aktuellen Zuweisungsstatus und die passende bestätigte Aktion. Bereichslinks führen direkt in die zugehörige Rechteverwaltung. Bestehende POST-Verträge bleiben kompatibel; widersprüchliche Größenfelder werden abgewiesen.
+
+Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).

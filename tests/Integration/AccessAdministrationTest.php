@@ -58,13 +58,24 @@ final class AccessAdministrationTest extends TestCase
     {return ['csrf'=>$this->csrf,'group'=>'team','space'=>$space??'','selection'=>json_encode([$profile,$state??$this->state($profile,'team',$space)['fingerprint']],JSON_THROW_ON_ERROR),'operation'=>$operation,'confirm'=>'1'];}
     private function allowed(string $actor,string $action,string $space):bool
     {return $this->auth->decide(new AuthorizationRequest($actor,$action,Scope::Space,$space))->decision===Decision::Permit;}
+    public function testReadableQuotaInputIsExactAndRejectsAmbiguousOrFractionalBytes(): void
+    {
+        $post=['csrf'=>$this->csrf,'name'=>'Einheitenbereich','quota_value'=>'1,5','quota_unit'=>'GiB'];
+        $response=$this->request('/administration/spaces/create','POST',post:$post);
+        self::assertSame(303,$response->status);
+        parse_str(parse_url($response->headers['Location'],PHP_URL_QUERY),$query);
+        self::assertSame(1610612736,(int)$this->spaces->details('admin',$query['space'])['quota_bytes']);
+        self::assertSame(400,$this->request('/administration/spaces/create','POST',post:$post+['quota'=>'1'])->status);
+        self::assertSame(400,$this->request('/administration/spaces/create','POST',post:array_replace($post,['quota_value'=>'0.1','quota_unit'=>'B']))->status);
+    }
+
     public function testDropdownsDisplayNamesAndProtectAdministrativeMetadata():void
     {
         $response=$this->request('/permissions',query:['group'=>'team','space'=>'space']);self::assertSame(200,$response->status);
         self::assertStringContainsString('<select id="permission-group"',$response->body);
         self::assertStringContainsString('Redaktion &lt;Team&gt;</option>',$response->body);
         self::assertStringContainsString('Medien &lt;Team&gt;</option>',$response->body);
-        self::assertStringContainsString('Lesen (nicht zugewiesen)',$response->body);
+        self::assertStringContainsString('Lesen',$response->body);self::assertStringContainsString('Nicht zugewiesen',$response->body);
         self::assertStringNotContainsString('>team</option>',$response->body);
         self::assertSame(403,$this->request('/permissions',actor:'bob')->status);
         self::assertSame(403,$this->request('/administration/spaces',actor:'bob')->status);
@@ -228,3 +239,4 @@ final class AccessAdministrationTest extends TestCase
     }
 
 }
+

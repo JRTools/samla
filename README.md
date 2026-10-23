@@ -14,6 +14,8 @@ Repository: https://github.com/JRTools/samla
 
 **U2: Dateien und Aktionen im Mittelpunkt.** Eine kompakte Werkzeugleiste ersetzt die dauerhaft vorgeschalteten Upload- und Ordnerformulare. Dateinamen öffnen die Details, der Bereichs- und Ordnerkontext bleibt sichtbar. Die Exportauswahl hat einen Zähler und lässt sich aufheben; ohne JavaScript bleibt das Formular nutzbar. Detailaktionen sind gezielt aufklappbar. Namenssuche bietet bei vorhandenen Katalogrechten einen Wechsel zur Metadatensuche. Auswahl gilt ausdrücklich nur für die aktuelle Seite; Tagbearbeitung bleibt ein eigener Bereichsablauf.
 
+**U3: Bereiche und Gruppenprofile verständlich verwalten.** Die Bereichsliste öffnet gezielt einen Bereich; Neuanlage und Löschung sind getrennte Abläufe. Quoten akzeptieren GB, GiB und kleinere Einheiten, mit exakter ganzzahliger Umrechnung und verlustfreier Darstellung bestehender Bytewerte. Profilkarten verbinden Beschreibung, aktuellen Zuweisungsstatus und die passende bestätigte Aktion. Bereichslinks führen direkt in die zugehörige Rechteverwaltung. Bestehende POST-Verträge bleiben kompatibel; widersprüchliche Größenfelder werden abgewiesen.
+
 ## Entwicklungsstand: Iteration 40 (Katalogsuche mit Beschreibungen und Tags)
 
 **Beschreibungen und Tags durchsuchen** findet Dateien über Namen, manuelle Beschreibungen und Tagbezeichnungen. Tag und Dateiendung lassen sich kombinieren, Ergebnisse sind geschützt und paginiert. Ausgelesene sensible Medienfelder und Originalinhalte werden nicht mit durchsucht. Keine neue Migration. [Bedienung und Grenzen](docs/catalog-search.md).

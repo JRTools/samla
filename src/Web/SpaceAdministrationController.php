@@ -25,8 +25,13 @@ final readonly class SpaceAdministrationController
                     $this->spaces->delete($actor,$request->field('space',64),$request->field('expected',64));
                     return new Response(303,headers:['Location'=>'/administration/spaces'],flash:'Leerer Speicherbereich und zugehörige Rechtezuweisungen gelöscht.');
                 }
-                $quota=$request->field('quota',13);
-                if(!ctype_digit($quota)||strlen($quota)>13){throw new \InvalidArgumentException();}
+                if(array_key_exists('quota_value',$request->post)||array_key_exists('quota_unit',$request->post)){
+                    if(array_key_exists('quota',$request->post)){throw new \InvalidArgumentException();}
+                    $quota=StorageSizeInput::parse($request->field('quota_value',20),$request->field('quota_unit',3));
+                }else{
+                    $quota=$request->field('quota',13);
+                    if(!ctype_digit($quota)||strlen($quota)>13){throw new \InvalidArgumentException();}
+                }
                 $name=$request->field('name',1020);
                 if($request->path==='/administration/spaces/create'){
                     $space=$this->spaces->create($actor,$name,(int)$quota);$message='Speicherbereich angelegt. Weise nun ausdrücklich Gruppenrechte zu.';
@@ -37,7 +42,8 @@ final readonly class SpaceAdministrationController
             }
             $choices=$this->directory->choices($actor);$id=$request->query['space']??'';
             if(!is_string($id)){throw new \InvalidArgumentException();}
-            $data+=['choices'=>$choices,'selected_space'=>$id===''?null:$this->spaces->details($actor,$id)];
+            $create=$request->query['create']??'';if(!is_string($create)||!in_array($create,['','1'],true)){throw new \InvalidArgumentException();}
+            $data+=['show_create'=>$create==='1','choices'=>$choices,'selected_space'=>$id===''?null:$this->spaces->details($actor,$id)];
             return new Response(200,$this->renderer->render('space-administration',$data));
         }catch(AccessDenied){return $this->error(403,'Für die Bereichsverwaltung fehlt die Berechtigung.',$data);}
         catch(MutationConflict){return $this->error(409,'Der Bereich wurde geändert, die Quote liegt unter dem aktuellen Verbrauch oder der Bereich enthält noch Dateien, Papierkorb oder Sperren. Bitte lade die Ansicht erneut.',$data);}
@@ -47,3 +53,4 @@ final readonly class SpaceAdministrationController
     private function error(int $status,string $message,array $data,array $headers=[]):Response
     {return new Response($status,$this->renderer->render('error',$data+['status'=>$status,'error'=>$message]),$headers);}
 }
+
