@@ -240,3 +240,7 @@ nav a{min-height:44px}.navigation-toggle{margin-top:12px}
 .panel.auth-panel>form{display:grid;gap:10px}.panel.auth-panel>form>.button{justify-self:start}.panel.auth-panel label{font-weight:600}.panel.auth-panel .field-note{margin:0 0 10px}.disclosure-content>.settings-form{padding:18px 0;border-bottom:1px solid var(--line)}
 .group-row details{margin:10px 0}.group-row details>summary{font-size:13px;min-height:44px;padding:10px 0}.media-card h2 a{color:var(--ink)}.media-viewer{padding:24px}.media-viewer>p{margin:0}.notice[role=alert]{border-left:4px solid #b91c1c}
 .button-small{min-height:44px}summary{min-height:44px;display:list-item;align-content:center}.account-menu summary{display:flex}
+/* Final readability and touch targets across existing forms. */
+.button,input:not([type=checkbox]):not([type=radio]),select,textarea{min-height:44px}
+input,select,textarea{font-size:14px}.field-note{font-size:12px}.subtle{font-size:13px}.eyebrow,.nav-heading{font-size:11px}
+.folder-path a:hover{background:#e2e8f0}.checkbox-label{min-height:44px;align-items:center}

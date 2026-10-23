@@ -1,6 +1,6 @@
 # Umsetzungsplan: Samla
 
-Version: 1.50
+Version: 1.51
 Stand: 23. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
@@ -1229,5 +1229,14 @@ Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Ger�
 Tags werden als benannte Checkboxen gewählt; Tagverwaltung und erneute Medienanalyse öffnen sich bei Bedarf. Sucheinstiege sind verbunden, leere Medien- und Exportansichten nennen den nächsten Schritt. Fehlermeldungen haben konkrete Überschriften. Katalogentwürfe, Bereichsname/Quote, Ordnernamen und Dateiaktionen bleiben bei unterstützten Eingabe- und Konfliktfehlern im Formular erhalten. Ursprüngliche Revisions- und Konfliktbedingungen bleiben bestehen; ein Konflikt erhält keinen still erneuerten Schreibnachweis. Datei-Uploads müssen aus Browsergründen gegebenenfalls erneut ausgewählt werden. Technische Verarbeitungszustände werden nicht als fertig oder synchronisiert umgedeutet.
 
 Prüfung: PHP 8.4.5: 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich; alle eigenen PHP-Dateien, das optionale lokale JavaScript und der aktualisierte HTTP-Prüfablauf sind syntaktisch geprüft. Integrationstests prüfen zusätzlich den erhaltenen Katalogentwurf samt alter Revision und Quoteneingaben. Diese Datenbanktests folgen mit der vollständigen CI-Matrix. Zwei überholte UI-Textannahmen aus den vorherigen CI-Läufen wurden auf die neue Struktur angepasst. Ein lokaler synthetischer HTML-Vorschauserver wurde erstellt, ist aber aus dem Cloud-Browser nicht erreichbar (ERR_HTTP_RESPONSE_CODE_FAILURE). Keine vollständige visuelle Abnahme behauptet.
+
+Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.
+
+
+## 59. UI-Paket U4.1: Abschlussprüfung und lokale Skriptauslieferung
+
+Der lokale Router liefert das optionale UI-Skript mit korrektem MIME-Typ aus; der HTTP-Prüfablauf kontrolliert die Auslieferung. Assetversionen verhindern alte Layoutdateien nach dem Update. Schriftgrößen und Touchziele der bestehenden Formulare wurden vereinheitlicht. U1 bis U4 sind implementiert. U5 bleibt ausdrücklich abhängig von der noch offenen Entscheidung zwischen einer eigenen installierbaren Samla-Web-App und vorhandenen WebDAV-Apps; eine lokale Warteschlange oder echte Synchronisation ist im aktuellen Serverfrontend nicht vorhanden.
+
+Prüfung: Vollständiger CI-Lauf 39890742597 für U4 ist in allen vier Kombinationen grün: je 221 Unit-/Architekturtests mit 1318 Assertions sowie 336 Integrationstests mit 1766 Assertions, zusätzlich HTTP und HTTPS. Alle vier Testlogs wurden gelesen; archiviert in verification-ui-u1-u4.md. Nachtrag lokal: 31 gezielte Tests mit 202 Assertions sowie tatsächliche HTTP-Auslieferung des UI-Skripts erfolgreich. Der Folgelauf für diesen Nachtrag wird gesondert geprüft. Visuelle Abnahme bleibt wegen des nicht erreichbaren lokalen Vorschauhosts offen.
 
 Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.

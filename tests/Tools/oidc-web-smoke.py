@@ -125,6 +125,8 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     before={c.name:c.value for c in jar};callback=login();count=len(token_requests)
                     wrong=callback.replace('state=','state=wrong')
                     assert req(wrong)[0]==401 and len(token_requests)==count
+                    asset_status,asset,asset_headers=req('/assets/workspace.js')
+                    assert asset_status==200 and asset_headers['Content-Type'].startswith('text/javascript') and 'data-navigation-toggle' in asset
                     callback=login();status,body,headers=req(callback);assert status==303,(status,body)
                     assert {c.name:c.value for c in jar}!=before
                     status,body,_=req('/account');assert status==200 and 'OIDC Test User' in body,(status,body)

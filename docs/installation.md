@@ -160,3 +160,9 @@ Keine neue Migration oder Abhängigkeit für diese Phase. Nach dem Codeupdate ka
 ## Persönliche Bereiche nach Update
 
 Iteration 39 benötigt die neue Speichermigration für persönliche Eigentümerzuordnungen. Sie muss vor der nächsten OIDC-Anmeldung eingespielt sein. Erfolgreiche nächste Anmeldung erstellt je Konto einmalig den persönlichen Bereich, sofern APP_PERSONAL_SPACE_ENABLED=1 (Voreinstellung). APP_PERSONAL_SPACE_QUOTA_BYTES setzt die Quote neuer Bereiche; 10737418240 ist ein vorläufiger technischer Startwert. Vorhandene Quoten werden dadurch nicht ersetzt. Deaktivieren löscht keine Bestandsdaten. [Einrichtung und Schutzgrenzen](personal-spaces.md).
+
+
+
+## UI-Überarbeitung U1 bis U4
+
+Diese UI-Pakete benötigen keine neue Migration oder Laufzeitbibliothek. Aktualisiere auch public/assets/samla.css und public/assets/workspace.js. Das lokale optionale Skript wird durch die Anwendungs-CSP mit script-src self erlaubt. Falls der Webserver eine zusätzliche CSP setzt, muss sie mit dieser lokalen Datei vereinbar sein. Navigation und grundlegende Formulare bleiben ohne JavaScript nutzbar. Der lokale PHP-Router liefert ausschließlich die ausdrücklich erlaubten CSS-/JavaScript-Dateien aus. Installation auf dem Betreiberhost und visuelle Abnahme erfolgen getrennt von der GitHub-Veröffentlichung.

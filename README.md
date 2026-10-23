@@ -8,7 +8,7 @@ Repository: https://github.com/JRTools/samla
 
 **Verbindliches Ausbauziel:** Dateien in der App offline bearbeiten und nach Wiederverbindung automatisch synchronisieren. Dauerhafte lokale Änderungen, Wiederaufnahme und sichtbare Konfliktbehandlung gehören dazu. Die vorhandene WebDAV-Basis ist noch keine fertige Offline-App. [Ablauf, Arbeitspakete und Abnahme](docs/offline-sync.md).
 
-**UI-Überarbeitung läuft:** Navigation und Bedienabläufe werden paketweise vereinfacht. [Umfang und aktueller Stand](docs/ui-overhaul.md).
+**UI-Pakete U1 bis U4 sind implementiert:** Navigation, Dateiverwaltung, Bereichsrechte und Katalog wurden überarbeitet. Visuelle Abnahme bleibt offen; U5 benötigt die noch ausstehende Offlineclient-Entscheidung. [Umfang und aktueller Stand](docs/ui-overhaul.md).
 
 **U1: Navigation und Seitenrahmen.** Arbeitsplatz und Verwaltung sind getrennt. Ein Kontomenü ersetzt verteilte Kontoaktionen, Unteransichten markieren den zugehörigen Abschnitt. Die mobile Navigation ist per Tastatur und Escape bedienbar; ohne JavaScript bleiben alle Links erreichbar. Login und Startseite sind kompakter; der OIDC-Start zeigt nun die Arbeitsfunktionen, während Mein Zugang separat bleibt. Anzeigenamen ersetzen interne Kennungen in der Kopfzeile. Ein lokales optionales Skript wird über script-src self zugelassen, ohne Inline-Skripte oder fremde Quellen.
 
@@ -18,7 +18,9 @@ Repository: https://github.com/JRTools/samla
 
 **U4: Katalog, Medien und hilfreiche Fehlerrückmeldungen.** Tags werden als benannte Checkboxen gewählt; Tagverwaltung und erneute Medienanalyse öffnen sich bei Bedarf. Sucheinstiege sind verbunden, leere Medien- und Exportansichten nennen den nächsten Schritt. Fehlermeldungen haben konkrete Überschriften. Katalogentwürfe, Bereichsname/Quote, Ordnernamen und Dateiaktionen bleiben bei unterstützten Eingabe- und Konfliktfehlern im Formular erhalten. Ursprüngliche Revisions- und Konfliktbedingungen bleiben bestehen; ein Konflikt erhält keinen still erneuerten Schreibnachweis. Datei-Uploads müssen aus Browsergründen gegebenenfalls erneut ausgewählt werden. Technische Verarbeitungszustände werden nicht als fertig oder synchronisiert umgedeutet.
 
-## Entwicklungsstand: Iteration 40 (Katalogsuche mit Beschreibungen und Tags)
+**U4.1: Abschlussprüfung und lokale Skriptauslieferung.** Der lokale Router liefert das optionale UI-Skript mit korrektem MIME-Typ aus; der HTTP-Prüfablauf kontrolliert die Auslieferung. Assetversionen verhindern alte Layoutdateien nach dem Update. Schriftgrößen und Touchziele der bestehenden Formulare wurden vereinheitlicht. U1 bis U4 sind implementiert. U5 bleibt ausdrücklich abhängig von der noch offenen Entscheidung zwischen einer eigenen installierbaren Samla-Web-App und vorhandenen WebDAV-Apps; eine lokale Warteschlange oder echte Synchronisation ist im aktuellen Serverfrontend nicht vorhanden.
+
+## Entwicklungsstand: UI-Überarbeitung U1 bis U4, Fachstand Iteration 40
 
 **Beschreibungen und Tags durchsuchen** findet Dateien über Namen, manuelle Beschreibungen und Tagbezeichnungen. Tag und Dateiendung lassen sich kombinieren, Ergebnisse sind geschützt und paginiert. Ausgelesene sensible Medienfelder und Originalinhalte werden nicht mit durchsucht. Keine neue Migration. [Bedienung und Grenzen](docs/catalog-search.md).
 
@@ -160,7 +162,7 @@ APP_ENV=test composer test:integration
 
 Alle `TEST_DB_*`-Werte müssen als Umgebungsvariablen gesetzt sein. Fehlende Testkonfiguration führt zum Fehler, nicht zum stillen Überspringen der Datenbanktests. Die Testdatenbank wird vorab angelegt; die Tests legen keine beliebigen Datenbanken an und löschen keine Datenbank.
 
-Nachgewiesen: in allen vier Kombinationen aus PHP 8.4.5/8.5.4 und MySQL 8.0.46/MariaDB 11.8.6 jeweils 402 Tests mit 1627 Assertions, ausgeführt mit PHPUnit 13.4.3. Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
+Aktuell vollständig nachgewiesen: in allen vier CI-Kombinationen aus PHP 8.4.27/8.5.12 und MySQL 8.0/MariaDB 11.8 jeweils 557 Tests mit 3084 Assertions. [Prüfstand der UI-Pakete und Grenzen](docs/verification-ui-u1-u4.md). Die Composer-Abhängigkeiten sind installiert und über composer.lock festgeschrieben. Aktuelle Ergebnisse: [Prüfprotokoll](docs/verification.md).
 
 ## OIDC einrichten
 

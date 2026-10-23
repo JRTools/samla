@@ -19,7 +19,7 @@ $administration = ($caps['identity.users.read'] ?? false) || ($caps['identity.gr
 ?>
 <!doctype html>
 <html lang="de">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?= $e($titles[$page]) ?> · Samla</title><link rel="stylesheet" href="/assets/samla.css?v=41"><script src="/assets/workspace.js?v=41" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><?= $e($titles[$page]) ?> · Samla</title><link rel="stylesheet" href="/assets/samla.css?v=45"><script src="/assets/workspace.js?v=45" defer></script></head>
 <body class="<?= $signedIn ? 'signed-in' : 'signed-out' ?>"><a class="skip" href="#main">Zum Inhalt</a>
 <div class="shell"><aside class="sidebar" aria-label="Hauptnavigation"><a class="brand" href="/"><span class="brand-icon" aria-hidden="true">S</span>Samla<span class="brand-dot">.</span></a><p class="brand-sub">JRTools · Dateien und Medien</p>
 <?php if ($signedIn): ?>
