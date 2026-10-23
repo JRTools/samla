@@ -57,3 +57,10 @@ Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
 Die Bereichsliste öffnet gezielt einen Bereich; Neuanlage und Löschung sind getrennte Abläufe. Quoten akzeptieren GB, GiB und kleinere Einheiten, mit exakter ganzzahliger Umrechnung und verlustfreier Darstellung bestehender Bytewerte. Profilkarten verbinden Beschreibung, aktuellen Zuweisungsstatus und die passende bestätigte Aktion. Bereichslinks führen direkt in die zugehörige Rechteverwaltung. Bestehende POST-Verträge bleiben kompatibel; widersprüchliche Größenfelder werden abgewiesen.
 
 Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
+
+
+### UI-Paket U4
+
+Tags werden als benannte Checkboxen gewählt; Tagverwaltung und erneute Medienanalyse öffnen sich bei Bedarf. Sucheinstiege sind verbunden, leere Medien- und Exportansichten nennen den nächsten Schritt. Fehlermeldungen haben konkrete Überschriften. Katalogentwürfe, Bereichsname/Quote, Ordnernamen und Dateiaktionen bleiben bei unterstützten Eingabe- und Konfliktfehlern im Formular erhalten. Ursprüngliche Revisions- und Konfliktbedingungen bleiben bestehen; ein Konflikt erhält keinen still erneuerten Schreibnachweis. Datei-Uploads müssen aus Browsergründen gegebenenfalls erneut ausgewählt werden. Technische Verarbeitungszustände werden nicht als fertig oder synchronisiert umgedeutet.
+
+Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).

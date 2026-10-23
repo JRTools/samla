@@ -234,3 +234,9 @@ nav a{min-height:44px}.navigation-toggle{margin-top:12px}
 /* U3: contextual administration. */
 .size-input{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:10px}.profile-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,320px);gap:24px}.profile-row .settings-form{margin:0}.danger-zone>summary{color:#991b1b}.view-switch{display:flex;flex-wrap:wrap;gap:8px}
 @media(max-width:760px){.profile-row{grid-template-columns:1fr;gap:12px}.size-input{grid-template-columns:minmax(0,1fr) 90px}}
+
+/* U4: shared forms, readable metadata and consistent feedback. */
+.tag-choices{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;max-height:320px;overflow:auto}.tag-choices legend{font-weight:600;padding:0 6px}.tag-choices label{padding:8px 0;min-height:44px}.tag-choices input{width:20px;height:20px}
+.panel.auth-panel>form{display:grid;gap:10px}.panel.auth-panel>form>.button{justify-self:start}.panel.auth-panel label{font-weight:600}.panel.auth-panel .field-note{margin:0 0 10px}.disclosure-content>.settings-form{padding:18px 0;border-bottom:1px solid var(--line)}
+.group-row details{margin:10px 0}.group-row details>summary{font-size:13px;min-height:44px;padding:10px 0}.media-card h2 a{color:var(--ink)}.media-viewer{padding:24px}.media-viewer>p{margin:0}.notice[role=alert]{border-left:4px solid #b91c1c}
+.button-small{min-height:44px}summary{min-height:44px;display:list-item;align-content:center}.account-menu summary{display:flex}

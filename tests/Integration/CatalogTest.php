@@ -114,11 +114,14 @@ final class CatalogTest extends TestCase
     {
         $tag=$this->tag();$post=['csrf'=>$this->csrf,'space'=>'space','entry'=>$this->entry,'entry_revision'=>'1','catalog_revision'=>'0','description'=>'Hallo','tags'=>[$tag]];
         self::assertSame(303,$this->page('/catalog/save','POST',$post)->status);
-        self::assertSame(409,$this->page('/catalog/save','POST',$post)->status);
+        $conflict=$this->page('/catalog/save','POST',array_replace($post,['description'=>'Entwurf <neu>']));
+        self::assertSame(409,$conflict->status);self::assertStringContainsString('Entwurf &lt;neu&gt;',$conflict->body);
+        self::assertStringContainsString('name="catalog_revision" value="0"',$conflict->body);
+        self::assertSame('Hallo',$this->catalog->details('alice','space',$this->entry)['catalog']['description']);
         self::assertSame(403,$this->page('/catalog/save','POST',array_replace($post,['csrf'=>str_repeat('b',64)]))->status);
         foreach([['tags'=>'x'],['tags'=>[$tag,$tag]],['description'=>str_repeat('x',16385)],['entry_revision'=>'-1']]as$bad){self::assertSame(400,$this->page('/catalog/save','POST',array_replace($post,$bad))->status);}
         self::assertSame(405,$this->page('/catalog/save','GET')->status);
-        self::assertSame(200,$this->page()->status);self::assertStringContainsString('name="tags[]" multiple',$this->page()->body);
+        self::assertSame(200,$this->page()->status);self::assertStringContainsString('name="tags[]"',$this->page()->body);
     }
     public function testTagCapacityAndSelectionBoundsAreEnforcedInsideMutation():void
     {
@@ -228,3 +231,4 @@ final class CatalogTest extends TestCase
     }
 
 }
+

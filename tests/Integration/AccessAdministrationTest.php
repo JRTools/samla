@@ -66,7 +66,9 @@ final class AccessAdministrationTest extends TestCase
         parse_str(parse_url($response->headers['Location'],PHP_URL_QUERY),$query);
         self::assertSame(1610612736,(int)$this->spaces->details('admin',$query['space'])['quota_bytes']);
         self::assertSame(400,$this->request('/administration/spaces/create','POST',post:$post+['quota'=>'1'])->status);
-        self::assertSame(400,$this->request('/administration/spaces/create','POST',post:array_replace($post,['quota_value'=>'0.1','quota_unit'=>'B']))->status);
+        $invalid=$this->request('/administration/spaces/create','POST',post:array_replace($post,['name'=>'Entwurf <Team>','quota_value'=>'0.1','quota_unit'=>'B']));
+        self::assertSame(400,$invalid->status);self::assertStringContainsString('Entwurf &lt;Team&gt;',$invalid->body);
+        self::assertStringContainsString('value="0.1"',$invalid->body);
     }
 
     public function testDropdownsDisplayNamesAndProtectAdministrativeMetadata():void
@@ -231,7 +233,7 @@ final class AccessAdministrationTest extends TestCase
         $this->roles->assign(new RoleAssignment('team',$legacy,Scope::Space,'space'));
         $state=$this->state($legacy);self::assertTrue($state['assigned']);
         $response=$this->request('/permissions',query:['group'=>'team','space'=>'space']);
-        self::assertStringContainsString('Hochladen (bisherige Zuweisung) (zugewiesen)',$response->body);
+        self::assertStringContainsString('Hochladen (bisherige Zuweisung)',$response->body);self::assertStringContainsString('Zugewiesen',$response->body);
         self::assertSame(303,$this->request('/permissions/change','POST',post:$this->assignmentPost($legacy,operation:'revoke'))->status);
         self::assertFalse($this->allowed('bob','files.read','space'));
         self::assertNotNull($this->roles->find($legacy));

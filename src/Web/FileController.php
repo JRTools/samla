@@ -10,6 +10,7 @@ final readonly class FileController
     public function __construct(private FileService $files, private PageRenderer $renderer = new PageRenderer()) {}
     public function handle(Request $request, string $actor, string $csrf, array $data): Response
     {
+        $verified=false;
         try {
             if (in_array($request->path, ['/files/edit', '/files/edit/save', '/files/edit/draft'], true)) {
                 return (new TextEditorController($this->files, $this->renderer))->handle($request, $actor, $csrf, $data);
@@ -17,6 +18,7 @@ final readonly class FileController
             if (in_array($request->path, ['/files/folder', '/files/upload', '/files/change', '/files/replace', '/files/version/restore', '/files/purge'], true)) {
                 if ($request->method !== 'POST') { return new Response(405, headers: ['Allow' => 'POST']); }
                 if (!preg_match('/^[a-f0-9]{64}$/D', $csrf) || !hash_equals($csrf, $request->field('csrf', 64))) { throw new AccessDenied(); }
+                $verified=true;
                 $space = $request->field('space', 64); $parent = $request->field('parent', 32);
                 if ($request->path === '/files/purge') {
                     if (($request->post['confirm'] ?? null) !== 'delete') { return $this->error(400, 'Bitte bestätige ausdrücklich die endgültige Löschung des Eintrags und seines Inhalts.', $data); }
@@ -89,9 +91,27 @@ final readonly class FileController
         } catch (AccessDenied) { return $this->error(403, 'Für diesen Speicherbereich fehlt die Berechtigung oder dein Gruppenstand ist nicht mehr aktuell.', $data); }
         catch (\Samla\Core\Storage\StorageLocked) { return $this->error(423, 'Der Eintrag oder sein Ziel ist gerade für eine Bearbeitung gesperrt. Bitte die Sperre im verwendeten Client freigeben oder ihren Ablauf abwarten.', $data); }
         catch (\Samla\Core\Storage\StorageUnavailable) { return $this->error(503, 'Der private Dateispeicher ist noch nicht eingerichtet oder für PHP nicht beschreibbar. Bitte die Administration um Prüfung bitten.', $data); }
-        catch (MutationConflict) { return $this->error(409, 'Der Eintrag wurde inzwischen geändert oder der Name ist bereits vergeben. Bitte neu laden. Es wurde nichts überschrieben.', $data); }
+        catch (MutationConflict) { if($verified&&($reply=$this->formError($request,$actor,$data,409,'Der Eintrag wurde geändert oder der Name ist bereits vergeben. Deine Eingaben bleiben erhalten. Öffne den aktuellen Stand vor dem erneuten Speichern.'))!==null){return $reply;}return $this->error(409, 'Der Eintrag wurde inzwischen geändert oder der Name ist bereits vergeben. Bitte neu laden. Es wurde nichts überschrieben.', $data); }
         catch (\LengthException) { return $this->error(413, 'Uploadgrenze, Speicherquote oder Versionskapazität überschritten. Vorhandene Versionen bleiben erhalten.', $data); }
-        catch (\InvalidArgumentException) { return $this->error(400, 'Bitte prüfe Dateiname, Zielordner und die Uploadgrenzen des Servers.', $data); }
+        catch (\InvalidArgumentException) { if($verified&&($reply=$this->formError($request,$actor,$data,400,'Bitte prüfe Name und Zielordner. Deine Eingaben bleiben erhalten.'))!==null){return $reply;}return $this->error(400, 'Bitte prüfe Dateiname, Zielordner und die Uploadgrenzen des Servers.', $data); }
+    }
+    private function formError(Request $request,string $actor,array $data,int $status,string $message):?Response
+    {
+        try{
+            $space=$request->field('space',64);
+            if($request->path==='/files/folder'){
+                $current=$this->files->listing($actor,$space,$request->field('parent',32));
+                return new Response($status,$this->renderer->render('files',$data+$current+['form_error'=>$message,'folder_name'=>$request->field('name',1020),'retry_folder'=>true]));
+            }
+            if($request->path!=='/files/change'){return null;}
+            $current=['space_id'=>$space,'entry'=>$this->files->details($actor,$space,$request->field('entry',32)),
+                'destinations'=>$this->files->folderChoices($actor,$space),'can_catalog'=>$this->files->allowed($actor,'catalog.read',$space)&&$this->files->allowed($actor,'files.read',$space)];
+            foreach(['update','delete','restore','read','create','versions.read'] as$action){$current['file_caps'][$action]=$this->files->allowed($actor,'files.'.$action,$space);}
+            $current+=['form_error'=>$message,'retry_operation'=>$request->field('operation',12),
+                'submitted_name'=>isset($request->post['name'])?$request->field('name',1020):$current['entry']['name'],
+                'submitted_parent'=>$request->field('parent',32),'expected_name'=>$request->field('expected_name',1020),'expected_parent'=>$request->field('expected_parent',32)];
+            return new Response($status,$this->renderer->render('file-detail',$data+$current));
+        }catch(AccessDenied|\InvalidArgumentException){return null;}
     }
     private function query(Request $request, string $key, int $limit): string
     {

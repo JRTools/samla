@@ -43,3 +43,6 @@ if (exportForm) {
   clear.addEventListener('click', () => { boxes.forEach(box => { box.checked = false; }); update(); boxes[0]?.focus(); });
   update();
 }
+
+// Bring server validation feedback into view without discarding any form values.
+document.querySelector('[data-form-error]')?.focus();

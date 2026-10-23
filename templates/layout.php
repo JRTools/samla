@@ -42,5 +42,6 @@ $administration = ($caps['identity.users.read'] ?? false) || ($caps['identity.gr
 <?php if ($signedIn && !($data['oidc'] ?? false)): ?><div class="dev-notice">Lokaler Entwicklungszugang: nur auf dem Entwicklungsrechner.</div><?php endif ?>
 <main id="main" tabindex="-1">
 <?php if ($data['flash'] !== null): ?><div class="notice" role="status"><?= $e($data['flash']) ?></div><?php endif ?>
+<?php if(isset($data['form_error'])): ?><div class="notice notice-error" role="alert" tabindex="-1" data-form-error><?= $e($data['form_error']) ?></div><?php endif ?>
 <?php require __DIR__ . '/' . $page . '.php'; ?>
 </main><footer>JRTools · Samla <span>Gemeinsam organisiert.</span></footer></div></div></body></html>

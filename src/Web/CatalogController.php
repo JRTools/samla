@@ -8,6 +8,7 @@ final readonly class CatalogController
     public function __construct(private CatalogService $catalog,private PageRenderer $renderer=new PageRenderer()){}
     public function handle(Request $request,string $actor,string $csrf,array $data):Response
     {
+        $recoverable=false;
         try{
             if(!in_array($request->path,['/catalog','/catalog/save','/catalog/tag','/catalog/batch','/catalog/batch/change','/catalog/search'],true)){return $this->error(404,'Diese Seite wurde nicht gefunden.',$data);}
             $method=in_array($request->path,['/catalog','/catalog/batch','/catalog/search'],true)?'GET':'POST';if($request->method!==$method){return $this->error(405,'Diese Methode ist hier nicht erlaubt.',$data,['Allow'=>$method]);}
@@ -25,6 +26,7 @@ final readonly class CatalogController
             if($method==='GET'){return new Response(200,$this->renderer->render('catalog',$data+$current+['space_id'=>$space]));}
             if(!preg_match('/^[a-f0-9]{64}$/D',$csrf)||!hash_equals($csrf,$request->field('csrf',64))){throw new AccessDenied();}
             if($request->path==='/catalog/save'){
+                $recoverable=true;
                 $tags=$request->post['tags']??[];if(!is_array($tags)){throw new \InvalidArgumentException();}
                 $changed=$this->catalog->save($actor,new CatalogEntryChange($space,$entry,$this->number($request,'entry_revision'),$this->number($request,'catalog_revision'),$request->field('description',CatalogEntryChange::MAX_DESCRIPTION_BYTES),$tags));
             }else{
@@ -40,9 +42,25 @@ final readonly class CatalogController
             }
             return new Response(303,headers:['Location'=>'/catalog?'.http_build_query(['space'=>$space,'entry'=>$entry])],flash:$changed?'Katalogangaben gespeichert.':'Die Angaben sind unverändert.');
         }catch(AccessDenied){return $this->error(403,'Für diese Katalogangaben fehlt die Berechtigung.',$data);}
-        catch(MutationConflict){return $this->error(409,'Datei, Katalog oder Tag wurde geändert; der Tagname ist bereits belegt oder der Tag wird noch verwendet. Bitte lade die Angaben erneut.',$data);}
-        catch(\LengthException){return $this->error(413,'Die Auswahl oder der Katalog überschreitet die unterstützte Größe.',$data);}
-        catch(\InvalidArgumentException){return $this->error(400,'Die Katalogeingabe oder Auswahl ist ungültig.',$data);}
+        catch(MutationConflict){if($recoverable){return $this->draft($request,$data,$current,$space,409,'Die Angaben wurden inzwischen geändert. Dein Entwurf bleibt erhalten. Öffne den aktuellen Stand und gleiche ihn vor dem Speichern ab.');}return $this->error(409,'Datei, Katalog oder Tag wurde geändert; der Tagname ist bereits belegt oder der Tag wird noch verwendet. Bitte lade die Angaben erneut.',$data);}
+        catch(\LengthException){if($recoverable){return $this->draft($request,$data,$current,$space,413,'Die Beschreibung oder Auswahl überschreitet eine Grenze. Dein Entwurf bleibt erhalten.');}return $this->error(413,'Die Auswahl oder der Katalog überschreitet die unterstützte Größe.',$data);}
+        catch(\InvalidArgumentException){if($recoverable){return $this->draft($request,$data,$current,$space,400,'Bitte prüfe Beschreibung und Tags. Dein Entwurf bleibt erhalten.');}return $this->error(400,'Die Katalogeingabe oder Auswahl ist ungültig.',$data);}
+    }
+    private function draft(Request $request,array $data,array $current,string $space,int $status,string $message):Response
+    {
+        $description=$request->post['description']??null;
+        if(!is_string($description)||strlen($description)>65536){return $this->error($status,$message,$data);}
+        $tags=$request->post['tags']??[];
+        if(!is_array($tags)||count($tags)>100){return $this->error($status,$message,$data);}
+        $current['catalog']['description']=$description;
+        $current['selected_tags']=array_values(array_filter(array_column($current['tags'],'id'),static fn($id)=>in_array($id,$tags,true)));
+        // Keep the submitted conditions. A conflict must not turn into a blind overwrite on retry.
+        foreach(['entry_revision','catalog_revision'] as$key){
+            $value=$request->post[$key]??null;
+            if(!is_string($value)||!preg_match('/^(0|[1-9][0-9]{0,17})$/D',$value)){return $this->error($status,$message,$data);}
+            $current['submitted_'.$key]=$value;
+        }
+        return new Response($status,$this->renderer->render('catalog',$data+$current+['space_id'=>$space,'form_error'=>$message]));
     }
     private function batch(Request $request,string $actor,string $csrf,array $data,string $space):Response
     {
@@ -67,3 +85,4 @@ final readonly class CatalogController
     private function error(int $status,string $message,array $data,array $headers=[]):Response
     {return new Response($status,$this->renderer->render('error',$data+['status'=>$status,'error'=>$message]),$headers);}
 }
+

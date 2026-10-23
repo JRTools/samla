@@ -242,11 +242,11 @@ with tempfile.TemporaryDirectory(prefix='samla-oidc-http-') as temp:
                     status,catalog,_=req(catalog_url);assert status==200
                     assert req('/catalog/tag',{'csrf':csrf(catalog),'space':space,'entry':entry,'operation':'create','name':'HTTP Sommer','confirm':'1'})[0]==303
                     status,catalog,_=req(catalog_url)
-                    tag=re.search(r'<option value="([a-f0-9]{32})"[^>]*>HTTP Sommer</option>',catalog).group(1)
+                    tag=re.search(r'name="tags\[\]" value="([a-f0-9]{32})"',catalog).group(1)
                     save=urllib.parse.urlencode([('csrf',csrf(catalog)),('space',space),('entry',entry),('entry_revision','1'),('catalog_revision','0'),('description','Manuell <Text>'),('tags[]',tag)]).encode()
                     assert req('/catalog/save',save)[0]==303
                     assert req('/catalog/save',save)[0]==409
-                    status,catalog,_=req(catalog_url);assert 'Manuell &lt;Text&gt;' in catalog and 'selected>HTTP Sommer</option>' in catalog
+                    status,catalog,_=req(catalog_url);assert 'Manuell &lt;Text&gt;' in catalog and f'value="{tag}" checked' in catalog
                     search_url='/catalog/search?'+urllib.parse.urlencode({'space':space,'q':'Manuell','tag':tag,'extension':'.PHP'})
                     status,search,_=req(search_url);assert status==200 and '>test.php</a>' in search and 'Manuell &lt;Text&gt;' in search
                     status,search,_=req('/catalog/search?'+urllib.parse.urlencode({'space':space,'q':'HTTP Sommer'}));assert status==200 and '>test.php</a>' in search

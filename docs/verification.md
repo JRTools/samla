@@ -39,3 +39,13 @@ Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und
 PHP 8.4.5: 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich, einschließlich Grenzwerten, Dezimalkomma, Überlauf, Bruchteilen von Bytes und exakten Quoten-Roundtrips. PHP- und Python-Syntax erfolgreich. Zusätzlicher Integrationstest und HTTP-Prüfablauf für die neue Größeneingabe vorbereitet; Ausführung der Datenbankmatrix erfolgt in CI und wird getrennt dokumentiert. Authentifizierte visuelle Abnahme noch offen.
 
 Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
+
+
+CI-Nachtrag zu U2: Lauf 39889957275 scheiterte in allen vier Kombinationen an einer alten Erwartung der Startseitenüberschrift in WebAdministrationTest. Der betrachtete PHP-8.4/MariaDB-Job bestand 219 Unit-/Architekturtests mit 1295 Assertions und führte 335 Integrationstests mit genau diesem einen Fehler aus. Die Erwartung wird auf die bewusst geänderte Arbeitsstartseite aktualisiert. Die übrigen Matrixlogs wurden noch nicht vollständig ausgewertet. Ein vollständiger grüner Folgelauf steht weiterhin aus.
+
+
+## UI-Paket U4: Katalog, Medien und hilfreiche Fehlerrückmeldungen (23. Oktober 2026)
+
+PHP 8.4.5: 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich; alle eigenen PHP-Dateien, das optionale lokale JavaScript und der aktualisierte HTTP-Prüfablauf sind syntaktisch geprüft. Integrationstests prüfen zusätzlich den erhaltenen Katalogentwurf samt alter Revision und Quoteneingaben. Diese Datenbanktests folgen mit der vollständigen CI-Matrix. Zwei überholte UI-Textannahmen aus den vorherigen CI-Läufen wurden auf die neue Struktur angepasst. Ein lokaler synthetischer HTML-Vorschauserver wurde erstellt, ist aber aus dem Cloud-Browser nicht erreichbar (ERR_HTTP_RESPONSE_CODE_FAILURE). Keine vollständige visuelle Abnahme behauptet.
+
+Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
