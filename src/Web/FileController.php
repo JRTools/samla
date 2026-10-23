@@ -54,6 +54,7 @@ final readonly class FileController
                 $text = $request->query['q'] ?? ''; $kind = $request->query['kind'] ?? 'all';
                 if (!is_string($text) || !is_string($kind)) { throw new \InvalidArgumentException(); }
                 $data += $this->files->search($actor, $space, $text, $kind, $request->after());
+                $data['can_catalog_read']=$this->files->allowed($actor,'catalog.read',$space)&&$this->files->allowed($actor,'files.read',$space);
                 return new Response(200, $this->renderer->render('file-search', $data));
             }
             if ($request->path === '/files/versions') {
@@ -107,3 +108,4 @@ final readonly class FileController
     private function error(int $status, string $message, array $data): Response
     { return new Response($status, $this->renderer->render('error', $data + ['status' => $status, 'error' => $message])); }
 }
+

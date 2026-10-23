@@ -25,3 +25,10 @@ README, Plan 1.45, Betreiberentscheidungen und native Clientabnahme verweisen au
 PHP 8.4.5: 23 gezielte Unitprüfungen mit 133 Assertions erfolgreich; Syntax aller 44 Templates/Webklassen und JavaScript erfolgreich. Ein erster zusätzlicher OIDC-Clienttestversuch scheiterte an noch nicht installierten Composer-Testabhängigkeiten, nicht an einer fachlichen Assertion. Zielmatrix und HTTP-Durchlauf folgen über GitHub-CI. Die angemeldeten Ausgangsansichten waren nicht live zugänglich; vollständige authentifizierte und mobile visuelle Abnahme bleibt offen.
 
 Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.
+
+
+## UI-Paket U2: Dateien und Aktionen im Mittelpunkt (23. Oktober 2026)
+
+PHP 8.4.5: 29 gezielte Unitprüfungen mit 181 Assertions erfolgreich, jetzt einschließlich installierter fixierter Composer-Abhängigkeiten und OIDC-Clientprüfungen. Syntax aller 44 Templates/Webklassen und JavaScript erfolgreich. Neue Rendererprüfung deckt Nur-Lese-Navigation, Escaping und ausgeschlossene Upload-/Exportformulare ab. Zielmatrix, echter HTTP-Durchlauf und authentifizierte visuelle Abnahme bleiben noch offen.
+
+Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.

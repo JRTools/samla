@@ -26,3 +26,20 @@ document.addEventListener('keydown', event => {
     }
   });
 });
+
+const exportForm = document.getElementById('export-selection');
+if (exportForm) {
+  const boxes = Array.from(document.querySelectorAll('input[type="checkbox"][form="export-selection"]'));
+  const count = exportForm.querySelector('[data-selection-count]');
+  const clear = exportForm.querySelector('[data-selection-clear]');
+  const submit = exportForm.querySelector('[type="submit"]');
+  const update = () => {
+    const selected = boxes.filter(box => box.checked).length;
+    count.textContent = selected ? `${selected} Dateien ausgewählt` : 'Keine Dateien ausgewählt';
+    clear.hidden = !selected;
+    submit.disabled = !selected;
+  };
+  boxes.forEach(box => box.addEventListener('change', update));
+  clear.addEventListener('click', () => { boxes.forEach(box => { box.checked = false; }); update(); boxes[0]?.focus(); });
+  update();
+}

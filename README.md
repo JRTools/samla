@@ -12,6 +12,8 @@ Repository: https://github.com/JRTools/samla
 
 **U1: Navigation und Seitenrahmen.** Arbeitsplatz und Verwaltung sind getrennt. Ein Kontomenü ersetzt verteilte Kontoaktionen, Unteransichten markieren den zugehörigen Abschnitt. Die mobile Navigation ist per Tastatur und Escape bedienbar; ohne JavaScript bleiben alle Links erreichbar. Login und Startseite sind kompakter; der OIDC-Start zeigt nun die Arbeitsfunktionen, während Mein Zugang separat bleibt. Anzeigenamen ersetzen interne Kennungen in der Kopfzeile. Ein lokales optionales Skript wird über script-src self zugelassen, ohne Inline-Skripte oder fremde Quellen.
 
+**U2: Dateien und Aktionen im Mittelpunkt.** Eine kompakte Werkzeugleiste ersetzt die dauerhaft vorgeschalteten Upload- und Ordnerformulare. Dateinamen öffnen die Details, der Bereichs- und Ordnerkontext bleibt sichtbar. Die Exportauswahl hat einen Zähler und lässt sich aufheben; ohne JavaScript bleibt das Formular nutzbar. Detailaktionen sind gezielt aufklappbar. Namenssuche bietet bei vorhandenen Katalogrechten einen Wechsel zur Metadatensuche. Auswahl gilt ausdrücklich nur für die aktuelle Seite; Tagbearbeitung bleibt ein eigener Bereichsablauf.
+
 ## Entwicklungsstand: Iteration 40 (Katalogsuche mit Beschreibungen und Tags)
 
 **Beschreibungen und Tags durchsuchen** findet Dateien über Namen, manuelle Beschreibungen und Tagbezeichnungen. Tag und Dateiendung lassen sich kombinieren, Ergebnisse sind geschützt und paginiert. Ausgelesene sensible Medienfelder und Originalinhalte werden nicht mit durchsucht. Keine neue Migration. [Bedienung und Grenzen](docs/catalog-search.md).
