@@ -1,6 +1,6 @@
 # UI-Abdeckung
 
-Stand: 22. Oktober 2026, Funktionsphasen bis 40. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
+Stand: 23. Oktober 2026, Funktionsphasen bis 40 sowie UI-Pakete U1 bis U4 und Offline-Vorbereitung U5.1. Codeveröffentlichung ist keine Installation auf dem Betreiberhost. Die Funktionen erscheinen nach Codeupdate und nur mit ihren jeweiligen aktuellen Rechten. Diese Übersicht ist eine Quellcode-/HTTP-Abdeckung, keine vollständige visuelle oder native Geräteabnahme.
 
 | Funktion | Einstieg | Status |
 |---|---|---|
@@ -90,5 +90,12 @@ Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
 ### UI-Paket U5.1
 
 Im geöffneten Texteditor erzeugt Entwurf herunterladen nun in unterstützten Browsern eine lokale Textdatei ohne Serveranfrage. Damit bleibt die bewusste Sicherung auch nach Verbindungsabbruch möglich; ohne JavaScript bleibt der geschützte Serverdownload erhalten. Keine automatische Speicherung, persistente Offline-Warteschlange oder Synchronisation wird dadurch behauptet. Der vollständige U5-Ablauf hängt weiterhin vom Offlineclient ab, insbesondere vom gewünschten Verhalten bei geschlossener App. Die mobile Marken-/Menüzeile erhält nach erneuter optischer Prüfung eine explizite horizontale Flexrichtung.
+
+Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
+
+
+### UI-Paket Prüfabschluss
+
+U1 bis U4 sowie die lokale Entwurfssicherung U5.1 sind veröffentlicht und geprüft. Repräsentative echte Templateansichten mit synthetischen Daten wurden nach Browseraufnahme optisch geprüft und erkannte Darstellungsfehler korrigiert. Vollständiges U5 bleibt offen: Für die Clientumsetzung muss insbesondere feststehen, ob Synchronisation bei geöffneter App genügt oder auch bei geschlossener App erwartet wird. Es wird keine fertige Offline-App behauptet. Betreiberdeployment bleibt getrennt.
 
 Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).

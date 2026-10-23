@@ -1,11 +1,11 @@
 # Umsetzungsplan: Samla
 
-Version: 1.54
+Version: 1.55
 Stand: 23. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
-Aktueller Stand: Iteration 40, Katalogsuche mit Beschreibungen und Tags, siehe Abschnitt 52. Repository: https://github.com/JRTools/samla
+Aktueller Stand: Fachstand Iteration 40 (Abschnitt 52), UI-Pakete U1 bis U4 und lokale Entwurfssicherung U5.1 implementiert und geprüft. Vollständige Offline-Synchronisation bleibt offen. Repository: https://github.com/JRTools/samla
 
 Aktuelle vollständige Betreiberentscheidungen: [offene-entscheidungen.md](offene-entscheidungen.md). Bereits entschiedene Punkte sind darin ausdrücklich als erledigt gekennzeichnet.
 
@@ -1265,5 +1265,14 @@ Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Ger�
 Im geöffneten Texteditor erzeugt Entwurf herunterladen nun in unterstützten Browsern eine lokale Textdatei ohne Serveranfrage. Damit bleibt die bewusste Sicherung auch nach Verbindungsabbruch möglich; ohne JavaScript bleibt der geschützte Serverdownload erhalten. Keine automatische Speicherung, persistente Offline-Warteschlange oder Synchronisation wird dadurch behauptet. Der vollständige U5-Ablauf hängt weiterhin vom Offlineclient ab, insbesondere vom gewünschten Verhalten bei geschlossener App. Die mobile Marken-/Menüzeile erhält nach erneuter optischer Prüfung eine explizite horizontale Flexrichtung.
 
 Prüfung: Lokale Syntax und 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich. Browserfixture und Prüffälle sind um den Texteditor sowie einen Download bei tatsächlich deaktiviertem Netzwerk ergänzt; sie prüfen UTF-8-Inhalt und portablen Dateinamen. 48 Bildschirmaufnahmen sind nun vorgesehen. Der neue CI-Lauf wird getrennt geprüft. Die vorangehende UI-/Datenbankmatrix einschließlich 44 Browseransichten ist vollständig erfolgreich; repräsentative Screenshots wurden tatsächlich optisch betrachtet.
+
+Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.
+
+
+## 63. UI-Paket Prüfabschluss: UI-Pakete und Offline-Entwurf geprüft
+
+U1 bis U4 sowie die lokale Entwurfssicherung U5.1 sind veröffentlicht und geprüft. Repräsentative echte Templateansichten mit synthetischen Daten wurden nach Browseraufnahme optisch geprüft und erkannte Darstellungsfehler korrigiert. Vollständiges U5 bleibt offen: Für die Clientumsetzung muss insbesondere feststehen, ob Synchronisation bei geöffneter App genügt oder auch bei geschlossener App erwartet wird. Es wird keine fertige Offline-App behauptet. Betreiberdeployment bleibt getrennt.
+
+Prüfung: Abschließender Codeprüflauf 39892974317 vollständig grün: alle vier PHP-/Datenbankkombinationen jeweils 557 Tests und 3084 Assertions, HTTP/HTTPS erfolgreich; zusätzlich erfolgreicher Chromium-Job mit 48 Aufnahmen, vier Breiten, Kontrast-/Sichtbarkeitsprüfungen, Tastatur, Leseransicht, JavaScript-Fallback und lokalem Download bei abgeschaltetem Netzwerk. Alle fünf Jobzustände und relevanten Logs sowie das Browserresultat wurden gelesen. Archiviert in verification-ui-u1-u4.md. Die abschließende Fortschreibung ändert ausschließlich Dokumentation.
 
 Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.

@@ -131,3 +131,24 @@ Der Browserjob 120213191019 aus Lauf 39891842200 ist erfolgreich: Chromium 156.0
 Im geöffneten Texteditor erzeugt Entwurf herunterladen nun in unterstützten Browsern eine lokale Textdatei ohne Serveranfrage. Damit bleibt die bewusste Sicherung auch nach Verbindungsabbruch möglich; ohne JavaScript bleibt der geschützte Serverdownload erhalten. Keine automatische Speicherung, persistente Offline-Warteschlange oder Synchronisation wird dadurch behauptet. Der vollständige U5-Ablauf hängt weiterhin vom Offlineclient ab, insbesondere vom gewünschten Verhalten bei geschlossener App. Die mobile Marken-/Menüzeile erhält nach erneuter optischer Prüfung eine explizite horizontale Flexrichtung.
 
 Lokale Syntax und 31 gezielte Unitprüfungen mit 202 Assertions erfolgreich. Browserfixture und Prüffälle sind um den Texteditor sowie einen Download bei tatsächlich deaktiviertem Netzwerk ergänzt; sie prüfen UTF-8-Inhalt und portablen Dateinamen. 48 Bildschirmaufnahmen sind nun vorgesehen. Der neue CI-Lauf wird getrennt geprüft. Die vorangehende UI-/Datenbankmatrix einschließlich 44 Browseransichten ist vollständig erfolgreich; repräsentative Screenshots wurden tatsächlich optisch betrachtet.
+
+
+## Aktueller Abschlussstand
+
+| Paket | Stand |
+| --- | --- |
+| U1 | Navigation, Konto, mobiler Rahmen und Start/Login implementiert; synthetisch im Browser geprüft |
+| U2 | Dateiliste, Aktionen und Auswahl implementiert; synthetisch im Browser geprüft |
+| U3 | Bereiche, exakte Quoten und Profilkarten implementiert; reale HTTP-/Datenbanktests erfolgreich |
+| U4 | Medien/Katalog und unterstützte Formularrückmeldungen implementiert; optisch anhand echter Templates mit synthetischen Daten geprüft |
+| U5.1 | Bewusster lokaler Download eines geöffneten Textentwurfs bei Verbindungsabbruch implementiert und mit deaktiviertem Netzwerk geprüft |
+| Vollständiges U5 | Offen: persistente Offlinebearbeitung, Warteschlange, Synchronisation und Konfliktführung benötigen die Clientumsetzung. Dafür ist das erwartete Verhalten bei geschlossener App zu klären. |
+
+Prüfstand: [verification-ui-u1-u4.md](verification-ui-u1-u4.md). Die ursprüngliche Planung wird nicht als vollständig erledigt markiert, solange U5 fehlt. Die Durchführung auf dem Betreiberhost und native iOS-/Android-/Desktopabnahme bleiben gesondert. Es ist keine erneute Go-Freigabe für die übrigen Arbeitspakete erforderlich.
+
+
+### Prüfabschluss: UI-Pakete und Offline-Entwurf geprüft (23. Oktober 2026)
+
+U1 bis U4 sowie die lokale Entwurfssicherung U5.1 sind veröffentlicht und geprüft. Repräsentative echte Templateansichten mit synthetischen Daten wurden nach Browseraufnahme optisch geprüft und erkannte Darstellungsfehler korrigiert. Vollständiges U5 bleibt offen: Für die Clientumsetzung muss insbesondere feststehen, ob Synchronisation bei geöffneter App genügt oder auch bei geschlossener App erwartet wird. Es wird keine fertige Offline-App behauptet. Betreiberdeployment bleibt getrennt.
+
+Abschließender Codeprüflauf 39892974317 vollständig grün: alle vier PHP-/Datenbankkombinationen jeweils 557 Tests und 3084 Assertions, HTTP/HTTPS erfolgreich; zusätzlich erfolgreicher Chromium-Job mit 48 Aufnahmen, vier Breiten, Kontrast-/Sichtbarkeitsprüfungen, Tastatur, Leseransicht, JavaScript-Fallback und lokalem Download bei abgeschaltetem Netzwerk. Alle fünf Jobzustände und relevanten Logs sowie das Browserresultat wurden gelesen. Archiviert in verification-ui-u1-u4.md. Die abschließende Fortschreibung ändert ausschließlich Dokumentation.
