@@ -22,10 +22,10 @@ final readonly class AdminController
         $caps['access.profiles.manage']=$this->permissions?->canManage($actorId)??false;
         return $caps;
     }
-    public function handle(Request $request, string $actorId, string $csrf, ?string $flash = null, bool $oidc = false): Response
+    public function handle(Request $request, string $actorId, string $csrf, ?string $flash = null, bool $oidc = false, ?string $displayName = null): Response
     {
         $caps = $this->capabilities($actorId);
-        $data = ['actor' => $actorId, 'csrf' => $csrf, 'caps' => $caps, 'flash' => $flash, 'oidc' => $oidc];
+        $data = ['actor' => $actorId, 'csrf' => $csrf, 'caps' => $caps, 'flash' => $flash, 'oidc' => $oidc, 'display_name' => $displayName ?? 'Mein Konto'];
         if (str_starts_with($request->path, '/files') && $this->files !== null) { return $this->files->handle($request, $actorId, $csrf, $data); }
         if (str_starts_with($request->path, '/media') && $this->media!==null) {return $this->media->handle($request,$actorId,$csrf,$data);}
         if (str_starts_with($request->path, '/operations/worker') && $this->worker!==null) {return $this->worker->handle($request,$actorId,$csrf,$data);}
@@ -46,7 +46,6 @@ final readonly class AdminController
             if ($request->path === '/users') { $data += $this->directory->users($actorId, $request->after()); $page = 'users'; }
             elseif ($request->path === '/groups') { $data += $this->directory->groups($actorId, $request->after()); $page = 'groups'; if($caps['identity.groups.memberships.manage']&&$caps['identity.users.read']){$data['user_choices']=$this->directory->userChoices($actorId);} }
             else {
-                if (!$caps['identity.users.read'] && !$caps['identity.groups.read']) { throw new AccessDenied(); }
                 $page = 'home';
             }
             return new Response(200, $this->renderer->render($page, $data));
@@ -82,3 +81,4 @@ final readonly class AdminController
     private function error(int $status, string $message, array $data, array $headers = []): Response
     { return new Response($status, $this->renderer->render('error', $data + ['error' => $message, 'status' => $status]), $headers); }
 }
+

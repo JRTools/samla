@@ -1,5 +1,3 @@
-<?php use Samla\Core\Web\PageRenderer; $e = PageRenderer::escape(...); ?>
-<section class="page-heading"><div><p class="eyebrow">WILLKOMMEN BEI SAMLA</p><h1>Alles an einem Ort.</h1><p>Melde dich mit deinem Organisationskonto an.</p></div></section>
-<?php if (isset($data['loginError'])): ?><div class="notice" role="alert"><?= $e($data['loginError']) ?></div><?php endif ?>
-<section class="panel auth-panel"><h2>Sicher anmelden</h2><p>Die Anmeldung erfolgt bei deinem zentralen Identitätsanbieter.</p>
-<form method="post" action="/auth/login"><input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>"><button class="button" type="submit">Mit Organisationskonto anmelden</button></form></section>
+<section class="panel login-card"><a class="brand login-brand" href="/">Samla<span class="brand-dot">.</span></a><h1>Willkommen bei Samla</h1><p class="lead">Melde dich an, um deine Dateien und die gemeinsamen Bereiche zu öffnen.</p>
+<?php if(isset($data['loginError'])): ?><p class="notice notice-error" role="alert"><?= $e($data['loginError']) ?></p><?php endif ?>
+<form method="post" action="/auth/login"><input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>"><button class="button" type="submit">Mit Organisationskonto anmelden</button></form><p class="field-note">Du wirst zur zentralen Anmeldung deiner Organisation weitergeleitet.</p></section>

@@ -9,8 +9,9 @@ final readonly class Response
     {
         $this->headers = $headers + [
             'Content-Type' => 'text/html; charset=utf-8', 'Cache-Control' => 'no-store',
-            'Content-Security-Policy' => "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+            'Content-Security-Policy' => "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
             'X-Content-Type-Options' => 'nosniff', 'Referrer-Policy' => 'no-referrer', 'X-Frame-Options' => 'DENY',
         ];
     }
 }
+

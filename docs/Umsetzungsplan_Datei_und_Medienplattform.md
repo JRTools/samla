@@ -1,7 +1,7 @@
 # Umsetzungsplan: Samla
 
-Version: 1.46
-Stand: 22. Oktober 2026
+Version: 1.47
+Stand: 23. Oktober 2026
 Grundlage: Konzept_Datei_und_Medienplattform.md, Version 1.3
 Status: Umsetzung begonnen, keine pauschale zusätzliche Komponentenfreigabe
 
@@ -1194,3 +1194,13 @@ Der Betreiber bewertet die Oberfläche als funktional, aber stark unintuitiv, un
 Die Abnahme umfasst autorisierte synthetische Daten, Desktop und Mobil, reine Leser, lange Namen, leere Zustände, Tastatur und Zoom. Die angemeldeten Ausgangsansichten müssen vor Umsetzung noch tatsächlich im Browser betrachtet werden. Dieses Paket veröffentlicht ausschließlich die Analyse und Planung, keine überarbeitete Oberfläche und keine neue Migration. Die Umsetzung erfolgt weiterhin paketweise mit README, Plan, gezielten Tests und GitHub-Veröffentlichung ohne erneute Go-Abfrage.
 
 Version 1.46: UI-Überarbeitung als priorisierte Arbeitspakete eingeplant; veröffentlichter Funktionsstand bleibt Iteration 40.
+
+
+
+## 55. UI-Paket U1: Navigation und Seitenrahmen
+
+Arbeitsplatz und Verwaltung sind getrennt. Ein Kontomenü ersetzt verteilte Kontoaktionen, Unteransichten markieren den zugehörigen Abschnitt. Die mobile Navigation ist per Tastatur und Escape bedienbar; ohne JavaScript bleiben alle Links erreichbar. Login und Startseite sind kompakter; der OIDC-Start zeigt nun die Arbeitsfunktionen, während Mein Zugang separat bleibt. Anzeigenamen ersetzen interne Kennungen in der Kopfzeile. Ein lokales optionales Skript wird über script-src self zugelassen, ohne Inline-Skripte oder fremde Quellen.
+
+Prüfung: PHP 8.4.5: 23 gezielte Unitprüfungen mit 133 Assertions erfolgreich; Syntax aller 44 Templates/Webklassen und JavaScript erfolgreich. Ein erster zusätzlicher OIDC-Clienttestversuch scheiterte an noch nicht installierten Composer-Testabhängigkeiten, nicht an einer fachlichen Assertion. Zielmatrix und HTTP-Durchlauf folgen über GitHub-CI. Die angemeldeten Ausgangsansichten waren nicht live zugänglich; vollständige authentifizierte und mobile visuelle Abnahme bleibt offen.
+
+Keine neue Laufzeitkomponente oder Datenbankmigration. Tatsächliche native Geräteabnahme und Betreiberdeployment bleiben getrennte Schritte. Weitere UI-Pakete werden ohne Go-Abfrage fortgesetzt.

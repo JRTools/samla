@@ -17,3 +17,11 @@ README, Plan 1.45, Betreiberentscheidungen und native Clientabnahme verweisen au
 ## UI-Analyse und Überarbeitungsplan (22. Oktober 2026)
 
 Öffentliche Anmeldeseite im Browser als DOM und Screenshot betrachtet. Ein vollständiger Screenshotversuch lief in einen Timeout; die anschließende Aufnahme des sichtbaren Bereichs war erfolgreich. Angemeldete Ansichten waren nicht zugänglich; sechs aktuelle Template-/CSS-Dateien wurden ergänzend gelesen. Analyse und Grenzen: ui-overhaul.md. Ausschließlich Dokumentationsänderung, keine neue PHP-/Datenbankmatrix ausgeführt und keine authentifizierte oder mobile visuelle Abnahme behauptet.
+
+
+
+## UI-Paket U1: Navigation und Seitenrahmen (23. Oktober 2026)
+
+PHP 8.4.5: 23 gezielte Unitprüfungen mit 133 Assertions erfolgreich; Syntax aller 44 Templates/Webklassen und JavaScript erfolgreich. Ein erster zusätzlicher OIDC-Clienttestversuch scheiterte an noch nicht installierten Composer-Testabhängigkeiten, nicht an einer fachlichen Assertion. Zielmatrix und HTTP-Durchlauf folgen über GitHub-CI. Die angemeldeten Ausgangsansichten waren nicht live zugänglich; vollständige authentifizierte und mobile visuelle Abnahme bleibt offen.
+
+Keine produktiven Daten verändert, keine Installation auf dem Betreiberhost und keine neue native Geräteabnahme.

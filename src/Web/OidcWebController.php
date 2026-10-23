@@ -60,16 +60,16 @@ final readonly class OidcWebController
             }
             if (str_starts_with($request->path, '/account/app-passwords') && $this->appPasswords !== null) {
                 return $this->appPasswords->handle($request, $session['id'], $_SESSION['csrf'], ['actor' => $session['id'],
-                    'csrf' => $_SESSION['csrf'], 'caps' => $this->admin->capabilities($session['id']), 'flash' => null, 'oidc' => true]);
+                    'csrf' => $_SESSION['csrf'], 'caps' => $this->admin->capabilities($session['id']), 'flash' => null, 'oidc' => true, 'display_name' => $user['display_name']]);
             }
-            if ($request->path === '/account' || $request->path === '/') {
+            if ($request->path === '/account') {
                 if ($request->method !== 'GET') { return new Response(405, headers: ['Allow' => 'GET']); }
                 // Own account is available to authenticated users before role assignment.
                 return $this->page('account', 200, ['actor' => $session['id'], 'name' => $user['display_name'],
                     'fresh' => $this->identities->isAccessAllowed($session['id']), 'caps' => $this->admin->capabilities($session['id'])]);
             }
             $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
-            $response = $this->admin->handle($request, $session['id'], $_SESSION['csrf'], $flash, true);
+            $response = $this->admin->handle($request, $session['id'], $_SESSION['csrf'], $flash, true, $user['display_name']);
             if ($response->flash !== null) { $_SESSION['flash'] = $response->flash; }
             return $response;
         } finally { if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); } }
@@ -117,6 +117,7 @@ final readonly class OidcWebController
     {
         $parts = parse_url($this->config->issuer);
         $origin = 'https://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
-        return ['Content-Security-Policy' => "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self' " . $origin . "; base-uri 'none'; frame-ancestors 'none'"];
+        return ['Content-Security-Policy' => "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; form-action 'self' " . $origin . "; base-uri 'none'; frame-ancestors 'none'"];
     }
 }
+

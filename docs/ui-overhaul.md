@@ -73,4 +73,12 @@ Eine visuelle Abnahme verlangt echte Browseransichten und dokumentierte Ergebnis
 
 ## Stand dieses Pakets
 
-Analyse und Überarbeitungsplan erstellt. Noch keine Änderung des ausgelieferten UI, keine mobile oder authentifizierte visuelle Abnahme. Die Anmeldeseite wurde tatsächlich optisch betrachtet; die übrigen Befunde sind ausdrücklich quellcodebasiert.
+Die Umsetzung wird nachfolgend paketweise dokumentiert. Eine Veröffentlichung ist keine Installation auf dem Betreiberhost.
+
+
+
+### U1: Navigation und Seitenrahmen (23. Oktober 2026)
+
+Arbeitsplatz und Verwaltung sind getrennt. Ein Kontomenü ersetzt verteilte Kontoaktionen, Unteransichten markieren den zugehörigen Abschnitt. Die mobile Navigation ist per Tastatur und Escape bedienbar; ohne JavaScript bleiben alle Links erreichbar. Login und Startseite sind kompakter; der OIDC-Start zeigt nun die Arbeitsfunktionen, während Mein Zugang separat bleibt. Anzeigenamen ersetzen interne Kennungen in der Kopfzeile. Ein lokales optionales Skript wird über script-src self zugelassen, ohne Inline-Skripte oder fremde Quellen.
+
+PHP 8.4.5: 23 gezielte Unitprüfungen mit 133 Assertions erfolgreich; Syntax aller 44 Templates/Webklassen und JavaScript erfolgreich. Ein erster zusätzlicher OIDC-Clienttestversuch scheiterte an noch nicht installierten Composer-Testabhängigkeiten, nicht an einer fachlichen Assertion. Zielmatrix und HTTP-Durchlauf folgen über GitHub-CI. Die angemeldeten Ausgangsansichten waren nicht live zugänglich; vollständige authentifizierte und mobile visuelle Abnahme bleibt offen.

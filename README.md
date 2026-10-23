@@ -8,7 +8,9 @@ Repository: https://github.com/JRTools/samla
 
 **Verbindliches Ausbauziel:** Dateien in der App offline bearbeiten und nach Wiederverbindung automatisch synchronisieren. Dauerhafte lokale Änderungen, Wiederaufnahme und sichtbare Konfliktbehandlung gehören dazu. Die vorhandene WebDAV-Basis ist noch keine fertige Offline-App. [Ablauf, Arbeitspakete und Abnahme](docs/offline-sync.md).
 
-**Oberfläche wird überarbeitet:** Navigation, Dateiliste und Bereichsrechte erhalten eigene priorisierte Arbeitspakete. Die erste Prüfung umfasst den live betrachteten Login und die Templates der angemeldeten Seiten. [Befunde, Zielbild und Abnahme](docs/ui-overhaul.md). Noch keine ausgelieferte UI-Überarbeitung.
+**UI-Überarbeitung läuft:** Navigation und Bedienabläufe werden paketweise vereinfacht. [Umfang und aktueller Stand](docs/ui-overhaul.md).
+
+**U1: Navigation und Seitenrahmen.** Arbeitsplatz und Verwaltung sind getrennt. Ein Kontomenü ersetzt verteilte Kontoaktionen, Unteransichten markieren den zugehörigen Abschnitt. Die mobile Navigation ist per Tastatur und Escape bedienbar; ohne JavaScript bleiben alle Links erreichbar. Login und Startseite sind kompakter; der OIDC-Start zeigt nun die Arbeitsfunktionen, während Mein Zugang separat bleibt. Anzeigenamen ersetzen interne Kennungen in der Kopfzeile. Ein lokales optionales Skript wird über script-src self zugelassen, ohne Inline-Skripte oder fremde Quellen.
 
 ## Entwicklungsstand: Iteration 40 (Katalogsuche mit Beschreibungen und Tags)
 
@@ -220,3 +222,4 @@ Die aktuelle Übersicht der noch offenen Betreiberentscheidungen steht in [offen
 Native ZIP-Paketierung mit ext-zip/ZipArchive und libzip ist vom Betreiber freigegeben. Entscheidung und Abhängigkeit sind in [zip-library-decision.md](docs/zip-library-decision.md) dokumentiert; der aktuelle Umfang steht in [portable-export.md](docs/portable-export.md).
 
 Bestätigte Ausbauvorgaben: voraussichtlich bis 100 GB Gesamtbestand, persönliche und gemeinsame Speicherbereiche, Gruppenverwaltung in Samla mit optionalem IdP-Gruppenmapping und konfigurierbare Löschfristen. Offlinebearbeitung mit späterer Synchronisierung ist gewünscht; Referenzclients und Konfliktverhalten bleiben festzulegen. Diese Vorgaben sind keine Zusage bereits vollständig implementierter Funktionen.
+

@@ -35,3 +35,11 @@ Die bloße Sichtbarkeit eines Buttons gewährt keine Berechtigung. Jeder tatsäc
 ## Geplante Überarbeitung
 
 Die Bedienung wird nach [ui-overhaul.md](ui-overhaul.md) überarbeitet: klare Navigation, Dateien im Mittelpunkt, kontextbezogene Aktionen sowie verständliche Bereichs- und Rechteverwaltung. JRTools bleibt die optische Grundlage. Die öffentliche Anmeldeseite wurde im Browser betrachtet; die angemeldeten Ansichten bislang nur anhand ihrer Templates geprüft. Umsetzung und tatsächliche visuelle Abnahme sind offen.
+
+
+
+### UI-Paket U1
+
+Arbeitsplatz und Verwaltung sind getrennt. Ein Kontomenü ersetzt verteilte Kontoaktionen, Unteransichten markieren den zugehörigen Abschnitt. Die mobile Navigation ist per Tastatur und Escape bedienbar; ohne JavaScript bleiben alle Links erreichbar. Login und Startseite sind kompakter; der OIDC-Start zeigt nun die Arbeitsfunktionen, während Mein Zugang separat bleibt. Anzeigenamen ersetzen interne Kennungen in der Kopfzeile. Ein lokales optionales Skript wird über script-src self zugelassen, ohne Inline-Skripte oder fremde Quellen.
+
+Prüfgrenzen und weitere Pakete: [ui-overhaul.md](ui-overhaul.md).
